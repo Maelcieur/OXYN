@@ -288,7 +288,7 @@ static usb_ms_cid_descr_t usb_ms_cid_descriptor_deck =
 };
 
 // SwitchDeck : propriété DeviceInterfaceGUIDs (REG_MULTI_SZ) qui permet au PC de retrouver
-// la Switch via SetupAPI. Doit rester identique à DeckUsb.InterfaceGuid côté SysDeck.
+// la Switch via SetupAPI. Doit rester identique à DeckUsb.InterfaceGuid côté OXYN.
 typedef struct _usb_ms_ext_prop_guid_descr_t
 {
 	u32 dLength;

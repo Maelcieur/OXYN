@@ -1,5 +1,5 @@
 /*
- * SwitchDeck - protocole USB entre SysDeck (PC, hôte) et la Switch (périphérique).
+ * SwitchDeck - protocole USB entre OXYN (PC, hôte) et la Switch (périphérique).
  *
  * Transport : bulk EP1 OUT (PC -> Switch) et EP1 IN (Switch -> PC), WinUSB côté PC.
  * Échange question/réponse, à l'initiative du PC :
@@ -11,7 +11,7 @@
  * au-delà de ~4 s sans commande, la Switch se remet en attente (ou en mode nuit) sans quitter l'USB :
  * elle reste énumérée et c'est la première commande suivante du PC qui la réveille.
  *
- * Tout est en little-endian. Doit rester identique à DeckProtocol.cs côté SysDeck.
+ * Tout est en little-endian. Doit rester identique à DeckProtocol.cs côté OXYN.
  */
 
 #ifndef _DECK_PROTO_H_

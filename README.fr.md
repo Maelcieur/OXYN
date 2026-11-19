@@ -1,6 +1,6 @@
-<p align="center"><img src="docs/logo.png" width="128" alt="SysDeck"></p>
+<p align="center"><img src="docs/logo.png" width="128" alt="OXYN"></p>
 
-<h1 align="center">SysDeck</h1>
+<h1 align="center">OXYN</h1>
 
 <p align="center">
 Widgets de bureau pour Windows + Nintendo Switch transformée en écran tactile / stream deck USB.<br>
@@ -9,22 +9,22 @@ Widgets de bureau pour Windows + Nintendo Switch transformée en écran tactile 
 
 ---
 
-SysDeck (WPF, .NET 8) affiche des widgets rattachés au bureau (sous les fenêtres, comme les icônes) :
+OXYN (WPF, .NET 8) affiche des widgets rattachés au bureau (sous les fenêtres, comme les icônes) :
 surveillance du matériel, audio, lecture en cours, horloges, calendrier, météo, consommation électrique en euros,
 barre de raccourcis, quota Claude et correction de texte par IA. Tout est personnalisable depuis les Paramètres.
 
 Avec le **payload SwitchDeck**, une Nintendo Switch branchée en USB-C devient un second écran tactile
 1280×720 : le PC dessine les modules et les tuiles, la Switch les affiche et renvoie le tactile.
 Les tuiles, en **boutons de verre 3D** façon Stream Deck, pilotent aussi **OBS Studio**, **Twitch** et **Voicemod**,
-et des **plugins** : ceux de SysDeck et les plugins **Stream Deck d'Elgato** open source, à installer depuis un catalogue GitHub.
-Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions de SysDeck.
+et des **plugins** : ceux d'OXYN et les plugins **Stream Deck d'Elgato** open source, à installer depuis un catalogue GitHub.
+Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 
 ## Aperçu
 
 <table>
   <tr>
     <td width="30%" valign="top"><img src="docs/bureau.jpg" alt="Widgets sur le bureau"><br><sub>Widgets sur le bureau</sub></td>
-    <td valign="top"><img src="docs/switch-materiel.jpg" alt="SysDeck sur une Nintendo Switch"><br><sub>La Switch branchée en USB-C : matériel, horloge et sortie audio en direct</sub></td>
+    <td valign="top"><img src="docs/switch-materiel.jpg" alt="OXYN sur une Nintendo Switch"><br><sub>La Switch branchée en USB-C : matériel, horloge et sortie audio en direct</sub></td>
   </tr>
 </table>
 
@@ -86,7 +86,7 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions de SysDeck.
   Les émojis servent aussi d'icônes pour les tuiles de la Switch.
 - **Sur le bureau** : **clic droit** sur un module pour le personnaliser, changer sa taille ou celle des textes,
   modifier la disposition, verrouiller les positions ou le masquer ; **Ctrl+molette** pour l'agrandir ou le réduire.
-- **Profils et thèmes** : enregistrement, export/import (`.sysdeckprofile`), 9 thèmes prêts à l'emploi (dont « Edge noir » :
+- **Profils et thèmes** : enregistrement, export/import (`.oxynprofile`), 9 thèmes prêts à l'emploi (dont « Edge noir » :
   cartes noires mates, jauges fines, accent orange).
 - **Réglages des modules** : les options des horloges, de la météo, de la qualité de l'air, des températures, des barres de
   capteurs, de SimHub et du lecteur sont dans la personnalisation du module (onglet Style). Les nouveaux modules sont
@@ -98,6 +98,9 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions de SysDeck.
   dégradé, couleur par barre, halo, couleur d'alerte au-delà d'un seuil.
 - **Sélecteur de couleur** : le sélecteur de Windows garde maintenant ses couleurs personnalisées.
 - **Alertes** : température CPU/GPU, batterie de la souris, quota Claude.
+- **Mises à jour sans GitHub** (Paramètres → Général → Mises à jour) : OXYN surveille un dossier (sur le PC, une
+  clé USB ou un partage réseau) ; quand un `OxynSetup.exe` plus récent y est déposé, une bulle le signale au
+  démarrage et **Mettre à jour OXYN** l'installe par-dessus (réglages gardés) puis relance l'application.
 
 ## Compatibilité
 
@@ -105,9 +108,9 @@ La plupart des informations fonctionnent sur n'importe quel PC Windows 10/11 san
 mémoire, réseau, disques et carte graphique (NVIDIA, AMD ou Intel). Quelques exceptions :
 
 - **Température du processeur, CPU AMD Ryzen** : installer le SDK AMD Ryzen Master, puis cocher l'option
-  « Température du processeur » dans l'installateur de SysDeck.
+  « Température du processeur » dans l'installateur d'OXYN.
 - **Température du processeur, CPU Intel** : aucun pont n'est fourni ; la température risque de rester vide,
-  sauf peut-être en lançant SysDeck en administrateur avec l'Intégrité de la mémoire désactivée (non testé).
+  sauf peut-être en lançant OXYN en administrateur avec l'Intégrité de la mémoire désactivée (non testé).
 - **Batterie de la souris** : seulement les souris Logitech compatibles HID++.
 - **Ventilateurs** : ceux de la carte graphique sont lus sans réglage. Ceux de la carte mère (CPU, boîtier) demandent le
   pilote de bas niveau que l'Intégrité de la mémoire bloque ; ils n'apparaissent dans la liste des capteurs que si Windows
@@ -116,7 +119,7 @@ mémoire, réseau, disques et carte graphique (NVIDIA, AMD ou Intel). Quelques e
 ## Module Switch (SwitchDeck)
 
 Le dossier [`payload/`](payload) contient un payload bare-metal lancé depuis
-[hekate](https://github.com/CTCaer/hekate). Une fois lancé, la Switch attend SysDeck sur le port USB-C.
+[hekate](https://github.com/CTCaer/hekate). Une fois lancé, la Switch attend OXYN sur le port USB-C.
 
 - Pages de modules et de tuiles (applications, liens, raccourcis clavier, commandes, son/micro muet,
   OBS Studio, Twitch, Voicemod, plugins).
@@ -183,8 +186,8 @@ s'atténuent quand l'application n'est pas connectée.
 | Application | Connexion | Actions des tuiles |
 |---|---|---|
 | **OBS Studio** | Serveur WebSocket d'OBS 28+ (*Outils → Paramètres du serveur WebSocket*) : hôte, port, mot de passe | Changer de scène, stream, enregistrement et pause, caméra virtuelle, tampon de relecture et sauvegarde, couper une entrée audio, afficher/masquer une source, transition du mode Studio |
-| **Twitch** | « Se connecter à Twitch » : code à valider sur twitch.tv, sans mot de passe dans SysDeck | Clip (lien copié), marqueur, message dans le chat, pub, modes du chat (lent, émotes, followers, abonnés), mode bouclier, titre, catégorie |
-| **Voicemod** | Voicemod lancé sur le PC ; autoriser SysDeck dans Voicemod la première fois | Changeur de voix, charger une voix, voix au hasard, jouer un son du soundboard, arrêter les sons, micro, « M'entendre », ambiance |
+| **Twitch** | « Se connecter à Twitch » : code à valider sur twitch.tv, sans mot de passe dans OXYN | Clip (lien copié), marqueur, message dans le chat, pub, modes du chat (lent, émotes, followers, abonnés), mode bouclier, titre, catégorie |
+| **Voicemod** | Voicemod lancé sur le PC ; autoriser OXYN dans Voicemod la première fois | Changeur de voix, charger une voix, voix au hasard, jouer un son du soundboard, arrêter les sons, micro, « M'entendre », ambiance |
 
 - **Saisie sur la Switch** : une tuile Twitch *message*, *titre* ou *catégorie* peut demander son texte à
   l'appui. Un clavier AZERTY s'ouvre alors sur la Switch, avec les émotes Twitch du compte, les émojis et une
@@ -200,17 +203,38 @@ Jouer aux jeux du PC sur une TV branchée en HDMI, avec une interface de salon p
 | | |
 |---|---|
 | ![Mode console sur la TV](docs/console-zelda.jpg)<br><sub>L'interface TV : jaquettes, onglets par plateforme, temps de jeu et aide manette</sub> | ![Thème rouge](docs/console-rouge.jpg)<br><sub>Description du jeu et thème avec fond animé</sub> |
-| ![Thème or](docs/console-or.jpg)<br><sub>Chaque thème change les couleurs, le fond et les images du jeu</sub> | ![Réglages du mode console](docs/parametres-console.png)<br><sub>Réglages : 21 thèmes, style d'intro, bruitages, vibrations et jeux</sub> |
+| ![Thème or](docs/console-or.jpg)<br><sub>Chaque thème change les couleurs, le fond et les images du jeu</sub> | ![Réglages du mode console](docs/parametres-console.png)<br><sub>Réglages : 21 thèmes, intro, bruitages, vibrations et jeux</sub> |
+| ![Jaquettes 3D](docs/console-jaquettes-3d.jpg)<br><sub>Jaquettes 3D : jeux rangés tranche visible, le jeu choisi sort dans le boîtier de sa plateforme</sub> | ![Jaquettes 3D et thèmes](docs/console-jaquettes-3d-themes.jpg)<br><sub>Panneau des thèmes : aperçu en direct, Y active ou coupe les jaquettes 3D</sub> |
 
 - **Bascule** : les écrans du PC s'éteignent, seule la TV reste active, le son part sur la TV. Au retour, la
   disposition des écrans, les icônes du bureau, les widgets et les applications (réduites pendant le mode) reviennent
   comme avant. Après un plantage, tout est remis au démarrage suivant. Raccourci de secours : **Ctrl+Alt+Fin**.
 - **Interface TV** : jaquettes, fond animé, description, temps de jeu, batterie de la manette, 21 thèmes avec aperçu
-  en direct (bouton Menu ≡), intro animée élégante ou cyberpunk (ou vos propres images, sons et vidéos).
+  en direct (bouton Menu ≡). **Jaquettes 3D** (réglage, ou **Y** dans le panneau des thèmes) : les jeux sont rangés
+  tranche visible, du plus grand boîtier au plus petit, et le jeu choisi sort en 3D dans un boîtier qui dépend de sa
+  plateforme (formats et couleurs génériques, aucun logo).
+- **Intro « Orbite »** avec sa bande-son : les 4 touches du logo jaillissent du centre et tournent en spirale en 3D
+  pendant que la poussière lumineuse est aspirée, puis se verrouillent (onde de choc, éclat) et OXYN s'écrit. Ensuite
+  « Appuyez sur A » puis « Bienvenue » (les particules sont soufflées) ; **A** pendant l'animation va directement à
+  « Bienvenue », **B** passe l'intro.
+- **Temps de jeu réels** : Steam (`localconfig.vdf`) et émulateurs Switch (Eden / yuzu et dérivés, Ryujinx), sinon le
+  compteur d'OXYN.
 - **Jeux** : programme `.exe`, raccourci `.lnk` / `.url`, lien `steam://`, ou émulateur + ROM (préréglages Dolphin,
   PCSX2, DuckStation, PPSSPP, RPCS3, Cemu, Ryujinx, Eden / yuzu, Xemu, mGBA, RetroArch). Jaquettes et descriptions
   depuis Steam, ou SteamGridDB avec une clé gratuite. Le jeu s'ouvre au premier plan ; le menu revient dès qu'il se
   ferme. **Quitter** (X) ferme le jeu (fin de tâche immédiate pour un émulateur).
+- **Menu Guide** (appui court sur le bouton Xbox en jeu) : panneau à gauche avec batterie, temps de session et temps
+  total, Reprendre, Triches, compteur FPS, Menu console, Quitter et Retour au PC. Le jeu est **mis en pause** tant
+  qu'un menu est ouvert (réglage « Mettre le jeu en pause dans les menus »).
+- **Compteur FPS** (réglage ou menu Guide) : en haut à droite de la TV, vert / jaune / rouge, mesuré par PresentMon.
+- **Triches** (jeux d'émulateur Switch) :
+  - **Recherche de valeurs** dans la mémoire de l'émulateur : chercher une valeur connue (vies, argent…), affiner,
+    nommer, puis modifier (±1, ±10, valeur exacte) ou bloquer. Les valeurs sont retrouvées au lancement suivant
+    (`console-cheats.json`).
+  - **Codes de triche** au format Atmosphère : fichiers `.txt` ou recherche en ligne (switch-cheats-db, et
+    [CheatSlips](https://www.cheatslips.com) avec un jeton gratuit), installés en add-ons de l'émulateur,
+    désactivés par défaut, actifs au lancement suivant du jeu.
+- **Souris** : le curseur disparaît en jeu après 2 s d'immobilité et revient en sortant du mode console.
 - **Manette Xbox** :
 
 | Action | Boutons |
@@ -219,11 +243,12 @@ Jouer aux jeux du PC sur une TV branchée en HDMI, avec une interface de salon p
 | Volume (menu et jeux) | **View ⧉ + RT** / **View ⧉ + LT** |
 | Naviguer, jouer, retour | Croix ou stick, **A**, **B** |
 | Plateformes / thèmes / infos / quitter le jeu | **LB RB** / **Menu ≡** / **Y** / **X** |
+| Menu Guide pendant un jeu (pause, triches, FPS…) | Appui court sur le bouton Xbox |
 | Revenir au menu pendant un jeu | Appui long sur le bouton Xbox |
 
 ### TV par le réseau (facultatif)
 
-Avec une TV **Google TV / Android TV** sur le même réseau, SysDeck peut l'**allumer** en entrant en mode console, la
+Avec une TV **Google TV / Android TV** sur le même réseau, OXYN peut l'**allumer** en entrant en mode console, la
 passer sur l'**entrée HDMI du PC**, régler son **vrai volume**, et la **mettre en veille** au retour (deux options
 séparées). Section **TV et manette** : *Rechercher*, *Appairer* (un code s'affiche sur la TV), puis choisir l'entrée
 HDMI du PC et *Tester*.
@@ -241,14 +266,14 @@ retient celle qui affiche l'entrée du PC.
 
 **Dépannage** : la TV ne s'allume pas (réveil réseau non activé, ou TV sur un Wi-Fi « invité » isolé du PC) ; la
 TV clignote quelques secondes après la bascule (un écran DisplayPort du PC se met en veille et se déconnecte :
-désactiver sa veille profonde) ; un émulateur se ferme tout de suite (voir `%AppData%\SysDeck\logs\sysdeck.log`).
+désactiver sa veille profonde) ; un émulateur se ferme tout de suite (voir `%AppData%\Oxyn\logs\oxyn.log`).
 
 ## Plugins et packs d'icônes
 
-- **Plugins** : un plugin est un petit programme (exe, Node.js, Python ou PowerShell) relié à SysDeck par un
+- **Plugins** : un plugin est un petit programme (exe, Node.js, Python ou PowerShell) relié à OXYN par un
   WebSocket local. Ses actions apparaissent dans la bibliothèque de la page Switch ; il peut changer le titre,
   l'image et l'état de ses tuiles en direct.
-  - **Catalogue** (Paramètres → Plugins) : recherche sur GitHub (sujets `sysdeck-plugin`, `streamdeck-plugin`),
+  - **Catalogue** (Paramètres → Plugins) : recherche sur GitHub (sujets `oxyn-plugin`, `streamdeck-plugin`),
     installation en un clic de la dernière version et mises à jour. Les plugins « Vérifiés » sont listés dans
     [plugins/catalogue.json](plugins/catalogue.json).
   - **Plugins Stream Deck d'Elgato** : les plugins open source (`.streamDeckPlugin` non chiffré, dossier
@@ -268,24 +293,24 @@ Prérequis : SDK .NET 8 et, pour l'installateur, [Inno Setup 6](https://jrsoftwa
 
 ```powershell
 # Développement et tests
-dotnet build SysDeck.sln -c Debug
-dotnet test SysDeck.sln
+dotnet build Oxyn.sln -c Debug
+dotnet test Oxyn.sln
 
-# Version publiée puis installateur (SysDeck\installer\output\SysDeckSetup.exe)
-dotnet publish SysDeck\SysDeck.csproj -c Release -o SysDeck\bin\publish
-& "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" SysDeck\installer\SysDeck.iss
+# Version publiée puis installateur (Oxyn\installer\output\OxynSetup.exe)
+dotnet publish Oxyn\Oxyn.csproj -c Release -o Oxyn\bin\publish
+& "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" Oxyn\installer\Oxyn.iss
 ```
 
-La version est définie dans `SysDeck.csproj` (`<Version>`) et doit être reportée dans
-`installer\SysDeck.iss` (`MyAppVersion`).
+La version est définie dans `Oxyn.csproj` (`<Version>`) et doit être reportée dans
+`installer\Oxyn.iss` (`MyAppVersion`).
 
 La clé de la Control API de Voicemod n'est pas dans le dépôt : elle est intégrée à la compilation depuis
-`SysDeck\Secrets\voicemod.key`, un fichier non versionné. Sans ce fichier, tout compile, mais l'intégration
+`Oxyn\Secrets\voicemod.key`, un fichier non versionné. Sans ce fichier, tout compile, mais l'intégration
 Voicemod indique « clé absente ». Les clés sont délivrées par Voicemod. L'identifiant de l'application
 Twitch est public et figure dans le code.
 
 Arguments de lancement : `--settings` ouvre les Paramètres, `--edit-layout` démarre en mode édition
-de la disposition. Lancer SysDeck alors qu'il tourne déjà ouvre ses Paramètres.
+de la disposition. Lancer OXYN alors qu'il tourne déjà ouvre ses Paramètres.
 
 ### Payload Switch
 
@@ -300,27 +325,28 @@ $env:MSYSTEM = 'MSYS'
 `build.sh` télécharge au premier lancement la BDK de hekate (version fixée, v6.5.4) dans `third_party/hekate`.
 
 Le protocole USB est défini deux fois et doit rester identique :
-`payload/src/deck_proto.h` (Switch) et `SysDeck/Deck/DeckProtocol.cs` (PC).
+`payload/src/deck_proto.h` (Switch) et `Oxyn/Deck/DeckProtocol.cs` (PC).
 
 ## Organisation du dépôt
 
 ```
-├── SysDeck/                 Application WPF
+├── Oxyn/                 Application WPF
 │   ├── App.xaml(.cs)        Démarrage : instance unique, gestion globale des erreurs, icône de notification
 │   ├── WidgetManager*.cs    Registre des modules, création des fenêtres, rafraîchissements
 │   ├── Windows/             Fenêtres : cadre d'un module, Paramètres, ajout de raccourci/tuile
 │   ├── Widgets/             Contenu de chaque module (XAML + affichage, sans logique métier)
 │   ├── Controls/            Contrôles réutilisables : jauges, graphe, éditeur de thème, disposition libre
 │   ├── Deck/                Module Switch : protocole et lien USB, rendu de l'écran, tuiles, clavier, mode nuit
+│   ├── Console/             Interface TV du mode console : intros, jaquettes 3D, menu Guide, FPS, triches
 │   ├── Services/            Logique métier et accès système (capteurs, audio, médias, consommation, profils,
 │   │                        OBS, Twitch, Voicemod, packs d'icônes, SVG)
-│   ├── Plugins/             Plugins : manifest (SysDeck et Stream Deck), hôte WebSocket, Node.js, catalogue GitHub
+│   ├── Plugins/             Plugins : manifest (OXYN et Stream Deck), hôte WebSocket, Node.js, catalogue GitHub
 │   ├── Infrastructure/      Transversal : chemins, journal, fichiers JSON sûrs, instance unique
 │   ├── Interop/             Appels Win32/COM (bureau, raccourci global, clavier simulé, sortie audio)
 │   ├── Converters/, Models/, Themes/, Assets/
 │   ├── Tools/               Pont de température CPU (tâche planifiée élevée), PresentMon (FPS)
 │   └── installer/           Script Inno Setup
-├── SysDeck.Tests/           Tests xUnit
+├── Oxyn.Tests/           Tests xUnit
 ├── payload/                 Payload Switch en C (GPL-2.0)
 ├── plugins/                 Plugin d'exemple et liste des plugins vérifiés du catalogue
 └── docs/                    Images de la documentation, guide des plugins
@@ -336,7 +362,9 @@ Règles suivies :
 
 ## Données
 
-Tout est dans `%AppData%\SysDeck` :
+Tout est dans `%AppData%\Oxyn`. OXYN s'appelait auparavant **SysDeck** : au premier lancement, l'ancien dossier
+`%AppData%\SysDeck` est déplacé tel quel vers `%AppData%\Oxyn` (réglages, jeux, thèmes, triches), et l'installateur
+remplace l'ancienne installation.
 
 | Fichier / dossier | Contenu |
 |---|---|
@@ -344,22 +372,28 @@ Tout est dans `%AppData%\SysDeck` :
 | `shortcuts.json` | Raccourcis de la barre |
 | `custom-colors.json` | Couleurs personnalisées du sélecteur de couleur |
 | `power-usage.json` | Historique de consommation |
+| `console-games.json`, `console-state.json` | Jeux du mode console ; état à restaurer après un plantage |
+| `console-cheats.json`, `cheat-codes.json` | Valeurs de triche enregistrées ; codes de triche par jeu |
 | `Icons/`, `Backgrounds/`, `Fonts/` | Copies des icônes, images de fond et polices importées |
 | `IconPacks/` | Packs d'icônes importés (SVG convertis en PNG) |
 | `Plugins/`, `logs/plugins/` | Plugins installés et leur journal |
 | `Runtime/`, `WebView2/` | Node.js téléchargé pour les plugins, profil du moteur des pages de réglages |
-| `logs/sysdeck.log` | Journal (1 Mo max, l'ancien est conservé en `sysdeck.old.log`) |
+| `logs/oxyn.log` | Journal (1 Mo max, l'ancien est conservé en `oxyn.old.log`) |
 
-La variable d'environnement `SYSDECK_DATA_DIR` permet d'utiliser un autre dossier (tests, profil
+La variable d'environnement `OXYN_DATA_DIR` permet d'utiliser un autre dossier (tests, profil
 portable) ; une instance par dossier de données.
 
 ## Dépannage
 
-- **Un module reste vide** : consulter `%AppData%\SysDeck\logs\sysdeck.log`.
+- **Un module reste vide** : consulter `%AppData%\Oxyn\logs\oxyn.log`.
 - **Température CPU absente** : l'Intégrité de la mémoire bloque le pilote de LibreHardwareMonitor ;
   activer l'option « Température du processeur » de l'installateur (SDK AMD Ryzen Master requis).
-- **La température CPU ne se met plus à jour (AMD)** : lire `C:\ProgramData\SysDeck\cputemp-bridge.log`, qui indique
-  l'erreur de l'outil AMD (par exemple « Platform init failed »). Si le pilote AMD lui-même est bloqué, redémarrer le PC.
+- **La température CPU ne se met plus à jour (AMD)** : lire `C:\ProgramData\Oxyn\cputemp-bridge.log`, qui indique
+  l'erreur de l'outil AMD (par exemple « Platform init failed »). Après plusieurs échecs, le pont relance lui-même le
+  pilote AMD (une fois toutes les 10 minutes au plus) ; si ça ne suffit pas, redémarrer le PC.
+- **Le bouton Xbox n'ouvre pas le menu Guide** : désactiver dans Windows « Ouvrir la Game Bar avec le bouton Xbox » ;
+  Steam Input peut aussi prendre le bouton.
+- **Codes CheatSlips : « Quota exceeded for today »** : le compte gratuit a une limite par jour, réessayer le lendemain.
 - **Ctrl+Espace sans effet** : le raccourci est pris par une autre application (voir le journal).
 - **Switch non détectée** : vérifier que le payload affiche « En attente du PC » et utiliser un câble USB-C de données.
 - **Joy-Con sans effet** : copier le dernier `switchdeck.bin` (protocole v6) sur la carte SD ; l'onglet Manettes prévient

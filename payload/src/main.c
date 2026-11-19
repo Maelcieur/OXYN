@@ -1,6 +1,6 @@
 /*
  * SwitchDeck - payload bare-metal lancé depuis hekate.
- * Transforme la Switch en écran de dashboard et stream deck pour le PC (SysDeck) :
+ * Transforme la Switch en écran de dashboard et stream deck pour le PC (OXYN) :
  * le PC dessine tout et l'envoie par USB, la Switch affiche et renvoie le tactile.
  *
  * Basé sur la BDK de hekate (CTCaer), GPLv2.

@@ -2,7 +2,7 @@
 bin/
 obj/
 TestResults/
-SysDeck/installer/output/
+Oxyn/installer/output/
 payload/build/
 payload/output/
 
@@ -22,4 +22,4 @@ NOTES.md
 CODE.md
 
 # Clés privées intégrées à la compilation / private keys embedded at build time
-SysDeck/Secrets/
+Oxyn/Secrets/

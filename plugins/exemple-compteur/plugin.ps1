@@ -1,6 +1,6 @@
-﻿# Plugin d'exemple SysDeck : compteur.
-# SysDeck le lance avec les arguments du Stream Deck : -port <p> -pluginUUID <jeton> -registerEvent registerPlugin -info <json>
-# (aussi disponibles dans les variables d'environnement SYSDECK_PLUGIN_PORT et SYSDECK_PLUGIN_UUID).
+﻿# Plugin d'exemple OXYN : compteur.
+# OXYN le lance avec les arguments du Stream Deck : -port <p> -pluginUUID <jeton> -registerEvent registerPlugin -info <json>
+# (aussi disponibles dans les variables d'environnement OXYN_PLUGIN_PORT et OXYN_PLUGIN_UUID).
 param(
     [string]$port,
     [string]$pluginUUID,
@@ -9,8 +9,8 @@ param(
     [Parameter(ValueFromRemainingArguments = $true)]$rest
 )
 $ErrorActionPreference = 'Stop'
-if (-not $port) { $port = $env:SYSDECK_PLUGIN_PORT }
-if (-not $pluginUUID) { $pluginUUID = $env:SYSDECK_PLUGIN_UUID }
+if (-not $port) { $port = $env:OXYN_PLUGIN_PORT }
+if (-not $pluginUUID) { $pluginUUID = $env:OXYN_PLUGIN_UUID }
 if (-not $registerEvent) { $registerEvent = 'registerPlugin' }
 
 $none = [Threading.CancellationToken]::None
@@ -76,7 +76,7 @@ while ($ws.State -eq [System.Net.WebSockets.WebSocketState]::Open) {
             $tile = $tiles[$context]
             $tile.value += $tile.step
             Show $context
-            # Valeur enregistree dans la tuile : elle survit au redemarrage de SysDeck.
+            # Valeur enregistree dans la tuile : elle survit au redemarrage d'OXYN.
             Send @{ event = 'setSettings'; context = $context; payload = @{ label = $tile.label; step = $tile.step; value = $tile.value } }
         }
     }

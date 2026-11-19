@@ -142,7 +142,7 @@ void screen_draw_waiting(bool usb_ready)
 
 	gfx_con_setcol(COL_DIM, 0, 0);
 	gfx_con_setpos(32, 180);
-	gfx_printf("Branche le cable USB-C et lance SysDeck sur le PC.");
+	gfx_printf("Branche le cable USB-C et lance OXYN sur le PC.");
 
 	if (!usb_ready)
 	{
@@ -166,7 +166,7 @@ void screen_draw_connected(bool ram_fast)
 
 	gfx_con_setcol(COL_DIM, 0, 0);
 	gfx_con_setpos(32, 180);
-	gfx_printf("En attente de l'affichage de SysDeck...");
+	gfx_printf("En attente de l'affichage de OXYN...");
 
 	gfx_con_setpos(32, 220);
 	gfx_printf(ram_fast ? "Memoire : 1600 MHz" : "Memoire : 204 MHz (libsys_minerva.bso introuvable)");

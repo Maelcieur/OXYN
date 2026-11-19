@@ -1,5 +1,5 @@
 /*
- * SwitchDeck - session USB avec SysDeck.
+ * SwitchDeck - session USB avec OXYN.
  *
  * On réutilise le gadget UMS de la BDK pour son transport bulk EP1 IN/OUT ;
  * ses descripteurs sont remplacés dans usb_descriptors.c (classe vendeur, WinUSB).
@@ -14,7 +14,7 @@
 #include "night.h"
 #include "screen.h"
 
-// Silence du PC pendant une session avant de repasser à l'attente (SysDeck envoie un PING toutes les 100 ms
+// Silence du PC pendant une session avant de repasser à l'attente (OXYN envoie un PING toutes les 100 ms
 // au moins). L'USB reste initialisé et énuméré : c'est le PC qui réveille la Switch, pas l'inverse.
 #define CMD_TIMEOUT_MS 4000
 

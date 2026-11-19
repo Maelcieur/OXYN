@@ -1,7 +1,7 @@
-# Écrire un plugin SysDeck
+# Écrire un plugin OXYN
 
-Un plugin ajoute de nouvelles **actions de tuiles** à SysDeck. C'est un programme séparé, écrit dans n'importe quel
-langage, que SysDeck lance et avec lequel il échange des messages JSON par un **WebSocket local**. Le principe et les
+Un plugin ajoute de nouvelles **actions de tuiles** à OXYN. C'est un programme séparé, écrit dans n'importe quel
+langage, qu'OXYN lance et avec lequel il échange des messages JSON par un **WebSocket local**. Le principe et les
 noms des messages sont repris du Stream Deck d'Elgato (`keyDown`, `willAppear`, `setTitle`, `context`…).
 
 Un exemple complet en PowerShell se trouve dans [`plugins/exemple-compteur`](../plugins/exemple-compteur).
@@ -16,7 +16,7 @@ fr.moi.monplugin/
 └── action.png        (facultatif : icône d'une action)
 ```
 
-Une fois installé, le plugin vit dans `%AppData%\SysDeck\Plugins\<Id>\`. Le nom du dossier doit être son `Id`.
+Une fois installé, le plugin vit dans `%AppData%\Oxyn\Plugins\<Id>\`. Le nom du dossier doit être son `Id`.
 
 ## manifest.json
 
@@ -58,20 +58,20 @@ Une fois installé, le plugin vit dans `%AppData%\SysDeck\Plugins\<Id>\`. Le nom
   - `.js` est lancé avec `node` (il faut que Node.js soit installé) ;
   - `.py` est lancé avec `python` (il faut que Python soit installé) ;
   - `.ps1` est lancé avec `powershell -NoProfile -ExecutionPolicy Bypass -File`.
-- `Settings` : SysDeck génère le formulaire de la tuile à partir de cette liste. Les valeurs sont enregistrées dans la
+- `Settings` : OXYN génère le formulaire de la tuile à partir de cette liste. Les valeurs sont enregistrées dans la
   tuile, puis envoyées au plugin dans `payload.settings`. Les types possibles sont `text`, `textarea`, `number`,
   `checkbox`, `select`, `color` et `file`.
 
 ## Lancement
 
-SysDeck lance le programme avec les mêmes arguments que le Stream Deck :
+OXYN lance le programme avec les mêmes arguments que le Stream Deck :
 
 ```
 plugin.exe -port 51234 -pluginUUID 9F2C… -registerEvent registerPlugin -info {"application":{…},"plugin":{…}}
 ```
 
-Le port et le jeton sont aussi fournis dans les variables d'environnement `SYSDECK_PLUGIN_PORT` et
-`SYSDECK_PLUGIN_UUID`, ce qui est plus simple quand le langage découpe mal les arguments JSON.
+Le port et le jeton sont aussi fournis dans les variables d'environnement `OXYN_PLUGIN_PORT` et
+`OXYN_PLUGIN_UUID`, ce qui est plus simple quand le langage découpe mal les arguments JSON.
 
 Le plugin ouvre alors `ws://127.0.0.1:<port>` et envoie **aussitôt** ce message :
 
@@ -82,11 +82,11 @@ Le plugin ouvre alors `ws://127.0.0.1:<port>` et envoie **aussitôt** ce message
 Sans ce message, ou avec un mauvais jeton, la connexion est refusée au bout de 10 secondes. Une connexion qui envoie
 un en-tête `Origin` (venant d'une page web) est refusée elle aussi.
 
-Le programme est arrêté quand SysDeck se ferme. S'il plante, SysDeck le relance avec un délai croissant, et
+Le programme est arrêté quand OXYN se ferme. S'il plante, OXYN le relance avec un délai croissant, et
 l'abandonne après 3 plantages en une minute. Tout ce qu'il écrit sur la sortie standard ou la sortie d'erreur va
 dans son journal (Paramètres › Plugins › Journal).
 
-## Messages envoyés par SysDeck
+## Messages envoyés par OXYN
 
 Tous les messages qui concernent une tuile ont cette forme :
 
@@ -95,7 +95,7 @@ Tous les messages qui concernent une tuile ont cette forme :
   "event": "keyDown",
   "action": "fr.moi.monplugin.action",
   "context": "3f1c…",
-  "device": "sysdeck",
+  "device": "oxyn",
   "payload": { "settings": { "pas": 1 } }
 }
 ```
@@ -133,11 +133,11 @@ Le titre et l'image envoyés par le plugin ne sont pas enregistrés : à chaque 
 
 ## Empaqueter et installer
 
-Un fichier `.sysdeckplugin` est un simple **zip** du dossier du plugin :
+Un fichier `.oxynplugin` est un simple **zip** du dossier du plugin :
 
 ```powershell
 Compress-Archive -Path .\fr.moi.monplugin\* -DestinationPath .\monplugin.zip
-Rename-Item .\monplugin.zip monplugin.sysdeckplugin
+Rename-Item .\monplugin.zip monplugin.oxynplugin
 ```
 
 Pour l'installer : Paramètres › Plugins › **Installer un plugin…**. Une version déjà installée est remplacée.
@@ -145,25 +145,25 @@ Ensuite, ajoute une tuile depuis Switch › Ajouter une tuile › **Plugin**.
 
 ## Publier un plugin dans le catalogue
 
-Paramètres › Plugins › **Catalogue** cherche sur GitHub les dépôts marqués avec le sujet (« topic ») `sysdeck-plugin`
-(plugins SysDeck) ou `streamdeck-plugin` / `stream-deck-plugin` (plugins Stream Deck).
+Paramètres › Plugins › **Catalogue** cherche sur GitHub les dépôts marqués avec le sujet (« topic ») `oxyn-plugin`
+(plugins OXYN) ou `streamdeck-plugin` / `stream-deck-plugin` (plugins Stream Deck).
 
-1. Ajoute le sujet `sysdeck-plugin` à ton dépôt GitHub (« About » › « Topics »).
-2. Publie une **release** avec, en pièce jointe, ton fichier `.sysdeckplugin`.
-3. SysDeck installe le fichier de la dernière release et propose les mises à jour quand une nouvelle release sort.
+1. Ajoute le sujet `oxyn-plugin` à ton dépôt GitHub (« About » › « Topics »).
+2. Publie une **release** avec, en pièce jointe, ton fichier `.oxynplugin`.
+3. OXYN installe le fichier de la dernière release et propose les mises à jour quand une nouvelle release sort.
 
-La liste « Vérifiés » est le fichier [`plugins/catalogue.json`](../plugins/catalogue.json) du dépôt SysDeck :
-`[{ "repo": "auteur/depot", "name": "…", "description": "…", "kind": "sysdeck" | "streamdeck" }]`.
+La liste « Vérifiés » est le fichier [`plugins/catalogue.json`](../plugins/catalogue.json) du dépôt OXYN :
+`[{ "repo": "auteur/depot", "name": "…", "description": "…", "kind": "oxyn" | "streamdeck" }]`.
 
 ## Plugins du Stream Deck d'Elgato
 
-SysDeck fait aussi tourner les plugins Stream Deck **non chiffrés** (publiés sur GitHub en `.streamDeckPlugin`,
+OXYN fait aussi tourner les plugins Stream Deck **non chiffrés** (publiés sur GitHub en `.streamDeckPlugin`,
 ou dossier `.sdPlugin`). Ceux du Marketplace d'Elgato sont chiffrés et ne fonctionnent qu'avec le logiciel d'Elgato.
 
 - Manifest Elgato lu tel quel : `UUID`, `CodePathWin`/`CodePath`, `States` (images des états 0 et 1),
   `PropertyInspectorPath`, `Nodejs.Version`. Les images sans extension (`@2x.png`, `.png`, `.svg`) sont retrouvées.
 - Plugins en JavaScript : Node.js du PC s'il est assez récent, sinon téléchargé une fois sur nodejs.org
-  (empreinte SHA-256 vérifiée) dans `%AppData%\SysDeck\Runtime`.
+  (empreinte SHA-256 vérifiée) dans `%AppData%\Oxyn\Runtime`.
 - La grille de la Switch est annoncée comme un Stream Deck (`deviceDidConnect`, `coordinates`, `state`).
 - La page de réglages du plugin (Property Inspector) s'affiche dans l'inspecteur de la tuile, page Switch.
 - Non pris en charge : molettes et écran du Stream Deck +, multi-actions, profils, plugins « page web » (ancienne génération).

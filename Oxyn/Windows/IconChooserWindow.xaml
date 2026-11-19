@@ -1,0 +1,118 @@
+﻿<Window x:Class="Oxyn.IconChooserWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="OXYN — Icône"
+        Width="560" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
+        FontFamily="Segoe UI" Foreground="#E7E8EB" Background="#1A1B1F">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Themes/SettingsStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <StackPanel Margin="20">
+        <TextBlock x:Name="TitleText" Text="Icône" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" TextTrimming="CharacterEllipsis"/>
+        <TextBlock Text="Choisis un symbole, un logo de marque, un émoji ou une image, puis ses couleurs. L'aperçu montre la tuile telle qu'elle apparaîtra sur la Switch."
+                   FontSize="11.5" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+        <!-- Aperçu de la tuile et sources d'icône -->
+        <DockPanel Margin="0,0,0,14">
+            <Border x:Name="PreviewTile" DockPanel.Dock="Left" Width="84" Height="84" CornerRadius="8" BorderThickness="1"
+                    BorderBrush="{StaticResource InputBorder}" Background="#1E2130" Margin="0,0,16,0">
+                <ContentControl x:Name="PreviewIcon" Width="42" Height="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="PreviewName" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8" TextTrimming="CharacterEllipsis"/>
+                <WrapPanel>
+                    <Button Content="Image…" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Click="Image_Click"/>
+                    <Button Content="Émoji…" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Click="Emoji_Click"/>
+                    <Button Content="Icône d'origine" Margin="0,0,8,8" Click="Reset_Click"/>
+                    <Button Content="Pack d'icônes…" Margin="0,0,8,8" Click="ImportPack_Click"
+                            ToolTip="Importer un pack d'icônes (.streamDeckIconPack du Stream Deck, zip ou dossier d'images)"/>
+                </WrapPanel>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Symboles : recherche + catégories -->
+        <DockPanel Margin="0,0,0,8">
+            <TextBlock Text="Symboles" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <TextBox x:Name="SearchBox" TextChanged="Search_Changed" ToolTip="Rechercher un symbole ou une marque (ex. : volume, dossier, discord)"/>
+        </DockPanel>
+        <DockPanel Margin="0,0,0,8">
+            <TextBlock Text="Catégorie" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <ComboBox x:Name="CategoriesBox" SelectionChanged="Category_Changed" ToolTip="Choisir une catégorie d'icônes"/>
+        </DockPanel>
+        <Expander Style="{StaticResource SectionExpander}" IsExpanded="False" Margin="0,0,0,4">
+            <Expander.Header>
+                <TextBlock x:Name="SymbolsHeader" Text="Afficher les icônes"/>
+            </Expander.Header>
+            <StackPanel>
+                <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}" BorderThickness="1" CornerRadius="8" Padding="8,8,2,2">
+                    <ScrollViewer Height="230" VerticalScrollBarVisibility="Auto">
+                        <WrapPanel x:Name="SymbolsPanel"/>
+                    </ScrollViewer>
+                </Border>
+                <TextBlock x:Name="NoSymbolText" Text="Aucune icône ne correspond." FontSize="11.5" Foreground="{StaticResource Muted}"
+                           Visibility="Collapsed" Margin="0,6,0,0"/>
+            </StackPanel>
+        </Expander>
+
+        <!-- Couleurs -->
+        <Expander Style="{StaticResource SectionExpander}" IsExpanded="False" Margin="0,8,0,0">
+            <Expander.Header>
+                <TextBlock x:Name="IconColorLabel" Text="Couleur du symbole"/>
+            </Expander.Header>
+            <WrapPanel x:Name="IconColorsPanel"/>
+        </Expander>
+        <Expander Style="{StaticResource SectionExpander}" IsExpanded="False" Margin="0,4,0,0">
+            <Expander.Header>
+                <TextBlock Text="Fond de la tuile"/>
+            </Expander.Header>
+            <WrapPanel x:Name="TileColorsPanel"/>
+        </Expander>
+
+        <!-- Tuile de la Switch : taille de l'icône et nom (réglages propres à cette tuile) -->
+        <StackPanel x:Name="TileOptionsPanel" Visibility="Collapsed">
+            <TextBlock Text="Taille de l'icône sur la Switch" Style="{StaticResource FieldLabel}" Margin="0,12,0,6"/>
+            <DockPanel>
+                <CheckBox x:Name="DefaultScaleCheck" DockPanel.Dock="Left" Content="Réglage général" VerticalAlignment="Center" Margin="0,0,14,0"
+                          Click="TileOption_Changed" ToolTip="Taille choisie dans Paramètres › Switch pour toutes les tuiles"/>
+                <TextBlock x:Name="ScaleValueText" DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Width="44" TextAlignment="Right"/>
+                <Slider x:Name="ScaleSlider" Minimum="0.25" Maximum="1" SmallChange="0.05" LargeChange="0.1" IsSnapToTickEnabled="True"
+                        TickFrequency="0.05" VerticalAlignment="Center" ValueChanged="ScaleSlider_Changed"/>
+            </DockPanel>
+            <CheckBox x:Name="HideNameCheck" Style="{StaticResource ToggleSwitch}" Content="Masquer le nom sous la tuile" Margin="0,10,0,0"
+                      Click="TileOption_Changed"/>
+
+            <!-- Tuile active : couleur, deuxième icône, bouton qui reste enfoncé -->
+            <Expander Style="{StaticResource SectionExpander}" IsExpanded="False" Margin="0,12,0,0">
+                <Expander.Header>
+                    <TextBlock Text="Quand la tuile est active"/>
+                </Expander.Header>
+                <StackPanel>
+                    <TextBlock Text="Micro ou son coupé, stream ou enregistrement OBS en cours, scène active, mode Twitch, voix Voicemod, plugin en état actif…"
+                               FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <WrapPanel x:Name="ActiveColorsPanel"/>
+                </StackPanel>
+            </Expander>
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                <Border Width="40" Height="40" CornerRadius="6" Background="#1E2130" BorderBrush="{StaticResource InputBorder}" BorderThickness="1" Margin="0,0,10,0">
+                    <ContentControl x:Name="ActiveIconHost" Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <Button Content="Icône active…" VerticalAlignment="Center" Click="ActiveIcon_Click"
+                        ToolTip="Deuxième icône, montrée quand la tuile est active (ex. : micro barré)"/>
+                <Button x:Name="ActiveIconClearButton" Content="Même icône" VerticalAlignment="Center" Margin="8,0,0,0" Click="ActiveIconClear_Click"/>
+            </StackPanel>
+            <CheckBox x:Name="ActivePressedCheck" Style="{StaticResource ToggleSwitch}" Content="Rester enfoncée quand elle est active (verre 3D)"
+                      Margin="0,10,0,0" Click="TileOption_Changed"/>
+            <CheckBox x:Name="PreviewActiveCheck" Content="Aperçu de la tuile active" Margin="0,8,0,0" Click="TileOption_Changed"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button Content="Annuler" Margin="0,0,8,0" Click="Cancel_Click"/>
+            <Button Content="Valider" Style="{StaticResource PrimaryButton}" Click="Ok_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

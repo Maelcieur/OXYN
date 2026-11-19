@@ -1,5 +1,5 @@
 /*
- * SwitchDeck - session USB avec SysDeck (voir deck_proto.h).
+ * SwitchDeck - session USB avec OXYN (voir deck_proto.h).
  */
 
 #ifndef _DECK_LINK_H_
