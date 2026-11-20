@@ -82,14 +82,22 @@ public sealed partial class WidgetManager
         ConsoleModeChanged?.Invoke();
     }
 
-    /// <summary>Si « Désactiver la TV hors mode console » est coché, la TV est désactivée au démarrage (sans effet si elle n'est pas branchée).</summary>
+    /// <summary>
+    /// Au démarrage : si la TV est le seul écran allumé (hors mode console), les écrans du PC sont rallumés ; puis, si
+    /// « Désactiver la TV hors mode console » est coché, la TV est désactivée (sans effet si elle n'est pas branchée).
+    /// </summary>
     public void EnsureTvDisabledIfConfigured()
     {
         var settings = _config.Console;
-        if (!settings.DisableTvWhenIdle || string.IsNullOrWhiteSpace(settings.TvTargetId)) return;
+        if (string.IsNullOrWhiteSpace(settings.TvTargetId)) return;
         var tvId = settings.TvTargetId;
-        _ = Task.Run(() =>
+        var disable = settings.DisableTvWhenIdle;
+        _ = Task.Run(async () =>
         {
+            var recovered = _consoleService.RecoverFromTvOnly(tvId);
+            if (!recovered.Success) Log.Warn($"Mode console : écrans du PC non rallumés au démarrage ({recovered.Message}).");
+            else if (recovered.Message == "OK") await Task.Delay(2500);   // écrans rallumés : on les laisse revenir avant de couper la TV
+            if (!disable) return;
             var result = _consoleService.EnsureTvDisabled(tvId);
             if (!result.Success) Log.Warn($"Mode console : la TV n'a pas pu être désactivée au démarrage ({result.Message}).");
         });

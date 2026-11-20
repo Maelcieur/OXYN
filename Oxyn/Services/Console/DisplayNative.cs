@@ -8,6 +8,7 @@ public static class DisplayNative
     public const uint QdcAllPaths = 0x1;
     public const uint QdcOnlyActivePaths = 0x2;
 
+    public const uint SdcTopologyExtend = 0x04;
     public const uint SdcTopologySupplied = 0x10;
     public const uint SdcUseSuppliedDisplayConfig = 0x20;
     public const uint SdcValidate = 0x40;

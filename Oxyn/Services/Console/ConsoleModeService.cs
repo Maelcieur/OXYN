@@ -299,6 +299,29 @@ public sealed class ConsoleModeService
     // ---------- Divers ----------
 
     /// <summary>Désactive la TV hors mode console (Windows ne la voit plus). Sans effet si le mode console est actif.</summary>
+    /// <summary>
+    /// Démarrage hors mode console avec la TV comme SEUL écran allumé (Windows a repris une disposition « TV seule »,
+    /// ou le PC s'est éteint pendant le mode console) : les écrans du PC sont rallumés.
+    /// </summary>
+    public DisplayResult RecoverFromTvOnly(string tvId)
+    {
+        try
+        {
+            if (IsActive) return DisplayResult.Ok("mode console actif");
+            var targets = _display.ListTargets();
+            var tv = FindTv(tvId);
+            if (tv is null || !tv.IsActive) return DisplayResult.Ok("TV éteinte ou absente");
+            if (targets.Count(t => t.IsActive) > 1 || targets.Count < 2) return DisplayResult.Ok("rien à réparer");
+            Log.Warn("Écrans : seule la TV est allumée hors mode console, les écrans du PC sont rallumés.");
+            return _display.ExtendAll();
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("Écrans : réparation de la disposition impossible", ex);
+            return DisplayResult.Fail(0, ex.Message);
+        }
+    }
+
     public DisplayResult EnsureTvDisabled(string tvId)
     {
         try

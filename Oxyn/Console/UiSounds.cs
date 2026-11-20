@@ -21,18 +21,24 @@ public sealed class UiSounds : IDisposable
     public bool Cyber { get; set; }
     private MixingSampleProvider? _mixer;
     private IWavePlayer? _output;
-    private long _lastMove;
+    private readonly string? _deviceId;
+    private readonly long _createdAt = Environment.TickCount64;
+    private long _nextTry, _lastMove;
+    private bool _disposed;
 
+    /// <summary>
+    /// La sortie n'est PAS ouverte ici : à l'entrée en mode console, la sortie HDMI de la TV n'existe pas encore (elle
+    /// apparaît après la bascule des écrans). Elle est ouverte au premier son (<see cref="EnsureOutput"/>), réessayée
+    /// si besoin, et rouverte si elle se perd (TV en veille, resynchronisation HDMI).
+    /// </summary>
     public UiSounds(string? deviceId, bool cyber = false)
     {
         Cyber = cyber;
+        _deviceId = string.IsNullOrWhiteSpace(deviceId) ? null : deviceId;
         try
         {
             foreach (UiSound s in Enum.GetValues(typeof(UiSound))) { _clips[s] = Build(s); _cyberClips[s] = BuildCyber(s); }
             _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(Rate, 2)) { ReadFully = true };
-            _output = CreateOutput(deviceId);
-            _output.Init(_mixer);
-            _output.Play();
         }
         catch (Exception ex)
         {
@@ -43,7 +49,7 @@ public sealed class UiSounds : IDisposable
 
     public void Play(UiSound sound)
     {
-        if (_mixer == null) return;
+        if (_mixer == null || !EnsureOutput()) return;
         // Déplacements répétés (stick maintenu) : pas plus d'un « tic » toutes les 45 ms.
         if (sound == UiSound.Move)
         {
@@ -55,25 +61,62 @@ public sealed class UiSounds : IDisposable
         catch (Exception ex) { Log.WarnOnce("ui-sound", "Mode console : bruitage", ex); }
     }
 
-    private static IWavePlayer CreateOutput(string? deviceId)
+    /// <summary>
+    /// Ouvre la sortie si elle ne l'est pas : celle de la TV en priorité. Tant qu'elle manque, nouvel essai à chaque son
+    /// (au plus une fois par seconde) ; après 20 s sans elle, sortie par défaut de Windows (la TV aussi en mode console).
+    /// </summary>
+    private bool EnsureOutput()
     {
-        if (!string.IsNullOrWhiteSpace(deviceId))
+        if (_output != null) return true;
+        if (_disposed || _mixer == null) return false;
+        var now = Environment.TickCount64;
+        if (now < _nextTry) return false;
+        _nextTry = now + 1000;
+        var useDefault = _deviceId == null || now - _createdAt > 20_000;
+        try
         {
-            try
+            IWavePlayer output;
+            if (!useDefault)
             {
                 using var enumerator = new MMDeviceEnumerator();
-                return new WasapiOut(enumerator.GetDevice(deviceId), AudioClientShareMode.Shared, true, 40);
+                output = new WasapiOut(enumerator.GetDevice(_deviceId), AudioClientShareMode.Shared, true, 40);
             }
-            catch (Exception ex) { Log.WarnOnce("ui-sound-dev", "Mode console : sortie de la TV indisponible pour les bruitages", ex); }
+            else
+            {
+                if (_deviceId != null) Log.WarnOnce("ui-sound-default", "Mode console : sortie de la TV introuvable, bruitages sur la sortie par défaut");
+                output = new WasapiOut(AudioClientShareMode.Shared, 40);
+            }
+            output.PlaybackStopped += OnStopped;
+            output.Init(_mixer);
+            output.Play();
+            _output = output;
+            Log.Info(useDefault ? "Mode console : bruitages sur la sortie par défaut." : "Mode console : bruitages sur la sortie de la TV.");
+            return true;
         }
-        return new WasapiOut(AudioClientShareMode.Shared, 40);
+        catch (Exception ex)
+        {
+            Log.WarnOnce("ui-sound-dev", "Mode console : sortie de la TV pas encore prête pour les bruitages (nouvel essai)", ex);
+            return false;
+        }
+    }
+
+    /// <summary>Sortie perdue (appareil débranché, TV en veille...) : elle sera rouverte au prochain son.</summary>
+    private void OnStopped(object? sender, StoppedEventArgs e)
+    {
+        if (_disposed || sender is not IWavePlayer stopped || !ReferenceEquals(stopped, _output)) return;
+        if (e.Exception != null) Log.Info($"Mode console : sortie des bruitages perdue ({e.Exception.Message}), réouverture au prochain son.");
+        _output = null;
+        _nextTry = 0;
+        try { stopped.Dispose(); } catch { }
     }
 
     public void Dispose()
     {
-        try { _output?.Stop(); } catch { }
-        try { _output?.Dispose(); } catch { }
+        _disposed = true;
+        var output = _output;
         _output = null;
+        try { output?.Stop(); } catch { }
+        try { output?.Dispose(); } catch { }
         _mixer = null;
     }
 

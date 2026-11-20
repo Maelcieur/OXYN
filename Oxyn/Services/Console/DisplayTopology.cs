@@ -112,12 +112,13 @@ public sealed class DisplayTopology
                 var src = new ModeInfo { InfoType = ModeSource, Id = p.SourceId, AdapterId = p.SourceAdapter, D0 = pref.W, D1 = pref.H, D2 = 4 /* 32 bpp */ };
                 var tgt = pref.Target; tgt.InfoType = ModeTarget; tgt.Id = p.TargetId; tgt.AdapterId = p.TargetAdapter;
                 var pm = pa; pm.SourceModeIdx = 0; pm.TargetModeIdx = 1;
-                attempts.Add((new[] { pm }, new[] { src, tgt }, SdcUseSuppliedDisplayConfig | SdcAllowChanges | SdcSaveToDatabase, "résolution préférée"));
+                attempts.Add((new[] { pm }, new[] { src, tgt }, SdcUseSuppliedDisplayConfig | SdcAllowChanges, "résolution préférée"));
             }
             // Candidat B : modes laissés à Windows.
+            // JAMAIS SdcSaveToDatabase ici : Windows retiendrait « TV seule » pour cette combinaison d'écrans et la
+            // réappliquerait au démarrage suivant (écrans du PC noirs tant que la TV est branchée).
             var pb = pa; pb.SourceModeIdx = Invalid; pb.TargetModeIdx = Invalid;
-            attempts.Add((new[] { pb }, null, SdcUseSuppliedDisplayConfig | SdcAllowChanges | SdcSaveToDatabase, "modes automatiques"));
-            attempts.Add((new[] { pb }, null, SdcUseSuppliedDisplayConfig | SdcAllowChanges, "modes automatiques sans base"));
+            attempts.Add((new[] { pb }, null, SdcUseSuppliedDisplayConfig | SdcAllowChanges, "modes automatiques"));
             // Candidat C : topologie seule.
             attempts.Add((new[] { pb }, null, SdcTopologySupplied | SdcAllowChanges, "topologie imposée"));
 
@@ -216,6 +217,27 @@ public sealed class DisplayTopology
         var now = Snapshot();
         var remapped = snapshot.RemapTo(ListTargets(), out _);
         return now is not null && remapped is not null && now.Signature().SetEquals(remapped.Signature());
+    }
+
+    /// <summary>Allume tous les écrans branchés en mode étendu (positions mémorisées par Windows pour cette combinaison).</summary>
+    public DisplayResult ExtendAll()
+    {
+        try
+        {
+            var rc = SetDisplayConfig(0, null, 0, null, SdcTopologyExtend | SdcApply);
+            if (rc != 0)
+            {
+                Log.Warn($"Écrans : mode étendu refusé (code {rc}).");
+                return DisplayResult.Fail(rc, $"Windows a refusé d'étendre l'affichage (code {rc}).");
+            }
+            Log.Info("Écrans : tous les écrans rallumés (mode étendu).");
+            return DisplayResult.Ok();
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("Écrans : mode étendu impossible", ex);
+            return DisplayResult.Fail(Marshal.GetLastWin32Error(), ex.Message);
+        }
     }
 
     /// <summary>Désactive l'écran demandé en gardant le reste de la configuration active.</summary>
