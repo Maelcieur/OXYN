@@ -29,7 +29,7 @@ public partial class ModuleCard
         if (brush is null && (useArtwork ? Soften(_mediaArtwork!, appearance.MediaBlur) : LoadImage(appearance.BackgroundImage)) is { } image)
             brush = new ImageBrush(image) { Stretch = Stretch.UniformToFill };
 
-        if (brush is null)
+        if (brush is null || _bare)
         {
             ImageLayer.Background = DimLayer.Background = null;
             return;

@@ -25,6 +25,7 @@ public sealed partial class DeckScreen
     /// </summary>
     public NightParts RenderNight(RenderTargetBitmap bitmap)
     {
+        FinishPageTransition();   // sinon l'image de veille serait prise semi-transparente ou décalée
         var clock = FindClock();
         var image = RenderNightImage(bitmap, clock);
         var glyphs = clock is null ? null : RenderGlyphs(clock);

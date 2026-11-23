@@ -10,12 +10,11 @@ namespace Oxyn;
 public sealed partial class WidgetManager
 {
     /// <summary>Modules ajoutés en 1.12 : masqués tant qu'on ne les a pas affichés (pas d'apparition surprise).</summary>
-    private static readonly HashSet<string> HiddenByDefault = new() { "tileclock", "analogclock", "digitalclock", "calendar", "weather", "temperatures", "airquality", "simhub", "sensorbars", "moon", "sun" };
+    private static readonly HashSet<string> HiddenByDefault = new() { "tileclock", "analogclock", "digitalclock", "calendar", "weather", "temperatures", "airquality", "sensorbars", "moon", "sun", "searchbar" };
 
     private readonly DispatcherTimer _clockTimer = new(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(250) };
     private readonly List<(double? Cpu, double? Gpu)> _temperatureHistory = new();
     private WeatherService? _weather;
-    private SimHubService? _simHub;
     private int _lastClockSecond = -1;
 
     public WeatherService Weather => _weather!;
@@ -24,11 +23,10 @@ public sealed partial class WidgetManager
     {
         _weather = new WeatherService(_config.Weather);
         _weather.Updated += PushWeather;
-        _simHub = new SimHubService(_config.WidgetExtras);
-        _simHub.Updated += PushSimHub;
         _config.Weather.PropertyChanged += OnExtraSettingsChanged;
         _config.WidgetExtras.PropertyChanged += OnExtraSettingsChanged;
         _config.SensorBars.PropertyChanged += OnExtraSettingsChanged;
+        _config.SearchBar.PropertyChanged += OnExtraSettingsChanged;
         _clockTimer.Tick += (_, _) => TickClocks();
         _clockTimer.Start();
     }
@@ -37,12 +35,10 @@ public sealed partial class WidgetManager
     {
         _clockTimer.Stop();
         _weather?.Dispose();
-        _simHub?.Dispose();
     }
 
     private void OnExtraSettingsChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ExtraWidgetSettings.SimHubPort)) _simHub?.Reconnect();
         _configStore.Save(_config);
         RefreshExtraWidgets();
     }
@@ -61,6 +57,7 @@ public sealed partial class WidgetManager
     {
         if (_weather is null) return;
         foreach (var clock in Live<TileClockWidgetContent>()) clock.Apply(_config.WidgetExtras);
+        foreach (var search in Live<SearchBarWidgetContent>()) search.Apply(_config.SearchBar);
         foreach (var bars in Live<SensorBarsWidgetContent>())
         {
             bars.Apply(_config.SensorBars);
@@ -73,11 +70,6 @@ public sealed partial class WidgetManager
         }
         _weather.Enabled = Live<WeatherWidgetContent>().Any() || Live<AirQualityWidgetContent>().Any() || Live<SunWidgetContent>().Any();
         PushWeather();
-        if (_simHub is not null)
-        {
-            _simHub.Enabled = Live<SimHubWidgetContent>().Any();
-            PushSimHub();
-        }
         _lastClockSecond = -1;
         TickClocks();
     }
@@ -90,12 +82,6 @@ public sealed partial class WidgetManager
         foreach (var s in Live<SunWidgetContent>()) s.Update(_weather.Current, _weather.Error);
         // Hémisphère sud : la Lune y est vue « à l'envers » (éclairée à gauche quand elle croît).
         foreach (var m in Live<MoonWidgetContent>()) m.SouthernHemisphere = _config.Weather.Latitude is < 0;
-    }
-
-    private void PushSimHub()
-    {
-        if (_simHub is null) return;
-        foreach (var s in Live<SimHubWidgetContent>()) s.Update(_simHub.Current, _simHub.Status);
     }
 
     /// <summary>Dernières mesures (catalogue complet), pour le module Barres de capteurs et le choix des données.</summary>

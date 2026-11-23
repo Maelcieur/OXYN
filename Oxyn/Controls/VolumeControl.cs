@@ -62,6 +62,8 @@ public sealed class VolumeControl : FrameworkElement, ITouchDraggable
         var f = Math.Clamp(Value / 100, 0, 1);
         // Fond transparent : toute la zone répond à la souris, pas seulement les parties dessinées.
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, w, h));
+        if (w < 24 || h < 24) return;   // trop petit : les pistes auraient une taille négative (exception WPF)
+        if (!double.IsFinite(f)) f = 0;
 
         switch (Shape)
         {
@@ -87,6 +89,7 @@ public sealed class VolumeControl : FrameworkElement, ITouchDraggable
             {
                 const double gap = 2.5;
                 var segH = (h - gap * (SegmentCount - 1)) / SegmentCount;
+                if (segH <= 0) break;
                 var lit = (int)Math.Round(f * SegmentCount);
                 for (var i = 0; i < SegmentCount; i++)
                 {

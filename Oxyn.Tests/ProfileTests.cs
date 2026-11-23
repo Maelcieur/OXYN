@@ -106,13 +106,10 @@ public sealed class ProfileTests : IDisposable
     public void ProfileNeverContainsSecrets()
     {
         var (host, service) = Create(Dir("a"));
-        host.Config.GeminiApiKey = "cle-secrete-123";
-        host.Config.EmojiHotkey = "Ctrl+Shift+E";
+        host.Config.Console.EmergencyHotkey = "Ctrl+Shift+E";
         host.Config.Power.GaugeMaxWatts = 7771;
         service.SaveCurrent("P");
         var json = File.ReadAllText(Path.Combine(_root, "a", "Profiles", "P.json"));
-        Assert.DoesNotContain("cle-secrete", json);
-        Assert.DoesNotContain("Gemini", json);
         Assert.DoesNotContain("Ctrl+Shift+E", json);
         Assert.DoesNotContain("777", json);
     }
@@ -462,7 +459,6 @@ public sealed class ProfileTests : IDisposable
         var theme = config.Theme;
         var cpu = new ModuleAppearance();
         config.Modules["cpu"] = cpu;
-        var picker = config.EmojiPicker;
         config.Deck.Modules["cpu"] = new ModuleAppearance();
         config.Deck.Modules["gpu"] = new ModuleAppearance();
 
@@ -470,7 +466,6 @@ public sealed class ProfileTests : IDisposable
         profile.Theme.GaugeStartColor = "#FF123456";
         profile.Modules["cpu"] = new ModuleAppearance { Height = 321 };
         profile.DeckModules["cpu"] = new ModuleAppearance { Height = 222 };
-        profile.EmojiPicker.CornerRadius = 5;
         profile.Dock.IconSize = 70;
         profile.Dock.Orientation = "Vertical";
         profile.Layout.Add(new WidgetPosition { Id = "cpu", X = 5, Y = 6, Visible = false });
@@ -478,12 +473,10 @@ public sealed class ProfileTests : IDisposable
         profile.ApplyTo(config, includeLayout: false);
         Assert.Same(theme, config.Theme);
         Assert.Same(cpu, config.Modules["cpu"]);
-        Assert.Same(picker, config.EmojiPicker);
         Assert.Equal("#FF123456", theme.GaugeStartColor);
         Assert.Equal(321, cpu.Height);
         Assert.Equal(222, config.Deck.Modules["cpu"].Height);
         Assert.False(config.Deck.Modules.ContainsKey("gpu")); // absent du profil : recréé à la demande
-        Assert.Equal(5, picker.CornerRadius);
         Assert.Equal(70, config.DockIconSize);
         Assert.Equal("Vertical", config.DockOrientation);
         Assert.Empty(config.Layout); // disposition non demandée

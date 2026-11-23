@@ -144,6 +144,7 @@ public sealed class DeckSettings
     public void Migrate()
     {
         Pages ??= new();
+        Pages.RemoveAll(p => p is null);   // config.json modifié à la main : « null » dans la liste
         Modules ??= new();
         if (Pages.Count == 0)
         {
@@ -156,7 +157,7 @@ public sealed class DeckSettings
             page.Elements ??= new();
             page.Apps ??= new();
             // La barre de raccourcis du PC n'est plus affichée sur la Switch : seules restent les tuiles de chaque page.
-            page.Elements.RemoveAll(e => e.Id == "shortcuts");
+            page.Elements.RemoveAll(e => e.Id is "shortcuts" or "searchbar");
             // Ancien fichier : l'apparence commune devient celle de chaque page.
             if (!page.OwnLook)
             {

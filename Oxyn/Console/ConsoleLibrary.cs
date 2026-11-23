@@ -41,6 +41,7 @@ public sealed class ConsoleLibrary
         catch (Exception ex)
         {
             Log.Warn("Bibliothèque du Mode console illisible", ex);
+            JsonFile.KeepCorruptCopy(_file);
             _data = new();
         }
     }
@@ -59,6 +60,9 @@ public sealed class ConsoleLibrary
             Log.Warn("Enregistrement de la bibliothèque du Mode console impossible", ex);
         }
     }
+
+    /// <summary>Instance actuelle d'un jeu (même Id) après un <see cref="Load"/> ; le jeu lui-même s'il n'y est plus.</summary>
+    public ConsoleGame Current(ConsoleGame game) => _data.Games.FirstOrDefault(g => g.Id == game.Id) ?? game;
 
     public void Add(ConsoleGame game) => _data.Games.Add(game);
     public bool Remove(string id) => _data.Games.RemoveAll(g => g.Id == id) > 0;

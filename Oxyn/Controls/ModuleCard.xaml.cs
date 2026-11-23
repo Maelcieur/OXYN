@@ -20,6 +20,8 @@ public partial class ModuleCard : UserControl
     private readonly AppConfig _config;
     private readonly Action _save;
     private readonly bool _useDefaultChrome;
+    // Module sans carte (Barre de recherche) : ni fond, ni contour, ni ombre ; il dessine lui-même son apparence.
+    private readonly bool _bare;
     private readonly bool _fillFrame;
 
     /// <param name="fillFrame">Vrai sur la Switch : la carte remplit le cadre imposé, la taille du module est ignorée.</param>
@@ -36,12 +38,13 @@ public partial class ModuleCard : UserControl
         ContentHost.Content = content;
         ContentHost.SizeChanged += (_, _) => NaturalSizeChanged?.Invoke();
 
-        if (!useDefaultChrome)
+        _bare = id == "searchbar";
+        if (!useDefaultChrome || _bare)
         {
             Chrome.Style = null;
             Chrome.Background = Brushes.Transparent;
             Chrome.BorderThickness = new Thickness(0);
-            ContentScaler.Margin = new Thickness(0);
+            ContentScaler.Margin = new Thickness(_bare ? 4 : 0);
         }
 
         AddHandler(Movable.ElementsChangedEvent, new RoutedEventHandler((_, _) => RefreshMovables()));

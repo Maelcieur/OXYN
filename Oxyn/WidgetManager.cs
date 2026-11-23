@@ -43,10 +43,10 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         new("weather", "Météo et ciel · prévisions"),
         new("temperatures", "Températures CPU / GPU"),
         new("airquality", "Météo et ciel · qualité de l'air"),
-        new("simhub", "SimHub (course)"),
         new("sensorbars", "Barres de capteurs"),
         new("moon", "Météo et ciel · Lune"),
         new("sun", "Météo et ciel · soleil"),
+        new("searchbar", "Barre de recherche"),
         new("shortcuts", "Barre de raccourcis"),
     };
 
@@ -93,9 +93,6 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
     /// </summary>
     private readonly Window _hiddenOwner;
     private GlobalHotkey? _correctionHotkey;
-    private GlobalHotkey? _emojiHotkey;
-    private EmojiPickerWindow? _emojiPicker;
-    private const int MaxRecentEmojis = 32;
     private readonly TextCorrectionService _textCorrection;
     private readonly uint _taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
     private DispatcherTimer? _recreateTimer;
@@ -112,8 +109,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         foreach (var item in _shortcutStore.Load())
             _shortcuts.Add(item);
 
-        var corrector = new GeminiCorrector(() => _config.GeminiApiKey);
-        _textCorrection = new TextCorrectionService(corrector, ShowWarning);
+        _textCorrection = new TextCorrectionService(ShowWarning);
 
         _registry = new()
         {
@@ -136,10 +132,11 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             ["weather"] = (() => new WeatherWidgetContent(), () => new Point(900, 460)),
             ["temperatures"] = (() => new TemperatureWidgetContent(), () => new Point(1220, 460)),
             ["airquality"] = (() => new AirQualityWidgetContent(), () => new Point(900, 700)),
-            ["simhub"] = (() => new SimHubWidgetContent(), () => new Point(1220, 700)),
             ["sensorbars"] = (() => new SensorBarsWidgetContent(), () => new Point(1500, 40)),
             ["moon"] = (() => new MoonWidgetContent(), () => new Point(1500, 300)),
             ["sun"] = (() => new SunWidgetContent(), () => new Point(1500, 520)),
+            ["searchbar"] = (() => new SearchBarWidgetContent(),
+                () => new Point(SystemParameters.WorkArea.Width / 2 - 225, 60)),
             ["shortcuts"] = (BuildShortcutsContent,
                 () => new Point(SystemParameters.WorkArea.Width / 2 - 150, SystemParameters.WorkArea.Height - 110)),
         };
@@ -178,12 +175,8 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             _correctionHotkey = new GlobalHotkey(_hiddenOwner, id: 1);
             _correctionHotkey.Pressed += () => _ = _textCorrection.RunAsync();
             if (!_correctionHotkey.Register(HotkeyGesture.CtrlSpace))
-                Log.Warn("Raccourci Ctrl+Espace déjà utilisé par une autre application : correction IA indisponible.");
+                Log.Warn("Raccourci Ctrl+Espace déjà utilisé par une autre application : correction orthographique indisponible.");
 
-            _emojiHotkey = new GlobalHotkey(_hiddenOwner, id: 2);
-            _emojiHotkey.Pressed += ShowEmojiPicker;
-            if (HotkeyGesture.Parse(_config.EmojiHotkey) is { } emojiGesture && !_emojiHotkey.Register(emojiGesture))
-                Log.Warn($"Raccourci des émojis ({emojiGesture}) déjà utilisé par une autre application.");
 
             InitConsoleHotkey();
         };
@@ -313,21 +306,44 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         }
 
         var position = entry.DefaultPosition();
-        var window = new WidgetWindow(id, content, _configStore, _config, position.X, position.Y, useDefaultChrome: id != "shortcuts");
-        window.ApplyAppearance(GetAppearance(id));
-        window.SetEditMode(LayoutEditMode);
-        window.ContextMenu = BuildWidgetMenu(id);
-        window.ResizeRequested += factor => ResizeWidget(id, factor);
-        if (id == "media") window.SetMediaArtwork(_lastArtwork);
-        window.Closed += (_, _) => OnWidgetClosed(id, window);
-        _windows[id] = window;
-        window.Show();
-        if (_desktopWidgetsHidden)
+        WidgetWindow? window = null;
+        try
         {
+            window = new WidgetWindow(id, content, _configStore, _config, position.X, position.Y, useDefaultChrome: id != "shortcuts");
+            // Position enregistrée sur un écran débranché (ou avant un changement de résolution) : module inatteignable.
+            if (!IsOnScreen(window.Left, window.Top)) { window.Left = position.X; window.Top = position.Y; }
+            window.ApplyAppearance(GetAppearance(id));
+            window.SetEditMode(LayoutEditMode);
+            window.ContextMenu = BuildWidgetMenu(id);
+            window.ResizeRequested += factor => ResizeWidget(id, factor);
+            if (id == "media") window.SetMediaArtwork(_lastArtwork);
+            var created = window;
+            window.Closed += (_, _) => OnWidgetClosed(id, created);
+            _windows[id] = window;
+            window.Show();
             // créé pendant le Mode console : reste caché jusqu'à la sortie
-            window.Hide();
-            _widgetsHiddenForConsole.Add(window);
+            if (_desktopWidgetsHidden) window.Hide();
         }
+        catch (Exception ex)
+        {
+            // Un module défaillant (apparence abîmée...) ne doit pas empêcher les autres de s'afficher.
+            Log.Error($"Affichage du module « {id} » impossible", ex);
+            _windows.Remove(id);
+            try { window?.Close(); } catch { /* déjà fermée */ }
+        }
+    }
+
+    /// <summary>
+    /// Vrai si le coin haut gauche d'un module (marge de 40 px) est dans le bureau actuel. Rattachés au bureau, les modules
+    /// peuvent être en coordonnées de l'écran OU relatives au bureau (origine 0,0) : les deux plages sont acceptées.
+    /// </summary>
+    private static bool IsOnScreen(double x, double y)
+    {
+        double left = SystemParameters.VirtualScreenLeft, top = SystemParameters.VirtualScreenTop;
+        double width = SystemParameters.VirtualScreenWidth, height = SystemParameters.VirtualScreenHeight;
+        return double.IsFinite(x) && double.IsFinite(y)
+            && x > Math.Min(left, 0) - 40 && x < Math.Max(left + width, width) - 40
+            && y > Math.Min(top, 0) - 40 && y < Math.Max(top + height, height) - 40;
     }
 
     /// <summary>
@@ -426,6 +442,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         _recreateTimer.Tick += (_, _) =>
         {
             _recreateTimer.Stop();
+            if (_desktopWidgetsHidden) return;   // mode console : la sortie recrée les modules de toute façon
             Log.Info("Explorer redémarré : recréation des modules");
             foreach (var id in _windows.Keys.ToList())
                 CloseWidget(id);
@@ -586,7 +603,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         _shortcutsContent.ChangeIconRequested += item =>
         {
             // Même fenêtre de choix que partout : symbole, logo de marque, émoji ou image (propriétaire invisible : centrée sur l'écran).
-            var chooser = new IconChooserWindow(_hiddenOwner, item.Name, CreateEmojiPickerForChoice, item)
+            var chooser = new IconChooserWindow(_hiddenOwner, item.Name, item)
             {
                 WindowStartupLocation = WindowStartupLocation.CenterScreen
             };
@@ -781,55 +798,6 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         _shortcutStore.Save(_shortcuts);
     }
 
-    // ---------- Émojis ----------
-
-    private void ShowEmojiPicker()
-    {
-        if (_emojiPicker is null)
-        {
-            _emojiPicker = new EmojiPickerWindow(() => _config.RecentEmojis, _config.EmojiPicker);
-            _emojiPicker.EmojiInserted += text =>
-            {
-                UpdateConfig(c =>
-                {
-                    c.RecentEmojis.Remove(text);
-                    c.RecentEmojis.Insert(0, text);
-                    if (c.RecentEmojis.Count > MaxRecentEmojis)
-                        c.RecentEmojis.RemoveRange(MaxRecentEmojis, c.RecentEmojis.Count - MaxRecentEmojis);
-                });
-            };
-        }
-        _emojiPicker.ShowNearCursor();
-    }
-
-    /// <summary>
-    /// Change le raccourci des émojis (null = désactivé). Renvoie faux si la combinaison est déjà prise
-    /// par une autre application : l'ancien raccourci est alors remis en place.
-    /// </summary>
-    public bool SetEmojiHotkey(HotkeyGesture? gesture)
-    {
-        if (_emojiHotkey is null) return false;
-        var previous = HotkeyGesture.Parse(_config.EmojiHotkey);
-
-        if (gesture is null)
-        {
-            _emojiHotkey.Unregister();
-            UpdateConfig(c => c.EmojiHotkey = null);
-            return true;
-        }
-
-        if (!_emojiHotkey.Register(gesture))
-        {
-            if (previous is not null) _emojiHotkey.Register(previous);
-            return false;
-        }
-        UpdateConfig(c => c.EmojiHotkey = gesture.Serialize());
-        return true;
-    }
-
-    /// <summary>Vrai si le raccourci des émojis est actif (enregistré auprès de Windows).</summary>
-    public bool IsEmojiHotkeyActive => _emojiHotkey?.IsRegistered == true;
-
     /// <summary>
     /// Suspend les raccourcis globaux pendant la saisie d'une nouvelle combinaison dans les Paramètres :
     /// sinon, une combinaison déjà active serait interceptée au lieu d'être saisie.
@@ -839,18 +807,11 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         if (suspended)
         {
             _correctionHotkey?.Unregister();
-            _emojiHotkey?.Unregister();
             _consoleHotkey?.Unregister();
             return;
         }
         _correctionHotkey?.Register(HotkeyGesture.CtrlSpace);
-        if (HotkeyGesture.Parse(_config.EmojiHotkey) is { } gesture) _emojiHotkey?.Register(gesture);
         if (HotkeyGesture.Parse(_config.Console.EmergencyHotkey) is { } consoleGesture) _consoleHotkey?.Register(consoleGesture);
-    }
-
-    public void ClearRecentEmojis()
-    {
-        UpdateConfig(c => c.RecentEmojis.Clear());
     }
 
     /// <summary>Message d'avertissement toujours visible, même déclenché depuis un widget du bureau.</summary>
@@ -911,7 +872,14 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         }
 
         // Le service ne lit qu'aux 2 min ; ici on remet à jour les « Réinit. dans… » et les modules nouvellement affichés.
-        if (_claude.Latest.State != ClaudeUsageState.Pending) PushClaudeUsage(_claude.Latest);
+        try
+        {
+            if (_claude.Latest.State != ClaudeUsageState.Pending) PushClaudeUsage(_claude.Latest);
+        }
+        catch (Exception ex)
+        {
+            Log.WarnOnce("refresh:claude", "Affichage de l'utilisation de Claude en échec", ex);
+        }
 
         // Compté même module masqué, pour que les cumuls du jour et du mois restent justes.
         if (snapshot is not null)
@@ -1330,9 +1298,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             _fps.Dispose();
             _recreateTimer?.Stop();
             _correctionHotkey?.Dispose();
-            _emojiHotkey?.Dispose();
             _consoleHotkey?.Dispose();
-            _emojiPicker?.Close();
             _hardware.Dispose();
             _claude.Dispose();
             TileRuntime.Obs = null;

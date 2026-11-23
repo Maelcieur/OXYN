@@ -97,7 +97,7 @@ public sealed class LinearGauge : FrameworkElement
         double w = ActualWidth, h = ActualHeight;
         if (w <= 0 || h <= 0) return;
 
-        var fraction = Maximum > 0 ? Math.Clamp(DisplayValue / Maximum, 0, 1) : 0;
+        var fraction = Maximum > 0 && double.IsFinite(DisplayValue) ? Math.Clamp(DisplayValue / Maximum, 0, 1) : 0;
         var track = new SolidColorBrush(Color.FromArgb(0x24, 0xFF, 0xFF, 0xFF));
         track.Freeze();
 

@@ -94,7 +94,10 @@ public partial class WidgetWindow : Window
         DesktopWidgetHost.AttachToDesktop(handle);
     }
 
-    private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => DragFromContent();
+
+    /// <summary>Déplace le module à la souris (bouton gauche enfoncé), sauf si les positions sont verrouillées.</summary>
+    public void DragFromContent()
     {
         if (_config.WidgetsLocked) return;
 

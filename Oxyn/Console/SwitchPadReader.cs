@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using HidSharp;
 using Oxyn.Infrastructure;
 
@@ -85,10 +84,10 @@ internal sealed class SwitchPadReader
 
     private void Read()
     {
-        var buf = new byte[Math.Max(_stream.Device.GetMaxInputReportLength(), 64)];
         long lastSet;
         try
         {
+            var buf = new byte[Math.Max(_stream.Device.GetMaxInputReportLength(), 64)];
             SetFullMode();
             lastSet = Environment.TickCount64;
             while (!_closed)

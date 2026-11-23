@@ -4,7 +4,7 @@ using Oxyn.Services;
 
 namespace Oxyn;
 
-// Pages Énergie, Barre de raccourcis, Correction de texte, Émojis, Alertes et Général (FPS, éléments masqués).
+// Pages Énergie, Barre de raccourcis, Alertes et Général (FPS, éléments masqués).
 public partial class SettingsWindow
 {
     private void OnPowerSettingsChanged(object? sender, PropertyChangedEventArgs e)
@@ -81,15 +81,6 @@ public partial class SettingsWindow
         _widgetManager.SetDockStyle(orientation, direction, IconSizeSlider.Value, IconSpacingSlider.Value);
     }
 
-    // ---------- Correction de texte ----------
-
-    private void SaveGeminiKey_Click(object sender, RoutedEventArgs e)
-    {
-        _widgetManager.Config.GeminiApiKey = GeminiApiKeyBox.Password;
-        _widgetManager.SaveConfig();
-        MessageBox.Show(this, "Clé API enregistrée.", "OXYN", MessageBoxButton.OK, MessageBoxImage.Information);
-    }
-
     // ---------- Général : mesure des FPS ----------
 
     private bool _fpsPermissionGranted;
@@ -132,37 +123,6 @@ public partial class SettingsWindow
             FpsPermissionButton.IsEnabled = true;
         }
     }
-
-    // ---------- Émojis ----------
-
-    private void EmojiHotkeyBox_GestureCaptured(Interop.HotkeyGesture gesture)
-    {
-        if (_widgetManager.SetEmojiHotkey(gesture))
-        {
-            EmojiHotkeyBox.Display(gesture);
-            EmojiHotkeyStatus.Text = $"Actif : appuie sur {gesture} dans n'importe quelle application.";
-        }
-        else
-        {
-            EmojiHotkeyBox.Display(Interop.HotkeyGesture.Parse(_widgetManager.Config.EmojiHotkey));
-            EmojiHotkeyStatus.Text = $"{gesture} est déjà utilisé par Windows ou une autre application : choisis une autre combinaison.";
-        }
-    }
-
-    private void EmojiHotkeyBox_CaptureStateChanged(bool capturing) => _widgetManager.SuspendHotkeys(capturing);
-
-    private void ClearEmojiHotkey_Click(object sender, RoutedEventArgs e)
-    {
-        _widgetManager.SetEmojiHotkey(null);
-        EmojiHotkeyBox.Display(null);
-        EmojiHotkeyStatus.Text = "Aucun raccourci : le sélecteur d'émojis est désactivé.";
-    }
-
-    private void ClearRecentEmojis_Click(object sender, RoutedEventArgs e) => _widgetManager.ClearRecentEmojis();
-
-    private void ResetEmojiAppearance_Click(object sender, RoutedEventArgs e) => _widgetManager.Config.EmojiPicker.Reset();
-
-    private void OnEmojiPickerSettingsChanged(object? sender, PropertyChangedEventArgs e) => ScheduleSave();
 
     // ---------- Alertes ----------
 

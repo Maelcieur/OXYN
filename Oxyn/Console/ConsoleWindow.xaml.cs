@@ -1551,6 +1551,8 @@ public partial class ConsoleWindow : Window
             Log.Warn("Lancement du jeu", ex);
             outcome = new LaunchOutcome(false, "Lancement impossible");
         }
+        // La bibliothèque a pu être relue pendant la partie (retour au menu par le Guide) : on met à jour l'objet actuel.
+        game = _library.Current(game);
         if (outcome.Started && sw.Elapsed > TimeSpan.FromSeconds(5)) _library.MarkPlayed(game, start, sw.Elapsed);
         // Jeu d'émulateur sans identifiant dans son nom de fichier : l'émulateur vient de noter lequel il a lancé.
         if (outcome.Started && game.UsesEmulator && PlayTimeSources.TitleIdOf(game) == null && PlayTimeSources.LearnTitleId(start) is { } titleId)

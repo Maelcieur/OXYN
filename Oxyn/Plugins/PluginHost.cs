@@ -542,7 +542,13 @@ public sealed partial class PluginHost : IDisposable
                 {
                     var text = await ReceiveAsync(socket, CancellationToken.None);
                     if (text is null) break;
-                    if (PluginProtocol.Parse(text) is { } message) Handle(runner, message);
+                    if (PluginProtocol.Parse(text) is not { } message) continue;
+                    // Un message mal formé ne doit pas couper la connexion du plugin (la tâche n'est pas observée).
+                    try { Handle(runner, message); }
+                    catch (Exception ex) when (ex is not OperationCanceledException and not ObjectDisposedException)
+                    {
+                        Log.WarnOnce("plugin-handle:" + runner.Info.Id, $"Plugin {runner.Info.Id} : message ignoré", ex);
+                    }
                 }
             }
             catch (Exception ex) when (ex is IOException or WebSocketException or OperationCanceledException or ObjectDisposedException or SocketException)
@@ -801,6 +807,7 @@ public sealed partial class PluginHost : IDisposable
             var image = new BitmapImage();
             image.BeginInit();
             image.CacheOption = BitmapCacheOption.OnLoad;
+            image.DecodePixelWidth = 288;   // une tuile n'a pas besoin de plus ; évite un PNG géant décodé en entier
             image.StreamSource = new MemoryStream(bytes);
             image.EndInit();
             image.Freeze();

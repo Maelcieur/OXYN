@@ -27,7 +27,6 @@ public partial class AddVoicemodTileWindow : TileEditorWindow
         (VoicemodAction.MuteSoundsForMe, "Couper les sons pour moi")
     };
 
-    private readonly Func<EmojiPickerWindow> _createEmojiPicker;
     private readonly VoicemodService _voicemod;
     private readonly TileIconState _icon = new();
     private readonly string? _existingTarget, _existingTargetName;
@@ -36,11 +35,10 @@ public partial class AddVoicemodTileWindow : TileEditorWindow
     private int _loadVersion, _iconVersion;
     private string? _autoIcon; // image de la voix ou du son lue dans Voicemod (fichier temporaire), copiée à la validation
 
-    public AddVoicemodTileWindow(Window owner, Func<EmojiPickerWindow> createEmojiPicker, VoicemodService voicemod, ShortcutItem? existing = null)
+    public AddVoicemodTileWindow(Window owner, VoicemodService voicemod, ShortcutItem? existing = null)
         : base(owner)
     {
         InitializeComponent();
-        _createEmojiPicker = createEmojiPicker;
         _voicemod = voicemod;
 
         _loading = true;
@@ -302,6 +300,8 @@ public partial class AddVoicemodTileWindow : TileEditorWindow
         _autoIcon = null;
     }
 
+    protected override void OnCompleting(bool accepted) => TryDeleteAutoIcon(); // la tuile validée en a déjà sa propre copie
+
     protected override void OnClosed(EventArgs e)
     {
         TryDeleteAutoIcon(); // la tuile validée en a déjà sa propre copie
@@ -342,12 +342,12 @@ public partial class AddVoicemodTileWindow : TileEditorWindow
     private void Icon_Click(object sender, RoutedEventArgs e)
     {
         var name = string.IsNullOrWhiteSpace(NameBox.Text) ? "Voicemod" : NameBox.Text.Trim();
-        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, _createEmojiPicker, DefaultGlyph), choice =>
+        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, DefaultGlyph), choice =>
             {
                 _icon.ApplyChoice(choice);
                 ShowIcon();
             })) return;
-        if (!_icon.Choose(DialogOwner, name, _createEmojiPicker, DefaultGlyph)) return;
+        if (!_icon.Choose(DialogOwner, name, DefaultGlyph)) return;
         ShowIcon();
         RefreshVoicemodIcon(); // retour à l'icône par défaut : celle de Voicemod revient
     }

@@ -29,7 +29,6 @@ public partial class AddTwitchTileWindow : TileEditorWindow
         (TwitchAction.SetCategory, "Changer la catégorie du direct")
     };
 
-    private readonly Func<EmojiPickerWindow> _createEmojiPicker;
     private readonly TwitchService _twitch;
     private readonly TileIconState _icon = new();
     private bool _loading;
@@ -37,11 +36,10 @@ public partial class AddTwitchTileWindow : TileEditorWindow
     private bool _confirmManual; // la confirmation a été réglée à la main : elle ne suit plus l'action
     private string? _categoryId, _categoryName;
 
-    public AddTwitchTileWindow(Window owner, Func<EmojiPickerWindow> createEmojiPicker, TwitchService twitch, ShortcutItem? existing = null)
+    public AddTwitchTileWindow(Window owner, TwitchService twitch, ShortcutItem? existing = null)
         : base(owner)
     {
         InitializeComponent();
-        _createEmojiPicker = createEmojiPicker;
         _twitch = twitch;
 
         _loading = true;
@@ -275,12 +273,12 @@ public partial class AddTwitchTileWindow : TileEditorWindow
     private void Icon_Click(object sender, RoutedEventArgs e)
     {
         var name = string.IsNullOrWhiteSpace(NameBox.Text) ? "Twitch" : NameBox.Text.Trim();
-        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, _createEmojiPicker, DefaultGlyph), choice =>
+        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, DefaultGlyph), choice =>
             {
                 _icon.ApplyChoice(choice);
                 ShowIcon();
             })) return;
-        if (_icon.Choose(DialogOwner, name, _createEmojiPicker, DefaultGlyph)) ShowIcon();
+        if (_icon.Choose(DialogOwner, name, DefaultGlyph)) ShowIcon();
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Complete(false);

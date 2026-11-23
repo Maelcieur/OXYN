@@ -15,7 +15,6 @@ public partial class AddHotkeyShortcutWindow : TileEditorWindow
 {
     private const string KeyboardGlyph = "\uE765";
 
-    private readonly Func<EmojiPickerWindow> _createEmojiPicker;
     private HotkeyGesture? _gesture; // combinaison validée par « Terminer » ; null tant qu'elle ne l'est pas
     private Key _key = Key.None;      // touche principale en cours de composition
     private string? _glyph;
@@ -30,11 +29,10 @@ public partial class AddHotkeyShortcutWindow : TileEditorWindow
 
     /// <summary>Tuile créée (Path vide, Hotkey rempli) ; null si annulé. En modification, nouvelle version de la tuile.</summary>
     /// <param name="existing">Tuile à modifier (champs pré-remplis) ; null pour en créer une.</param>
-    public AddHotkeyShortcutWindow(Window owner, Func<EmojiPickerWindow> createEmojiPicker, ShortcutItem? existing = null)
+    public AddHotkeyShortcutWindow(Window owner, ShortcutItem? existing = null)
         : base(owner)
     {
         InitializeComponent();
-        _createEmojiPicker = createEmojiPicker;
         if (existing is not null) LoadExisting(existing);
         ShowCombo();
         ShowIcon();
@@ -182,7 +180,7 @@ public partial class AddHotkeyShortcutWindow : TileEditorWindow
             TileColor = _tileColor,
             ImageTint = _imageTint
         };
-        var chooser = new IconChooserWindow(DialogOwner, string.IsNullOrWhiteSpace(NameBox.Text) ? "Raccourci clavier" : NameBox.Text.Trim(), _createEmojiPicker, current);
+        var chooser = new IconChooserWindow(DialogOwner, string.IsNullOrWhiteSpace(NameBox.Text) ? "Raccourci clavier" : NameBox.Text.Trim(), current);
         if (ChooseIconInline(chooser, ApplyIconChoice)) return;
         if (chooser.ShowDialog() != true || chooser.Result is not { } choice) return;
 

@@ -11,17 +11,15 @@ namespace Oxyn;
 /// </summary>
 public partial class AddMuteTileWindow : TileEditorWindow
 {
-    private readonly Func<EmojiPickerWindow> _createEmojiPicker;
     private readonly TileIconState _icon = new();
     private readonly bool _output;
     private readonly List<string> _ids = new(); // identifiant par ligne de la liste ; "" = défaut de Windows
 
     /// <param name="output">Vrai : son de sortie ; faux : micro.</param>
-    public AddMuteTileWindow(Window owner, Func<EmojiPickerWindow> createEmojiPicker, bool output, ShortcutItem? existing = null)
+    public AddMuteTileWindow(Window owner, bool output, ShortcutItem? existing = null)
         : base(owner)
     {
         InitializeComponent();
-        _createEmojiPicker = createEmojiPicker;
         _output = output;
 
         var what = output ? "son de sortie" : "micro";
@@ -65,12 +63,12 @@ public partial class AddMuteTileWindow : TileEditorWindow
     private void Icon_Click(object sender, RoutedEventArgs e)
     {
         var name = string.IsNullOrWhiteSpace(NameBox.Text) ? (_output ? "Son muet" : "Micro muet") : NameBox.Text.Trim();
-        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, _createEmojiPicker, DefaultGlyph), choice =>
+        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, DefaultGlyph), choice =>
             {
                 _icon.ApplyChoice(choice);
                 ShowIcon();
             })) return;
-        if (_icon.Choose(DialogOwner, name, _createEmojiPicker, DefaultGlyph)) ShowIcon();
+        if (_icon.Choose(DialogOwner, name, DefaultGlyph)) ShowIcon();
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Complete(false);

@@ -85,9 +85,9 @@ public sealed class AlertToast : Window
 
     private static string IconFor(AlertKind kind) => kind switch
     {
-        AlertKind.CpuTemperature or AlertKind.GpuTemperature => "🌡️",
-        AlertKind.MouseBattery => "🪫",
-        _ => "✨"
+        AlertKind.CpuTemperature or AlertKind.GpuTemperature => "\uE9CA", // thermomètre
+        AlertKind.MouseBattery => "\uE850", // batterie vide
+        _ => "\uE7BA" // avertissement
     };
 
     private static Color WithAlpha(Color c, byte a) => Color.FromArgb(a, c.R, c.G, c.B);
@@ -96,9 +96,16 @@ public sealed class AlertToast : Window
     {
         var accent = new LinearGradientBrush(start, end, 0);
 
-        // Pastille : halo dégradé + émoji en couleur.
-        var icon = new Image { Width = 28, Height = 28 };
-        Emoji.Wpf.Image.SetSource(icon, IconFor(alert.Kind));
+        // Pastille : halo dégradé + symbole Segoe aux couleurs de l'alerte.
+        var icon = new TextBlock
+        {
+            Text = IconFor(alert.Kind),
+            FontFamily = new FontFamily(Controls.ShortcutIcons.SymbolFont),
+            FontSize = 24,
+            Foreground = accent,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
         var badge = new Border
         {
             Width = 52,
@@ -149,7 +156,7 @@ public sealed class AlertToast : Window
 
         var close = new Button
         {
-            Content = "",
+            Content = "\uE711",
             FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),
             FontSize = 10,
             Width = 22,

@@ -404,32 +404,6 @@ public sealed class ModuleAppearance : ObservableSettings
     }
 }
 
-/// <summary>
-/// Apparence du sélecteur d'émojis : transparent, avec un léger fond noir par défaut.
-/// </summary>
-public sealed class EmojiPickerSettings : ObservableSettings
-{
-    private string _backgroundColor = "#FF000000";
-    private double _backgroundOpacity = 0.5;
-    private string _borderColor = "#FFFFFFFF";
-    private double _borderOpacity = 0.18;
-    private double _cornerRadius = 18;
-
-    public string BackgroundColor { get => _backgroundColor; set => Set(ref _backgroundColor, value); }
-    /// <summary>Opacité du fond (0 = entièrement transparent).</summary>
-    public double BackgroundOpacity { get => _backgroundOpacity; set => Set(ref _backgroundOpacity, value); }
-    public string BorderColor { get => _borderColor; set => Set(ref _borderColor, value); }
-    public double BorderOpacity { get => _borderOpacity; set => Set(ref _borderOpacity, value); }
-    public double CornerRadius { get => _cornerRadius; set => Set(ref _cornerRadius, value); }
-
-    public void Reset()
-    {
-        var d = new EmojiPickerSettings();
-        BackgroundColor = d.BackgroundColor; BackgroundOpacity = d.BackgroundOpacity;
-        BorderColor = d.BorderColor; BorderOpacity = d.BorderOpacity; CornerRadius = d.CornerRadius;
-    }
-}
-
 /// <summary>Affichage, police et taille d'un texte de module.</summary>
 public sealed class TextPartStyle : ObservableSettings
 {

@@ -39,10 +39,10 @@ public partial class SettingsWindow : Window
         ["weather"] = "\uE9CA",
         ["temperatures"] = "\uE9D2",
         ["airquality"] = "\uE9CA",
-        ["simhub"] = "\uE7FC",
         ["sensorbars"] = "\uE9D9",
         ["moon"] = "\uE708",
         ["sun"] = "\uE706",
+        ["searchbar"] = "\uE721",
     };
 
     private sealed record WidgetRow(string Id, string Label, string Glyph, bool IsVisible, bool CanCustomize, string Category);
@@ -53,7 +53,7 @@ public partial class SettingsWindow : Window
         ("Matériel", new[] { "cpu", "gpu", "ram", "disk", "network", "temperatures", "sensorbars", "power" }),
         ("Audio et médias", new[] { "sound", "media", "visualizer" }),
         ("Heure et météo", new[] { "clock", "calendar", "sky" }),
-        ("Outils", new[] { "shortcuts", "mouse", "claude", "simhub" }),
+        ("Outils", new[] { "searchbar", "shortcuts", "mouse", "claude" }),
     };
 
     /// <summary>Liste de la page Modules, groupée par catégorie (les modules inconnus vont dans « Autres »).</summary>
@@ -157,15 +157,11 @@ public partial class SettingsWindow : Window
         InitConsolePage();
 
         // Divers
-        GeminiApiKeyBox.Password = config.GeminiApiKey ?? "";
-        EmojiHotkeyBox.Display(Interop.HotkeyGesture.Parse(config.EmojiHotkey));
-        EmojiAppearanceCard.DataContext = config.EmojiPicker;
-        config.EmojiPicker.PropertyChanged += OnEmojiPickerSettingsChanged;
+        SpellLanguageText.Text = SpellCorrector.Language is { } language
+            ? new System.Globalization.CultureInfo(language).DisplayName
+            : "Aucun (installe le français dans les langues de Windows)";
         AlertsPanel.DataContext = config.Alerts;
         config.Alerts.PropertyChanged += OnAlertSettingsChanged;
-        EmojiHotkeyStatus.Text = config.EmojiHotkey is null ? "Aucun raccourci : le sélecteur d'émojis est désactivé."
-            : widgetManager.IsEmojiHotkeyActive ? "Actif."
-            : "Ce raccourci est déjà utilisé par une autre application : choisis-en un autre.";
         LockWidgetsCheck.IsChecked = config.WidgetsLocked;
         SetNavCollapsed(config.SettingsNavCollapsed, save: false);
         LayoutEditCheck.IsChecked = widgetManager.LayoutEditMode;
@@ -180,7 +176,6 @@ public partial class SettingsWindow : Window
             _widgetManager.Deck.StatusChanged -= ShowDeckStatus;
             _widgetManager.Theme.PropertyChanged -= OnGlobalThemeChanged;
             _widgetManager.Config.Power.PropertyChanged -= OnPowerSettingsChanged;
-            _widgetManager.Config.EmojiPicker.PropertyChanged -= OnEmojiPickerSettingsChanged;
             _widgetManager.Config.Alerts.PropertyChanged -= OnAlertSettingsChanged;
             _widgetManager.SuspendHotkeys(false); // fermeture en pleine saisie : les raccourcis reviennent
             _integrationsTimer.Stop();
@@ -193,6 +188,9 @@ public partial class SettingsWindow : Window
                 appearance.PropertyChanged -= handler;
             foreach (var (style, handler) in _textSubscriptions)
                 style.PropertyChanged -= handler;
+            foreach (var (style, handler) in _buttonSubscriptions)
+                style.PropertyChanged -= handler;
+            _buttonSubscriptions.Clear();
             if (_saveTimer.IsEnabled)
             {
                 _saveTimer.Stop();

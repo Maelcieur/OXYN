@@ -29,18 +29,16 @@ public partial class AddObsTileWindow : TileEditorWindow
         (ObsAction.StudioTransition, "Transition du mode Studio")
     };
 
-    private readonly Func<EmojiPickerWindow> _createEmojiPicker;
     private readonly ObsService _obs;
     private readonly TileIconState _icon = new();
     private bool _loading;
     private bool _nameManual; // le nom a été saisi à la main : il n'est plus proposé automatiquement
     private string? _sourcesScene; // scène dont la liste des sources est affichée
 
-    public AddObsTileWindow(Window owner, Func<EmojiPickerWindow> createEmojiPicker, ObsService obs, ShortcutItem? existing = null)
+    public AddObsTileWindow(Window owner, ObsService obs, ShortcutItem? existing = null)
         : base(owner)
     {
         InitializeComponent();
-        _createEmojiPicker = createEmojiPicker;
         _obs = obs;
 
         _loading = true;
@@ -247,12 +245,12 @@ public partial class AddObsTileWindow : TileEditorWindow
     private void Icon_Click(object sender, RoutedEventArgs e)
     {
         var name = string.IsNullOrWhiteSpace(NameBox.Text) ? "OBS" : NameBox.Text.Trim();
-        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, _createEmojiPicker, DefaultGlyph), choice =>
+        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, DefaultGlyph), choice =>
             {
                 _icon.ApplyChoice(choice);
                 ShowIcon();
             })) return;
-        if (_icon.Choose(DialogOwner, name, _createEmojiPicker, DefaultGlyph)) ShowIcon();
+        if (_icon.Choose(DialogOwner, name, DefaultGlyph)) ShowIcon();
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Complete(false);

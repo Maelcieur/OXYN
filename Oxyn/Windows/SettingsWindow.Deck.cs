@@ -409,9 +409,6 @@ public partial class SettingsWindow
         ScheduleSave();
     }
 
-    private EmojiPickerWindow CreateEmojiPickerForChoice()
-        => new(() => _widgetManager.Config.RecentEmojis, _widgetManager.Config.EmojiPicker);
-
     /// <summary>Modifie une tuile dans le panneau intégré de la page Switch.</summary>
     private void DeckTileEdit_Click(object sender, RoutedEventArgs e)
     {
@@ -423,15 +420,15 @@ public partial class SettingsWindow
         if (app.Kind == TileKind.ConsoleMode) return; // action fixe : rien à configurer
         TileEditorWindow editor = app.Kind switch
         {
-            TileKind.Hotkey => new AddHotkeyShortcutWindow(this, CreateEmojiPickerForChoice, app),
-            TileKind.Command => new AddCommandTileWindow(this, CreateEmojiPickerForChoice, app),
-            TileKind.MicMute => new AddMuteTileWindow(this, CreateEmojiPickerForChoice, output: false, app),
-            TileKind.OutputMute => new AddMuteTileWindow(this, CreateEmojiPickerForChoice, output: true, app),
-            TileKind.Obs => new AddObsTileWindow(this, CreateEmojiPickerForChoice, _widgetManager.Obs, app),
-            TileKind.Twitch => new AddTwitchTileWindow(this, CreateEmojiPickerForChoice, _widgetManager.Twitch, app),
-            TileKind.Voicemod => new AddVoicemodTileWindow(this, CreateEmojiPickerForChoice, _widgetManager.Voicemod, app),
-            TileKind.Plugin => new AddPluginTileWindow(this, CreateEmojiPickerForChoice, _widgetManager.PluginHost, app),
-            _ => new AddCustomShortcutWindow(this, CreateEmojiPickerForChoice, app)
+            TileKind.Hotkey => new AddHotkeyShortcutWindow(this, app),
+            TileKind.Command => new AddCommandTileWindow(this, app),
+            TileKind.MicMute => new AddMuteTileWindow(this, output: false, app),
+            TileKind.OutputMute => new AddMuteTileWindow(this, output: true, app),
+            TileKind.Obs => new AddObsTileWindow(this, _widgetManager.Obs, app),
+            TileKind.Twitch => new AddTwitchTileWindow(this, _widgetManager.Twitch, app),
+            TileKind.Voicemod => new AddVoicemodTileWindow(this, _widgetManager.Voicemod, app),
+            TileKind.Plugin => new AddPluginTileWindow(this, _widgetManager.PluginHost, app),
+            _ => new AddCustomShortcutWindow(this, fullIcon: true, existing: app)
         };
         ShowInlineEditor(editor, accepted =>
         {
@@ -451,7 +448,9 @@ public partial class SettingsWindow
         app.Hotkey = edited.Hotkey;
         app.Command = edited.Command;
         app.RunAsAdmin = edited.RunAsAdmin;
-        app.ConfirmTap = edited.ConfirmTap;
+        // Seuls ces éditeurs proposent « Confirmer » : pour les autres, le choix fait dans l'inspecteur est gardé.
+        if (edited.Kind is TileKind.Command or TileKind.Obs or TileKind.Twitch or TileKind.Voicemod or TileKind.Plugin)
+            app.ConfirmTap = edited.ConfirmTap;
         app.DeviceId = edited.DeviceId;
         app.ObsAction = edited.ObsAction;
         app.ObsTarget = edited.ObsTarget;
@@ -472,6 +471,8 @@ public partial class SettingsWindow
         app.IconColor = edited.IconColor;
         app.TileColor = edited.TileColor;
         app.IconScale = edited.IconScale;
+        // « Masquer le nom » changé dans l'éditeur : il remplace le choix propre fait dans l'inspecteur (ShowName).
+        if (edited.HideName != app.HideName) app.ShowName = edited.HideName ? false : null;
         app.HideName = edited.HideName;
         app.ImageTint = edited.ImageTint;
         var previousActiveImage = app.ActiveIconPath;
@@ -488,7 +489,7 @@ public partial class SettingsWindow
     private void DeckAppIcon_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: ShortcutItem app }) return;
-        var chooser = new IconChooserWindow(this, app.Name, CreateEmojiPickerForChoice, app, tileOptions: true);
+        var chooser = new IconChooserWindow(this, app.Name, app, tileOptions: true);
         PresentInlineIconChooser(chooser, accepted =>
         {
             if (accepted && chooser.Result is { } choice)

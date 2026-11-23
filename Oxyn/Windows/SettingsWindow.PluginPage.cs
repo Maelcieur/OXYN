@@ -54,6 +54,11 @@ public partial class SettingsWindow
             _pluginPage.Visibility = Visibility.Visible;
             _pluginPage.CoreWebView2.Navigate(new Uri(launch.Page).AbsoluteUri);
         }
+        catch (UriFormatException ex)
+        {
+            Log.Warn("Adresse de la page de réglages du plugin invalide", ex);
+            ShowPluginPageMessage("La page de réglages de ce plugin a une adresse invalide.");
+        }
         catch (Exception ex) when (ex is WebView2RuntimeNotFoundException or InvalidOperationException or System.Runtime.InteropServices.COMException
                                        or ArgumentException or UnauthorizedAccessException)
         {

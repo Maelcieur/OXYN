@@ -54,8 +54,9 @@ public sealed class SpectrumVisualizer : FrameworkElement
 
         for (var i = 0; i < raw.Length; i++)
         {
-            _levels[i] = raw[i] > _levels[i]
-                ? _levels[i] + (raw[i] - _levels[i]) * Attack
+            var level = double.IsFinite(raw[i]) ? raw[i] : 0;   // un NaN resterait collé pour toujours (NaN * Decay = NaN)
+            _levels[i] = level > _levels[i]
+                ? _levels[i] + (level - _levels[i]) * Attack
                 : _levels[i] * Decay;
 
             if (_levels[i] >= _peaks[i])

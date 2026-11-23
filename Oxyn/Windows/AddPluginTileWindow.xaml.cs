@@ -19,7 +19,6 @@ namespace Oxyn;
 /// </summary>
 public partial class AddPluginTileWindow : TileEditorWindow
 {
-    private readonly Func<EmojiPickerWindow> _createEmojiPicker;
     private readonly PluginHost _host;
     private readonly ShortcutItem? _existing;
     private readonly TileIconState _icon = new();
@@ -27,20 +26,23 @@ public partial class AddPluginTileWindow : TileEditorWindow
     private readonly List<(PluginSetting Setting, Func<JsonNode?> Read)> _fields = new();
     private bool _loading;
     private bool _nameManual;
+    private readonly bool _missingPlugin;
     private readonly string? _preselectedAction;
 
     /// <param name="pluginId">Nouvelle tuile : plugin choisi d'avance (bibliothèque d'actions).</param>
     /// <param name="actionId">Nouvelle tuile : action choisie d'avance.</param>
-    public AddPluginTileWindow(Window owner, Func<EmojiPickerWindow> createEmojiPicker, PluginHost host, ShortcutItem? existing = null,
+    public AddPluginTileWindow(Window owner, PluginHost host, ShortcutItem? existing = null,
         string? pluginId = null, string? actionId = null)
         : base(owner)
     {
         _preselectedAction = actionId;
         InitializeComponent();
-        _createEmojiPicker = createEmojiPicker;
         _host = host;
         _existing = existing;
         _plugins = host.Plugins.Where(p => p.Manifest is not null).ToList();
+        // Tuile dont le plugin n'est plus installé : on n'en choisit pas un autre à sa place en enregistrant.
+        _missingPlugin = existing is not null
+            && !_plugins.Any(p => string.Equals(p.Id, existing.PluginId, StringComparison.OrdinalIgnoreCase));
 
         _loading = true;
         foreach (var plugin in _plugins) PluginBox.Items.Add(plugin.Name);
@@ -77,6 +79,13 @@ public partial class AddPluginTileWindow : TileEditorWindow
 
     private void ShowStatus()
     {
+        if (_missingPlugin)
+        {
+            StatusText.Text = $"Le plugin « {_existing!.PluginId} » n'est plus installé : réinstalle-le (Paramètres › Plugins) pour modifier cette tuile.";
+            StatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xE5, 0xA0, 0x3E));
+            AddButton.IsEnabled = false;
+            return;
+        }
         if (_plugins.Count == 0)
         {
             StatusText.Text = "Aucun plugin n'est installé : installe-en un dans Paramètres › Plugins.";
@@ -138,7 +147,14 @@ public partial class AddPluginTileWindow : TileEditorWindow
         var action = CurrentAction;
         ActionHint.Text = action?.Tooltip ?? "";
         ActionHint.Visibility = string.IsNullOrEmpty(ActionHint.Text) ? Visibility.Collapsed : Visibility.Visible;
-        if (!_nameManual) NameBox.Text = action?.Name ?? "";
+        if (!_nameManual)
+        {
+            // Nom proposé : ne doit pas passer pour une saisie à la main.
+            var wasLoading = _loading;
+            _loading = true;
+            NameBox.Text = action?.Name ?? "";
+            _loading = wasLoading;
+        }
         ShowIcon();
         if (action is null) return;
 
@@ -239,12 +255,12 @@ public partial class AddPluginTileWindow : TileEditorWindow
     private void Icon_Click(object sender, RoutedEventArgs e)
     {
         var name = string.IsNullOrWhiteSpace(NameBox.Text) ? "Plugin" : NameBox.Text.Trim();
-        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, _createEmojiPicker, TileRuntime.PluginGlyph), choice =>
+        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, TileRuntime.PluginGlyph), choice =>
             {
                 _icon.ApplyChoice(choice);
                 ShowIcon();
             })) return;
-        if (!_icon.Choose(DialogOwner, name, _createEmojiPicker, TileRuntime.PluginGlyph)) return;
+        if (!_icon.Choose(DialogOwner, name, TileRuntime.PluginGlyph)) return;
         ShowIcon();
     }
 

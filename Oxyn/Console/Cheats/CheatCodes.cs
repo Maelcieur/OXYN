@@ -96,7 +96,7 @@ public static class CheatCodes
                     ? new Dictionary<string, GameCheatCodes>(d, StringComparer.OrdinalIgnoreCase)
                     : new(StringComparer.OrdinalIgnoreCase);
         }
-        catch (Exception ex) { Log.Warn("cheat-codes.json illisible", ex); }
+        catch (Exception ex) { Log.Warn("cheat-codes.json illisible", ex); JsonFile.KeepCorruptCopy(file); }
         return new(StringComparer.OrdinalIgnoreCase);
     }
 

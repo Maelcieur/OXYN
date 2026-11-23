@@ -230,6 +230,10 @@ public sealed partial class ProfileService
                     throw Invalid("une image de fond référencée par le profil n'est pas dans l'archive.");
             }
 
+            // Glyphes de boutons : symboles, émojis ou logos seulement. Un chemin de fichier (UNC surtout) serait ouvert au rendu.
+            foreach (var style in profile.AllModuleAppearances().SelectMany(a => a.Buttons.Values))
+                if (style?.Glyph is { } glyph && Oxyn.Controls.ShortcutIcons.IsImagePath(glyph)) style.Glyph = null;
+
             var fontError = false;
             MapFontKeys(profile, key =>
             {

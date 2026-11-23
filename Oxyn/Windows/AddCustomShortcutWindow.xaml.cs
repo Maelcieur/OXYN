@@ -11,13 +11,13 @@ namespace Oxyn;
 /// </summary>
 public partial class AddCustomShortcutWindow : TileEditorWindow
 {
-    private readonly Func<EmojiPickerWindow>? _createEmojiPicker;
+    private readonly bool _fullIcon;
     private readonly TileIconState _icon = new();
 
     /// <param name="owner">Fenêtre parente (null = centrée sur l'écran).</param>
-    /// <param name="createEmojiPicker">Fournit le sélecteur d'émoji ; active le choix d'icône complet.</param>
+    /// <param name="fullIcon">Active le choix d'icône complet (symboles, images).</param>
     /// <param name="existing">Tuile à modifier (champs pré-remplis) ; null pour en créer une.</param>
-    public AddCustomShortcutWindow(Window? owner = null, Func<EmojiPickerWindow>? createEmojiPicker = null, ShortcutItem? existing = null)
+    public AddCustomShortcutWindow(Window? owner = null, bool fullIcon = false, ShortcutItem? existing = null)
         : base(owner)
     {
         InitializeComponent();
@@ -25,8 +25,8 @@ public partial class AddCustomShortcutWindow : TileEditorWindow
         {
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
         }
-        _createEmojiPicker = createEmojiPicker;
-        if (createEmojiPicker is not null)
+        _fullIcon = fullIcon;
+        if (fullIcon)
         {
             LegacyIconPanel.Visibility = Visibility.Collapsed;
             ChooserIconPanel.Visibility = Visibility.Visible;
@@ -46,7 +46,7 @@ public partial class AddCustomShortcutWindow : TileEditorWindow
 
     private void ShowIcon()
     {
-        if (_createEmojiPicker is null) return;
+        if (!_fullIcon) return;
         IconHost.Content = ShortcutIcons.Create(_icon.Preview(null, LinkBox.Text.Trim()), 28);
     }
 
@@ -81,14 +81,14 @@ public partial class AddCustomShortcutWindow : TileEditorWindow
 
     private void Icon_Click(object sender, RoutedEventArgs e)
     {
-        if (_createEmojiPicker is null) return;
+        if (!_fullIcon) return;
         var name = string.IsNullOrWhiteSpace(NameBox.Text) ? "Tuile" : NameBox.Text.Trim();
-        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, _createEmojiPicker, null, LinkBox.Text.Trim()), choice =>
+        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, null, LinkBox.Text.Trim()), choice =>
             {
                 _icon.ApplyChoice(choice);
                 ShowIcon();
             })) return;
-        if (_icon.Choose(DialogOwner, name, _createEmojiPicker, null, LinkBox.Text.Trim())) ShowIcon();
+        if (_icon.Choose(DialogOwner, name, null, LinkBox.Text.Trim())) ShowIcon();
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
@@ -117,7 +117,7 @@ public partial class AddCustomShortcutWindow : TileEditorWindow
             Path = link,
             Arguments = ArgumentsBox.Text.Trim()
         };
-        if (_createEmojiPicker is null)
+        if (!_fullIcon)
             item.CustomIconPath = string.IsNullOrWhiteSpace(IconBox.Text) ? null : IconBox.Text.Trim();
         else if (!_icon.ApplyTo(item, DialogOwner, defaultGlyph: null))
             return;

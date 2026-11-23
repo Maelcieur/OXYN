@@ -321,7 +321,12 @@ public sealed class HardwareMonitorService : IDisposable
             RedirectStandardOutput = true, RedirectStandardError = true,
         };
         using var p = System.Diagnostics.Process.Start(psi);
-        if (p is null || !p.WaitForExit(5000)) return null;
+        if (p is null) return null;
+        if (!p.WaitForExit(5000))
+        {
+            try { p.Kill(); } catch { /* déjà terminé */ }
+            return null;
+        }
         return p.ExitCode;
     }
 
@@ -341,17 +346,21 @@ public sealed class HardwareMonitorService : IDisposable
         if (now - _lastBridgeRestart < wait) return;
         _lastBridgeRestart = now;
         _bridgeRestarts++;
-        try
+        // En tâche de fond : schtasks peut prendre plusieurs secondes et Read() tient le verrou des capteurs.
+        _ = Task.Run(() =>
         {
-            // Nouvelle tâche (OXYN), sinon celle d'avant le renommage (SysDeck).
-            var code = RunTask("OXYN-CpuTempBridge");
-            if (code != 0) code = RunTask("SysDeck-CpuTempBridge");
-            Log.Info($"Température CPU : le pont n'écrit plus depuis {(now - lastWriteUtc).TotalMinutes:0} min, tâche relancée (code {code}).");
-        }
-        catch (Exception ex)
-        {
-            Log.WarnOnce("bridge-restart", "Température CPU : relance du pont impossible", ex);
-        }
+            try
+            {
+                // Nouvelle tâche (OXYN), sinon celle d'avant le renommage (SysDeck).
+                var code = RunTask("OXYN-CpuTempBridge");
+                if (code != 0) code = RunTask("SysDeck-CpuTempBridge");
+                Log.Info($"Température CPU : le pont n'écrit plus depuis {(now - lastWriteUtc).TotalMinutes:0} min, tâche relancée (code {code}).");
+            }
+            catch (Exception ex)
+            {
+                Log.WarnOnce("bridge-restart", "Température CPU : relance du pont impossible", ex);
+            }
+        });
     }
 
     public void Dispose()

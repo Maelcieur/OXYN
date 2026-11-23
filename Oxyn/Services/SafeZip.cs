@@ -22,13 +22,24 @@ public static class SafeZip
             if (archive.Entries.Sum(e => e.Length) > maxBytes) throw new InvalidDataException("Cette archive est trop volumineuse.");
 
             Directory.CreateDirectory(destination);
+            long written = 0;
             foreach (var entry in archive.Entries)
             {
                 var target = Path.GetFullPath(Path.Combine(destination, entry.FullName));
                 if (!IsInside(destination, target)) throw new InvalidDataException("Archive refusée : un fichier sort du dossier de destination.");
                 if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\')) { Directory.CreateDirectory(target); continue; }
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-                entry.ExtractToFile(target, overwrite: true);
+                // Taille réellement décompressée comptée (celle de l'en-tête du zip peut mentir).
+                using var input = entry.Open();
+                using var output = File.Create(target);
+                var buffer = new byte[81920];
+                int read;
+                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    written += read;
+                    if (written > maxBytes) throw new InvalidDataException("Cette archive est trop volumineuse.");
+                    output.Write(buffer, 0, read);
+                }
             }
         }
     }

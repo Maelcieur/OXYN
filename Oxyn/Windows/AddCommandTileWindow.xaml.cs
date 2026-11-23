@@ -11,16 +11,14 @@ public partial class AddCommandTileWindow : TileEditorWindow
 {
     private const string CustomPreset = "Personnalisée";
 
-    private readonly Func<EmojiPickerWindow> _createEmojiPicker;
     private readonly TileIconState _icon = new();
     private string _defaultGlyph = TileRuntime.CommandGlyph;
     private bool _loading;
 
-    public AddCommandTileWindow(Window owner, Func<EmojiPickerWindow> createEmojiPicker, ShortcutItem? existing = null)
+    public AddCommandTileWindow(Window owner, ShortcutItem? existing = null)
         : base(owner)
     {
         InitializeComponent();
-        _createEmojiPicker = createEmojiPicker;
 
         _loading = true;
         PresetBox.Items.Add(CustomPreset);
@@ -65,12 +63,12 @@ public partial class AddCommandTileWindow : TileEditorWindow
     private void Icon_Click(object sender, RoutedEventArgs e)
     {
         var name = string.IsNullOrWhiteSpace(NameBox.Text) ? "Commande" : NameBox.Text.Trim();
-        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, _createEmojiPicker, _defaultGlyph), choice =>
+        if (ChooseIconInline(_icon.CreateChooser(DialogOwner, name, _defaultGlyph), choice =>
             {
                 _icon.ApplyChoice(choice);
                 ShowIcon();
             })) return;
-        if (_icon.Choose(DialogOwner, name, _createEmojiPicker, _defaultGlyph)) ShowIcon();
+        if (_icon.Choose(DialogOwner, name, _defaultGlyph)) ShowIcon();
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Complete(false);

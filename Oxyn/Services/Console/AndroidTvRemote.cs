@@ -19,7 +19,7 @@ public static class AndroidTvRemote
     public const int PairingPort = 6467, RemotePort = 6466;
 
     // Touches Android.
-    public const int KeyVolumeUp = 24, KeyVolumeDown = 25, KeyPower = 26, KeyMute = 164, KeySleep = 223, KeyWakeUp = 224;
+    public const int KeyVolumeUp = 24, KeyVolumeDown = 25, KeyPower = 26, KeySleep = 223;
 
     /// <summary>Touche « entrée HDMI n » (KEYCODE_TV_INPUT_HDMI_1 = 243 ... HDMI_4 = 246).</summary>
     public static int KeyHdmi(int n) => 242 + Math.Clamp(n, 1, 4);
@@ -152,7 +152,11 @@ public static class AndroidTvRemote
             var link = new Link(tcp, ssl);
             _ = link.ReadLoopAsync();
             await Task.WhenAny(link._ready.Task, Task.Delay(5000, ct));
-            if (link.Closed) throw new IOException("La TV a fermé la connexion (appairage perdu ?).");
+            if (link.Closed)
+            {
+                link.Dispose();
+                throw new IOException("La TV a fermé la connexion (appairage perdu ?).");
+            }
             return link;
         }
 
@@ -238,13 +242,16 @@ public static class AndroidTvRemote
     private static async Task<(TcpClient, SslStream, X509Certificate2)> ConnectAsync(string host, int port, X509Certificate2 client, CancellationToken ct)
     {
         var tcp = new TcpClient();
+        SslStream? ssl = null;
+        try
+        {
         using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct))
         {
             timeout.CancelAfter(4000);
             await tcp.ConnectAsync(host, port, timeout.Token);
         }
         X509Certificate2? server = null;
-        var ssl = new SslStream(tcp.GetStream(), false, (_, cert, _, _) =>
+        ssl = new SslStream(tcp.GetStream(), false, (_, cert, _, _) =>
         {
             if (cert != null) server = new X509Certificate2(cert);
             return true;   // certificat autosigné de la TV
@@ -257,6 +264,13 @@ public static class AndroidTvRemote
             CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
         }, ct);
         return (tcp, ssl, server ?? throw new IOException("Certificat de la TV absent."));
+        }
+        catch
+        {
+            ssl?.Dispose();
+            tcp.Dispose();
+            throw;
+        }
     }
 
     private static async Task WriteFramedAsync(Stream s, byte[] msg, CancellationToken ct)

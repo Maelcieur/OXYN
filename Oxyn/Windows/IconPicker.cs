@@ -19,7 +19,7 @@ public static class IconPicker
 
     /// <summary>Null si l'utilisateur annule (ou si l'image choisie ne peut pas être copiée).</summary>
     public static Pick? Choose(Window owner, string name, string? currentValue, string? currentColor,
-        Func<EmojiPickerWindow> createEmojiPicker, bool centerOnScreen = false)
+        bool centerOnScreen = false)
     {
         var current = new ShortcutItem
         {
@@ -28,7 +28,7 @@ public static class IconPicker
             CustomIconPath = currentValue is not null && ShortcutIcons.IsImagePath(currentValue) ? currentValue : null,
             IconColor = currentColor
         };
-        var chooser = new IconChooserWindow(owner, name, createEmojiPicker, current);
+        var chooser = new IconChooserWindow(owner, name, current);
         if (centerOnScreen) chooser.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         if (chooser.ShowDialog() != true || chooser.Result is not { } choice) return null;
 

@@ -160,13 +160,14 @@ public partial class SettingsWindow
         ResetAppearanceButton.Content = "Réinitialiser toute l'apparence";
 
         CopyTheme(new ThemeSettings(), _widgetManager.Theme);
+        var oldImages = new List<string?>();
         foreach (var row in ModuleSelector.Items.Cast<ModuleRow>())
         {
             var a = row.Appearance;
             var defaults = new ModuleAppearance();
             var oldImage = a.BackgroundImage;
             a.BackgroundImage = null;
-            DeleteBackgroundIfUnused(oldImage); // peut encore servir à la Switch
+            oldImages.Add(oldImage); // supprimée après l'enregistrement ; peut encore servir à la Switch
             a.UseCustomTheme = a.CustomCard = a.CustomGauges = a.CustomAnimations = false;
             a.Theme = null;
             a.AutoSize = true;
@@ -183,6 +184,7 @@ public partial class SettingsWindow
         }
         BuildTextRows();
         BuildButtonRows();
+        foreach (var image in oldImages.Where(i => !string.IsNullOrEmpty(i)).Distinct()) SaveThenDelete(image);
     }
 
     /// <summary>Copie propriété par propriété, pour garder les liaisons et abonnements sur l'objet cible.</summary>

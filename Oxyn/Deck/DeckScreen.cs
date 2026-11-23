@@ -158,11 +158,17 @@ public sealed partial class DeckScreen : Grid
         return changed;
     }
 
-    /// <summary>Anime l'arrivée du contenu de la nouvelle page selon les préférences configurées.</summary>
-    public void AnimatePageTransition(int direction, DeckPageTransition style, int durationMs, DeckTransitionEasing easing)
+    /// <summary>Termine tout de suite une transition de page en cours (contenu opaque et à sa place).</summary>
+    private void FinishPageTransition()
     {
         _canvas.BeginAnimation(UIElement.OpacityProperty, null);
         _canvas.RenderTransform = Transform.Identity;
+    }
+
+    /// <summary>Anime l'arrivée du contenu de la nouvelle page selon les préférences configurées.</summary>
+    public void AnimatePageTransition(int direction, DeckPageTransition style, int durationMs, DeckTransitionEasing easing)
+    {
+        FinishPageTransition();
         if (direction == 0 || style == DeckPageTransition.None) return;
 
         var duration = new Duration(TimeSpan.FromMilliseconds(Math.Clamp(durationMs, 100, 1000)));

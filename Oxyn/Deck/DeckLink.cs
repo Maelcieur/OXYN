@@ -558,7 +558,12 @@ public sealed class DeckLink : IDisposable
         var events = reply.Events;
         _dispatcher.BeginInvoke(() =>
         {
-            foreach (var e in events) Touch?.Invoke(e);
+            foreach (var e in events)
+            {
+                // Une erreur sur un événement ne doit pas faire perdre les suivants (le relâché surtout).
+                try { Touch?.Invoke(e); }
+                catch (Exception ex) { Log.WarnOnce("deck-touch", "Écran tactile de la Switch", ex); }
+            }
         });
     }
 

@@ -89,6 +89,12 @@ public partial class SettingsWindow
 
     private void ShowInlineEditor(TileEditorWindow editor, Action<bool> completed)
     {
+        // Un sélecteur d'icône encore ouvert (éventuellement imbriqué) est fermé d'abord, sinon son état périmé survivrait au nouvel éditeur.
+        while (_inlineIconChooser is { } openChooser)
+        {
+            openChooser.CancelInline();
+            if (ReferenceEquals(_inlineIconChooser, openChooser)) break;
+        }
         _inlineEditor?.CancelInline();
         _inlineEditor = editor;
         SwitchTabActions.IsChecked = true;
@@ -336,14 +342,14 @@ public partial class SettingsWindow
     private IEnumerable<DeckAction> DeckActions()
     {
         const string apps = "Applications", system = "Système", switchSystem = "Nintendo Switch", tilePages = "Pages des tuiles", keyboard = "Clavier", audio = "Audio";
-        const string appsIcon = "", systemIcon = "", keyboardIcon = "", audioIcon = "";
+        const string appsIcon = "\uE71D", systemIcon = "\uE770", keyboardIcon = "\uE765", audioIcon = "\uE767";
 
-        yield return new(apps, appsIcon, "Application installée", "", "Un ou plusieurs .exe ou raccourcis (.lnk).", PickInstalledApps);
-        yield return new(apps, appsIcon, "Lien ou fichier", "", "Programme, fichier, dossier, adresse web ou protocole.",
-            () => null, Editor: () => new AddCustomShortcutWindow(this, CreateEmojiPickerForChoice));
+        yield return new(apps, appsIcon, "Application installée", "\uE71D", "Un ou plusieurs .exe ou raccourcis (.lnk).", PickInstalledApps);
+        yield return new(apps, appsIcon, "Lien ou fichier", "\uE71B", "Programme, fichier, dossier, adresse web ou protocole.",
+            () => null, Editor: () => new AddCustomShortcutWindow(this, fullIcon: true));
 
         yield return new(system, systemIcon, "Commande", TileRuntime.CommandGlyph, "Ligne de commande exécutée sans fenêtre.",
-            () => null, Editor: () => new AddCommandTileWindow(this, CreateEmojiPickerForChoice));
+            () => null, Editor: () => new AddCommandTileWindow(this));
         foreach (var preset in CommandRunner.Presets)
             yield return new(system, systemIcon, preset.Name, preset.Glyph, preset.Description, () => One(new ShortcutItem
             {
@@ -371,7 +377,7 @@ public partial class SettingsWindow
                 IconGlyph = "\uE76B"
             }));
 
-        yield return new(switchSystem, "brand:nintendoswitch", "Éteindre vers le mode RCM", "⚡",
+        yield return new(switchSystem, "brand:nintendoswitch", "Éteindre vers le mode RCM", "\uE945",
             "Éteint l'affichage et redémarre la Switch en mode RCM. Un second appui est requis pour confirmer.",
             () => One(new ShortcutItem
             {
@@ -379,9 +385,9 @@ public partial class SettingsWindow
                 SwitchAction = SwitchActionKind.EnterRcm,
                 Name = "Mode RCM",
                 ConfirmTap = true,
-                IconGlyph = "⚡"
+                IconGlyph = "\uE945"
             }));
-        yield return new(switchSystem, "brand:nintendoswitch", "Redémarrer sur hekate", "🚀",
+        yield return new(switchSystem, "brand:nintendoswitch", "Redémarrer sur hekate", "\uE72C",
             "Charge hekate depuis bootloader/update.bin ou payload.bin sur la carte SD. Un second appui est requis pour confirmer.",
             () => One(new ShortcutItem
             {
@@ -389,15 +395,15 @@ public partial class SettingsWindow
                 SwitchAction = SwitchActionKind.LaunchHekate,
                 Name = "Redémarrer sur hekate",
                 ConfirmTap = true,
-                IconGlyph = "🚀"
+                IconGlyph = "\uE72C"
             }));
 
         yield return new(system, systemIcon, "Mode console", TileRuntime.ConsoleGlyph,
             "Bascule le PC sur la TV avec une interface manette ; la tuile s'allume tant que le mode est actif. Configuration dans Paramètres › Mode console.",
             () => One(new ShortcutItem { Kind = TileKind.ConsoleMode, Name = "Mode console", IconGlyph = TileRuntime.ConsoleGlyph }));
 
-        yield return new(keyboard, keyboardIcon, "Raccourci clavier", "", "Envoie une combinaison de touches au PC.",
-            () => null, Editor: () => new AddHotkeyShortcutWindow(this, CreateEmojiPickerForChoice));
+        yield return new(keyboard, keyboardIcon, "Raccourci clavier", "\uE765", "Envoie une combinaison de touches au PC.",
+            () => null, Editor: () => new AddHotkeyShortcutWindow(this));
 
         // Micro et son : le périphérique par défaut tout de suite ; « Configurer l'action » permet d'en choisir un autre.
         yield return new(audio, audioIcon, "Micro muet", TileRuntime.MicGlyph, "Coupe ou rétablit le micro par défaut ; la tuile s'allume quand il est coupé.",
@@ -407,20 +413,20 @@ public partial class SettingsWindow
 
         yield return new("OBS Studio", "brand:obsstudio", "Action OBS", "brand:obsstudio",
             "Scène, stream, enregistrement, caméra virtuelle, relecture, muet d'une entrée, source…",
-            () => null, "#FFE7E8EB", Editor: () => new AddObsTileWindow(this, CreateEmojiPickerForChoice, _widgetManager.Obs));
+            () => null, "#FFE7E8EB", Editor: () => new AddObsTileWindow(this, _widgetManager.Obs));
         yield return new("Twitch", "brand:twitch", "Action Twitch", "brand:twitch",
             "Clip, marqueur, message, pub, modes du tchat, bouclier, titre, catégorie…",
-            () => null, Editor: () => new AddTwitchTileWindow(this, CreateEmojiPickerForChoice, _widgetManager.Twitch));
-        yield return new("Voicemod", "", "Action Voicemod", "",
+            () => null, Editor: () => new AddTwitchTileWindow(this, _widgetManager.Twitch));
+        yield return new("Voicemod", "\uE720", "Action Voicemod", "\uE720",
             "Changeur de voix, voix, son du soundboard, micro, m'entendre…",
-            () => null, "#FF2EE6B6", Editor: () => new AddVoicemodTileWindow(this, CreateEmojiPickerForChoice, _widgetManager.Voicemod));
+            () => null, "#FF2EE6B6", Editor: () => new AddVoicemodTileWindow(this, _widgetManager.Voicemod));
 
         // Une catégorie par plugin installé, une entrée par action (la fenêtre s'ouvre sur cette action).
         foreach (var plugin in _widgetManager.PluginHost.Plugins.Where(p => p.Manifest is not null))
             foreach (var action in plugin.Manifest!.Actions)
                 yield return new(plugin.Name, plugin.Manifest.IconPath ?? TileRuntime.PluginGlyph, action.Name, action.IconPath ?? TileRuntime.PluginGlyph,
                     action.Tooltip ?? plugin.Manifest.Description ?? "",
-                    () => null, Plugin: true, Editor: () => new AddPluginTileWindow(this, CreateEmojiPickerForChoice, _widgetManager.PluginHost,
+                    () => null, Plugin: true, Editor: () => new AddPluginTileWindow(this, _widgetManager.PluginHost,
                         pluginId: plugin.Id, actionId: action.Id));
     }
 
@@ -450,7 +456,7 @@ public partial class SettingsWindow
                 {
                     new TextBlock
                     {
-                        Text = collapsed ? "" : "",
+                        Text = collapsed ? "\uE76C" : "\uE70D",
                         FontFamily = new FontFamily(ShortcutIcons.SymbolFont),
                         FontSize = 10,
                         Foreground = (Brush)FindResource("Muted"),

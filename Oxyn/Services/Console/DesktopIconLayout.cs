@@ -247,13 +247,13 @@ public sealed class DesktopIconLayout
     private static extern bool IsWow64Process(IntPtr process, out bool wow64);
 
     [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern IntPtr VirtualAllocEx(IntPtr process, IntPtr address, uint size, uint type, uint protect);
+    private static extern IntPtr VirtualAllocEx(IntPtr process, IntPtr address, nuint size, uint type, uint protect);
 
     [DllImport("kernel32.dll")]
-    private static extern bool VirtualFreeEx(IntPtr process, IntPtr address, uint size, uint type);
+    private static extern bool VirtualFreeEx(IntPtr process, IntPtr address, nuint size, uint type);
 
     [DllImport("kernel32.dll")]
-    private static extern bool ReadProcessMemory(IntPtr process, IntPtr address, [Out] byte[] buffer, int size, out IntPtr read);
+    private static extern bool ReadProcessMemory(IntPtr process, IntPtr address, [Out] byte[] buffer, nint size, out IntPtr read);
 
     [DllImport("kernel32.dll")]
     private static extern bool WriteProcessMemory(IntPtr process, IntPtr address, byte[] buffer, int size, out IntPtr written);

@@ -54,7 +54,7 @@ public partial class SettingsWindow
     private void ButtonIcon_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { DataContext: ButtonRow row }) return;
-        var pick = IconPicker.Choose(this, row.Label, row.Style.Glyph, row.Style.Foreground, CreateEmojiPickerForChoice);
+        var pick = IconPicker.Choose(this, row.Label, row.Style.Glyph, row.Style.Foreground);
         if (pick is null) return;
 
         var previous = row.Style.Glyph;
@@ -169,7 +169,7 @@ public partial class SettingsWindow
     private void AudioDeviceIcon_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { DataContext: AudioDeviceRow row }) return;
-        var pick = IconPicker.Choose(this, row.OriginalName, row.Icon, row.IconColor, CreateEmojiPickerForChoice);
+        var pick = IconPicker.Choose(this, row.OriginalName, row.Icon, row.IconColor);
         if (pick is not null) row.SetIcon(pick.Value, pick.Color);
     }
 
@@ -241,7 +241,7 @@ public partial class SettingsWindow
     private void AppIcon_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { DataContext: AppIconRow row }) return;
-        var pick = IconPicker.Choose(this, row.DisplayName, row.Icon, row.IconColor, CreateEmojiPickerForChoice);
+        var pick = IconPicker.Choose(this, row.DisplayName, row.Icon, row.IconColor);
         if (pick is null) return;
         _widgetManager.SetAppIcon(row.AppKey, row.DisplayName, pick.Value, pick.Color);
         row.SetIcon(pick.Value, pick.Color);

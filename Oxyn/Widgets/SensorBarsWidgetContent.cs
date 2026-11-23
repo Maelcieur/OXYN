@@ -104,7 +104,7 @@ public sealed class SensorBarsWidgetContent : UserControl
             bar.Label.Text = !string.IsNullOrWhiteSpace(bar.Item.Label) ? bar.Item.Label : reading?.Name ?? "?";
             bar.Value.Text = reading is null ? "--" : SensorCatalog.Format(reading.Value, reading.Unit);
             var max = bar.Item.Max > 0 ? bar.Item.Max : SensorCatalog.DefaultMax(reading?.Unit ?? "%");
-            var ratio = reading is null ? 0 : Math.Clamp(reading.Value / max, 0, 1);
+            var ratio = reading is null || !double.IsFinite(reading.Value / max) ? 0 : Math.Clamp(reading.Value / max, 0, 1);
             Draw(bar, ratio);
         }
     }
@@ -124,9 +124,10 @@ public sealed class SensorBarsWidgetContent : UserControl
         if (s.Style == "Segments")
         {
             // Blocs alignés depuis le départ (gauche ou bas) ; les blocs éteints restent visibles en très atténué.
-            var n = s.Segments;
+            // Trop de blocs pour la longueur : on en retire (une largeur négative ferait lever WPF à chaque relevé).
+            var n = Math.Max(1, Math.Min(s.Segments, (int)(length / 3)));
             var gap = Math.Max(2, length / n * 0.22);
-            var size = (length - gap * (n - 1)) / n;
+            var size = Math.Max(1, (length - gap * (n - 1)) / n);
             var lit = (int)Math.Round(ratio * n);
             var dim = Frozen(new SolidColorBrush(Color.FromArgb(0x2E, color.R, color.G, color.B)));
             var panel = new StackPanel

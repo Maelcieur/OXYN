@@ -43,9 +43,13 @@ public partial class ModuleCard
     /// Ombre et survol selon le thème effectif. Bureau seulement : sur la Switch (cadre imposé, rendu en image)
     /// aucune marge n'est disponible et la souris n'existe pas, ces réglages y sont ignorés.
     /// </summary>
+    /// <summary>Vitesse des animations bornée (config.json modifié à la main : négative ou NaN ferait lever WPF).</summary>
+    private static double AnimationSpeed(ThemeSettings theme) =>
+        double.IsFinite(theme.AnimationSpeed) ? Math.Clamp(theme.AnimationSpeed, 0.3, 3) : 1;
+
     private void ApplyCardEffects(ThemeSettings theme)
     {
-        var enabled = _useDefaultChrome && !_fillFrame;
+        var enabled = _useDefaultChrome && !_fillFrame && !_bare;
 
         var shadowSize = enabled && theme.ShadowEnabled ? Math.Clamp(theme.ShadowSize, 0, 80) : 0;
         var showShadow = shadowSize >= 1 && theme.ShadowOpacity > 0;
@@ -96,7 +100,7 @@ public partial class ModuleCard
             return;
         }
 
-        var animation = new DoubleAnimation(target, TimeSpan.FromMilliseconds(150 * theme.AnimationSpeed))
+        var animation = new DoubleAnimation(target, TimeSpan.FromMilliseconds(150 * AnimationSpeed(theme)))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
@@ -126,7 +130,7 @@ public partial class ModuleCard
         var style = theme.EntranceStyle;
         if (!theme.AnimationsEnabled || style == "None") return;
 
-        var duration = TimeSpan.FromMilliseconds(500 * theme.AnimationSpeed);
+        var duration = TimeSpan.FromMilliseconds(500 * AnimationSpeed(theme));
         var cubic = new CubicEase { EasingMode = EasingMode.EaseOut };
 
         // Fondu cubique quel que soit AnimationEasing : une courbe élastique ferait vibrer l'opacité.
@@ -203,7 +207,7 @@ public partial class ModuleCard
 
         DoubleAnimation Loop(double from, double to, double seconds)
         {
-            var animation = new DoubleAnimation(from, to, TimeSpan.FromSeconds(seconds * Math.Clamp(theme.AnimationSpeed, 0.3, 3)))
+            var animation = new DoubleAnimation(from, to, TimeSpan.FromSeconds(seconds * AnimationSpeed(theme)))
             {
                 AutoReverse = true,
                 RepeatBehavior = RepeatBehavior.Forever,

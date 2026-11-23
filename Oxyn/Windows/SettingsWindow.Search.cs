@@ -84,7 +84,7 @@ public partial class SettingsWindow
             [NavSwitch] = ("Appareils", "Switch", "écran câble usb"),
             [NavConsole] = ("Appareils", "Mode console", "mode console tv télévision manette jeux émulateurs jaquettes steamgriddb raccourci de secours"),
             [NavIntegrations] = ("Connexions", "Applications et plugins", "applications connectées intégrations obs studio websocket stream enregistrement twitch clip marqueur tchat bouclier compte voicemod voix soundboard"),
-            [NavTools] = ("Système", "Outils", "outils correction ia gemini orthographe emoji émojis sélecteur"),
+            [NavTools] = ("Système", "Outils", "outils correction correcteur orthographe faute dictionnaire"),
             [NavGeneral] = ("Système", "Général", "avancé fps éléments masqués réinitialiser mises à jour"),
         };
 

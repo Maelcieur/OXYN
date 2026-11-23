@@ -32,11 +32,18 @@ public partial class TwitchInputWindow : Window
         Loaded += async (_, _) =>
         {
             InputBox.Focus();
-            if (request.LoadInitial is { } load && await load() is { Length: > 0 } initial && !_edited)
+            try
             {
-                InputBox.Text = initial;
-                InputBox.SelectAll();
-                _edited = false;
+                if (request.LoadInitial is { } load && await load() is { Length: > 0 } initial && !_edited)
+                {
+                    InputBox.Text = initial;
+                    InputBox.SelectAll();
+                    _edited = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("Valeur initiale de la saisie Twitch indisponible", ex);
             }
         };
         UpdateCounter();
@@ -75,7 +82,16 @@ public partial class TwitchInputWindow : Window
     {
         _searchTimer.Stop();
         var query = InputBox.Text.Trim();
-        var found = query.Length == 0 ? new List<TwitchCategory>() : await _twitch.SearchCategoriesAsync(query);
+        List<TwitchCategory> found;
+        try
+        {
+            found = query.Length == 0 ? new List<TwitchCategory>() : await _twitch.SearchCategoriesAsync(query);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("Recherche de catégorie Twitch impossible", ex);
+            return;
+        }
         if (query != InputBox.Text.Trim()) return;
         ResultsList.ItemsSource = found;
         if (found.Count > 0) ResultsList.SelectedIndex = 0;

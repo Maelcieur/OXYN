@@ -11,7 +11,7 @@ Desktop widgets for Windows + a Nintendo Switch turned into a USB touch screen /
 
 OXYN (WPF, .NET 8) shows widgets pinned to the desktop (below windows, like desktop icons):
 hardware monitoring, audio, now playing, clocks, calendar, weather, power cost in euros, a shortcut bar,
-Claude usage quota and AI text correction. Everything can be customized from the Settings window.
+a search bar, Claude usage quota and offline spell checking. Everything can be customized from the Settings window.
 
 With the **SwitchDeck payload**, a Nintendo Switch plugged in over USB-C becomes a second 1280×720
 touch screen: the PC renders the modules and tiles, the Switch displays them and sends touch input back.
@@ -44,6 +44,7 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 
 ## Contents
 
+- [What's new in 2.2.0](#whats-new-in-220)
 - [Modules](#modules)
 - [Compatibility](#compatibility)
 - [Switch module (SwitchDeck)](#switch-module-switchdeck)
@@ -54,6 +55,39 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 - [Data](#data)
 - [Troubleshooting](#troubleshooting)
 - [Licenses and credits](#licenses-and-credits)
+
+## What's new in 2.2.0
+
+**Added**
+- **Search bar** (desktop module, not on the Switch):
+  - no card around it: only the bar shows; drag it to move it, click it to type;
+  - background and border color and opacity, input window opacity, width and height; text turns dark automatically on
+    a light bar;
+  - engine choice right in the bar (pill on the left): Google, Bing, DuckDuckGo, Brave, Ecosia, Qwant, YouTube, plus
+    your own engines (name and URL with `{texte}`) or ready-made sites (Wikipedia, Amazon, GitHub, Reddit, Twitch,
+    Steam…);
+  - engine suggestions while typing (can be turned off); a typed address (`example.com`) opens directly;
+  - bookmarks picked one by one (from Chrome, Edge, Brave or Opera, or typed by hand), renamable and reorderable;
+    none by default;
+  - `/xxx` commands picked from a list, renamable and editable, none by default. They send a ready-made prompt to
+    Google's AI Mode (summarize, translate, explain, definition, synonyms, rephrase, compare, recipe, code or a custom
+    command), except spell checking, which works offline.
+- **Offline spell checking** (Ctrl+Space on selected text, or the bar command) with the Windows spell checker: nothing is
+  sent online, no key to enter.
+
+**Removed**
+- Gemini AI text correction (and its API key): replaced by offline spell checking.
+- Emojis: emoji picker and its hotkey, recent emojis, emojis as tile icons (old emoji icons are replaced by a symbol),
+  Emojis tab of the Switch keyboard, Emoji.Wpf library.
+- SimHub module (sim racing) and its port setting.
+
+**Fixed**
+- Play time lost after going back to the menu through the Guide.
+- Unreadable JSON files (game library, cheats) set aside instead of being overwritten; safer disk writes.
+- Resource leaks (HID controllers, audio, TV network connections) and editor windows kept in memory.
+- Off-screen modules moved back; invalid sizes rejected in gauges, bars and volume controls.
+- Plugins: a malformed message no longer drops the connection; stricter file names on profile import.
+- Various Settings fixes (confirmations, subscriptions, unhandled errors) and unused code removed.
 
 ## Modules
 
@@ -78,19 +112,23 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 | `airquality` | Air quality (European AQI, PM2.5, PM10, NO₂, O₃) | Open-Meteo, same city as the weather |
 | `temperatures` | CPU and GPU temperature curves on one chart | LibreHardwareMonitor |
 | `sensorbars` | Bars for any sensor (temperatures, loads, RAM, VRAM, fans…) | LibreHardwareMonitor |
-| `simhub` | Sim racing: gear, speed, RPM, lap times, position, fuel | [SimHub](https://www.simhubdash.com) + the [SimHub Property Server](https://github.com/pre-martin/SimHubPropertyServer) plugin |
+| `searchbar` | Search bar (desktop only): built-in or added engines, suggestions, picked bookmarks, `/xxx` commands for Google's AI | Chosen engine; bookmarks from Chrome, Edge, Brave, Opera or typed |
 | `shortcuts` | Shortcut bar | `shortcuts.json` |
 
-- **AI correction**: select text in any application and press **Ctrl+Space**
-  (Gemini API key set in Settings).
-- **Emoji picker**: a global hotkey (chosen in Settings) opens a picker near the cursor with categories,
-  search and recent emojis; the selected emoji is typed into the active application.
-  Emojis can also be used as icons for Switch tiles.
+- **Spell checking**: select text in any application and press **Ctrl+Space**; mistakes are fixed by the Windows
+  spell checker, offline (spelling only, not grammar).
+- **Search bar**: a module without a card (drag the bar to move it, click to type). Enter searches with the chosen
+  engine or opens the typed address; the pill on the left switches engines (Google, Bing, DuckDuckGo, Brave, Ecosia,
+  Qwant, YouTube, plus your own engines: a name and a URL with `{texte}`, or ready-made sites such as Wikipedia, Amazon,
+  GitHub). Engine suggestions and the bookmarks you pick (from Chrome, Edge, Brave or Opera, or typed by hand) and rename;
+  arrow on the right to browse them. `/xxx` commands: none by default, add the ones you want (summarize, translate, explain… sent to
+  Google's AI Mode, or offline spell checking) and rename them. Color, opacity (bar and input window), border, width
+  and height can be set.
 - **On the desktop**: **right-click** a module to customize it, resize it or its text, edit the layout,
   lock positions or hide it; **Ctrl+mouse wheel** to scale it.
 - **Profiles and themes**: save, export/import (`.oxynprofile`), 9 built-in themes (including "Edge noir":
   matte black cards, thin gauges, orange accent).
-- **Module settings**: the clocks, weather, air quality, temperature, sensor bar, SimHub and media options are in the
+- **Module settings**: the clocks, weather, air quality, temperature, sensor bar, search bar and media options are in the
   module's own customization page (Style tab). New modules are hidden until you turn them on.
 - **Now playing**: Compact, Banner (large cover), Vinyl (spinning record with the cover as its label) or Sleeve
   (cover with the record sliding out) layouts; thin, thick or segmented time bar (click to seek); buttons with or
@@ -186,7 +224,7 @@ connected.
 | **Voicemod** | Voicemod running on the PC; allow OXYN in Voicemod the first time | Voice changer, load a voice, random voice, play a soundboard sound, stop sounds, mic, Hear Myself, background effect |
 
 - **Typing on the Switch**: a Twitch *message*, *title* or *category* tile can ask for its text when pressed.
-  An AZERTY keyboard then opens on the Switch, with the account's Twitch emotes, emojis and a category search
+  An AZERTY keyboard then opens on the Switch, with the account's Twitch emotes and a category search
   with box art. From the desktop, a small input window opens on the PC instead.
 - **Voicemod**: voices and sounds are picked from Voicemod's own lists and use their picture as the tile icon.
   Sounds are grouped by soundboard, your own first.
@@ -361,7 +399,7 @@ replaces the previous installation.
 
 | File / folder | Content |
 |---|---|
-| `config.json` | Settings, theme, module appearance, positions, Switch, connected apps. The Gemini key, the OBS password and the Twitch tokens are encrypted (DPAPI, current Windows account) and never exported in profiles. |
+| `config.json` | Settings, theme, module appearance, positions, Switch, connected apps. The OBS password and the Twitch tokens are encrypted (DPAPI, current Windows account) and never exported in profiles. |
 | `shortcuts.json` | Shortcut bar entries |
 | `custom-colors.json` | Custom colors of the color picker |
 | `power-usage.json` | Power usage history |
@@ -391,8 +429,10 @@ one instance runs per data folder.
 - **Switch not detected**: make sure the payload shows "En attente du PC" and use a USB-C data cable.
 - **Joy-Con do nothing**: copy the latest `switchdeck.bin` (protocol v6) to the SD card; the Joy-Con tab warns when the
   payload is too old.
-- **SimHub module says "SimHub non détecté"**: start SimHub with the SimHub Property Server plugin enabled
-  (port 18082 by default, changeable in the module settings).
+- **Search bar shows no bookmarks**: none are added by default; add them in the module's customization page.
+  "Ajouter depuis le navigateur" only reads Chromium browsers (Chrome, Edge, Brave, Opera), and only the one set as the
+  default browser in Windows; otherwise use "Ajouter à la main".
+- **Search bar: "/" shows nothing**: there are no commands by default; pick them in the module's customization page.
 - **Weather, air quality or sun empty**: set the city in the module's customization page (Style tab), then "Rechercher".
 - **Connected app in error**: the app's card (Settings → Applications connectées) shows the reason. Make sure
   OBS or Voicemod is running. For Twitch, sign out and back in after an update that asks for new permissions
@@ -404,8 +444,7 @@ one instance runs per data folder.
 - Switch payload (`payload/`): [GPL-2.0](payload/LICENSE), because it is built on the
   [hekate](https://github.com/CTCaer/hekate) BDK (CTCaer, naehrwert).
 - [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0),
-  [NAudio](https://github.com/naudio/NAudio) (MIT), [HidSharp](https://www.zer7.com/software/hidsharp) (Apache-2.0),
-  [Emoji.Wpf](https://github.com/samhocevar/emoji.wpf) (WTFPL).
+  [NAudio](https://github.com/naudio/NAudio) (MIT), [HidSharp](https://www.zer7.com/software/hidsharp) (Apache-2.0).
 - [PresentMon](https://github.com/GameTechDev/PresentMon) (Intel, MIT) for FPS measurement.
 - Brand logos: [Simple Icons](https://simpleicons.org) (CC0) — trademarks belong to their owners.
 - [SharpVectors](https://github.com/ElinamLLC/SharpVectors) (BSD-3-Clause) for SVG icons,
@@ -414,5 +453,5 @@ one instance runs per data folder.
 - Weather, air quality, sunrise and sunset data: [Open-Meteo.com](https://open-meteo.com) (CC BY 4.0).
 - Moon picture: LROC color map from NASA's Scientific Visualization Studio ([CGI Moon Kit](https://svs.gsfc.nasa.gov/4720)), projected to a disc.
 
-Nintendo Switch and Joy-Con are trademarks of Nintendo. Stream Deck and Elgato are trademarks of Corsair. OBS Studio, Twitch, Voicemod and SimHub are
-trademarks of their respective owners. This project is not affiliated with or endorsed by Nintendo, Corsair, OBS, Twitch, Voicemod or SimHub.
+Nintendo Switch and Joy-Con are trademarks of Nintendo. Stream Deck and Elgato are trademarks of Corsair. OBS Studio, Twitch and Voicemod are
+trademarks of their respective owners. This project is not affiliated with or endorsed by Nintendo, Corsair, OBS, Twitch or Voicemod.

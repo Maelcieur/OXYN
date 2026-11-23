@@ -90,10 +90,11 @@ public partial class SettingsWindow
         DiskStyleCard.Visibility = id == "disk" ? Visibility.Visible : Visibility.Collapsed;
         TileClockCard.Visibility = id == "tileclock" ? Visibility.Visible : Visibility.Collapsed;
         WeatherCard.Visibility = id is "weather" or "airquality" or "sun" ? Visibility.Visible : Visibility.Collapsed;
-        SimHubCard.Visibility = id == "simhub" ? Visibility.Visible : Visibility.Collapsed;
         SensorBarsCard.Visibility = id == "sensorbars" ? Visibility.Visible : Visibility.Collapsed;
         if (id == "sensorbars") BuildSensorBarsEditor();
         TemperatureCard.Visibility = id == "temperatures" ? Visibility.Visible : Visibility.Collapsed;
+        SearchBarCard.Visibility = id == "searchbar" ? Visibility.Visible : Visibility.Collapsed;
+        if (id == "searchbar") BuildSearchBarEditor();
         PageEnergy.Visibility = id == "power" ? Visibility.Visible : Visibility.Collapsed;
         if (id == "power") UpdateLifetimeDetails();
         SyncShownChecks();
@@ -116,6 +117,22 @@ public partial class SettingsWindow
         UpdateFitCard();
         UpdateCustomizeOptions();
         ShowModuleSpecificOptions();
+        HideCardOptionsForBareModule(id);
+    }
+
+    /// <summary>
+    /// Barre de recherche : module sans carte, qui a ses propres réglages de couleur et de taille. Les volets Taille,
+    /// Adaptation, Éléments et Couleurs et polices n'y changent rien : ils sont masqués.
+    /// </summary>
+    private void HideCardOptionsForBareModule(string? id)
+    {
+        var bare = id == "searchbar";
+        var visible = bare ? Visibility.Collapsed : Visibility.Visible;
+        ElementsExpander.Visibility = visible;
+        if (ColorsExpanderHost.Parent is FrameworkElement colors) colors.Visibility = visible;
+        if (!bare) return;
+        SizeExpander.Visibility = FitExpander.Visibility = Visibility.Collapsed;
+        OptionsExpander.IsExpanded = true;
     }
 
     /// <summary>
@@ -365,9 +382,9 @@ public partial class SettingsWindow
                 FrameworkElement element when element == MediaIconsCard || element == MediaBackgroundCard => module.Id == "media",
                 FrameworkElement element when element == TileClockCard => module.Id == "tileclock",
                 FrameworkElement element when element == WeatherCard => module.Id is "weather" or "airquality" or "sun",
-                FrameworkElement element when element == SimHubCard => module.Id == "simhub",
                 FrameworkElement element when element == SensorBarsCard => module.Id == "sensorbars",
                 FrameworkElement element when element == TemperatureCard => module.Id == "temperatures",
+                FrameworkElement element when element == SearchBarCard => module.Id == "searchbar",
                 FrameworkElement element when element == StyleGaugesSection => ModuleCapabilities.HasAnyGaugeOption(module.Id),
                 FrameworkElement element when element == StyleAnimationsSection => ModuleCapabilities.HasAnyGaugeOption(module.Id),
                 _ => false
@@ -584,7 +601,7 @@ public partial class SettingsWindow
         {
             var previous = appearance.BackgroundImage;
             appearance.BackgroundImage = BackgroundImageStore.SaveCopy(dialog.FileName);
-            DeleteBackgroundIfUnused(previous);
+            SaveThenDelete(previous); // enregistré d'abord : la config ne doit pas pointer sur un fichier déjà effacé
         }
         catch (Exception ex)
         {
@@ -598,7 +615,7 @@ public partial class SettingsWindow
 
         var previous = appearance.BackgroundImage;
         appearance.BackgroundImage = null;
-        DeleteBackgroundIfUnused(previous);
+        SaveThenDelete(previous);
     }
 
     private void LayoutEdit_Changed(object sender, RoutedEventArgs e)

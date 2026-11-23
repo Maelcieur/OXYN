@@ -23,12 +23,12 @@ public sealed record TextEntryRequest(TextEntryKind Kind, string Title, int MaxL
     Func<string, TwitchCategory?, Task<string?>> Submit, Func<Task<string?>>? LoadInitial = null);
 
 /// <summary>
-/// Panneau modal plein écran de la Switch : champ de texte, clavier AZERTY tactile, onglets Émotes Twitch et Émojis,
+/// Panneau modal plein écran de la Switch : champ de texte, clavier AZERTY tactile, onglet Émotes Twitch,
 /// ou recherche de catégorie avec jaquettes. Les touchers lui sont routés par <see cref="DeckController"/> tant qu'il est ouvert.
 /// </summary>
 public sealed class DeckTextEntry : Grid, IDisposable
 {
-    private enum Tab { Keyboard, Emotes, Emojis }
+    private enum Tab { Keyboard, Emotes }
 
     /// <summary>Zone touchable : action à l'appui ; <see cref="Repeat"/> = répétée tant que le doigt reste posé (retour arrière).</summary>
     private sealed record Hit(Action Action, bool Repeat = false);
@@ -43,18 +43,6 @@ public sealed class DeckTextEntry : Grid, IDisposable
     private static readonly Brush MutedColor = Frozen(Color.FromRgb(0x9A, 0x9D, 0xA7));
     private static readonly Brush ErrorColor = Frozen(Color.FromRgb(0xF0, 0x7A, 0x75));
 
-    private static readonly string[] Emojis =
-    {
-        "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😋", "😛", "😜", "🤪",
-        "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "😌", "😔", "😪", "😴", "😷", "🤒",
-        "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "😎", "🤓", "🧐", "😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧",
-        "😨", "😰", "😥", "😢", "😭", "😱", "😖", "😣", "😞", "😓", "😩", "😫", "🥱", "😤", "😡", "😠", "🤬", "😈", "👿", "💀",
-        "💩", "🤡", "👻", "👽", "🤖", "😺", "🙈", "🙉", "🙊", "💯", "💥", "💫", "💦", "💨", "🔥", "✨", "⭐", "🌟", "⚡", "🎉",
-        "🎊", "🎁", "🏆", "🥇", "🎮", "🕹️", "🎧", "🎤", "🎬", "📸", "💻", "📱", "⏰", "💡", "💰", "💎", "❤️", "🧡", "💛", "💚",
-        "💙", "💜", "🖤", "🤍", "💔", "❣️", "💕", "👍", "👎", "👌", "✌️", "🤞", "🤟", "🤘", "👏", "🙌", "👐", "🙏", "💪", "👀",
-        "👋", "🤙", "✅", "❌", "⚠️", "❓", "❗", "🍕", "🍔", "🍟", "🍿", "☕", "🍺", "🍻", "🥂", "🐐", "🐸", "🐱", "🐶", "🦄"
-    };
-
     private const int ImageCacheSize = 300;
     private static readonly Dictionary<string, ImageSource> ImageCache = new();
     private static readonly LinkedList<string> ImageOrder = new();
@@ -67,7 +55,7 @@ public sealed class DeckTextEntry : Grid, IDisposable
     private readonly DispatcherTimer _repeatTimer = new(DispatcherPriority.Input);
     private readonly DispatcherTimer _searchTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
 
-    private readonly Emoji.Wpf.TextBlock _textView = new() { FontSize = 26, TextWrapping = TextWrapping.Wrap, MaxHeight = 70, Margin = new Thickness(0, 0, 100, 0) };
+    private readonly TextBlock _textView = new() { FontSize = 26, TextWrapping = TextWrapping.Wrap, MaxHeight = 70, Margin = new Thickness(0, 0, 100, 0) };
     private readonly TextBlock _counter = new() { FontSize = 14, Foreground = MutedColor, HorizontalAlignment = HorizontalAlignment.Right };
     private readonly TextBlock _error = new() { FontSize = 16, Foreground = ErrorColor, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(4, 8, 4, 0) };
     private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 6) };
@@ -80,7 +68,7 @@ public sealed class DeckTextEntry : Grid, IDisposable
     private Tab _tab = Tab.Keyboard;
     private bool _busy, _edited, _disposed;
     private string _searched = "";
-    private ScrollViewer? _emotesView, _emojisView;
+    private ScrollViewer? _emotesView;
     private Grid? _categoryLayout;
 
     // Toucher en cours
@@ -196,8 +184,7 @@ public sealed class DeckTextEntry : Grid, IDisposable
         _tabs.Children.Clear();
         var tabs = _request.Kind switch
         {
-            TextEntryKind.Chat => new[] { (Tab.Keyboard, "Clavier"), (Tab.Emotes, "Émotes"), (Tab.Emojis, "Émojis") },
-            TextEntryKind.Title => new[] { (Tab.Keyboard, "Clavier"), (Tab.Emojis, "Émojis") },
+            TextEntryKind.Chat => new[] { (Tab.Keyboard, "Clavier"), (Tab.Emotes, "Émotes") },
             _ => Array.Empty<(Tab, string)>()
         };
         _tabs.Visibility = tabs.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
@@ -224,9 +211,6 @@ public sealed class DeckTextEntry : Grid, IDisposable
         {
             case Tab.Emotes:
                 _content.Child = _emotesView ??= BuildEmotes();
-                break;
-            case Tab.Emojis:
-                _content.Child = _emojisView ??= BuildEmojis();
                 break;
             default:
                 BuildKeyboard();
@@ -317,23 +301,6 @@ public sealed class DeckTextEntry : Grid, IDisposable
         Content = content,
         Background = Brushes.Transparent
     };
-
-    private ScrollViewer BuildEmojis()
-    {
-        var wrap = new WrapPanel();
-        foreach (var emoji in Emojis)
-        {
-            var image = new Image { Width = 44, Height = 44 };
-            Emoji.Wpf.Image.SetSource(image, emoji);
-            var value = emoji;
-            wrap.Children.Add(new Border
-            {
-                Width = 74, Height = 74, Margin = new Thickness(4), CornerRadius = new CornerRadius(10),
-                Background = KeyBrush, Child = image, Tag = new Hit(() => { _model.Insert(value); OnTextChanged(); })
-            });
-        }
-        return Scroller(wrap);
-    }
 
     private ScrollViewer BuildEmotes()
     {
@@ -427,8 +394,9 @@ public sealed class DeckTextEntry : Grid, IDisposable
                 bitmap.Freeze();
                 return (ImageSource?)bitmap;
             }
-            catch (Exception ex) when (ex is NotSupportedException or IOException or FileFormatException)
+            catch (Exception ex)   // image corrompue : exceptions variées selon le décodeur
             {
+                Log.Warn("Saisie de texte : image illisible", ex);
                 return null;
             }
         });

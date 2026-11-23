@@ -1626,19 +1626,6 @@
                                     </Border>
                                 </StackPanel>
 
-                                <!-- SimHub uniquement -->
-                                <StackPanel x:Name="SimHubCard" Visibility="Collapsed">
-                                    <ContentControl Style="{StaticResource SectionHeader}" Content="SimHub"/>
-                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Module="simhub" local:SettingsSearch.Keywords="simhub course simracing property server port">
-                                        <StackPanel Style="{StaticResource RowsPanel}">
-                                            <controls:SettingRow Description="Le module lit SimHub grâce au plugin gratuit « SimHub Property Server » (github.com/pre-martin/SimHubPropertyServer) : copier PropertyServer.dll dans le dossier de SimHub, puis l'activer dans SimHub › Settings › Plugins."/>
-                                            <controls:SettingRow Label="Port du plugin" Description="18082 par défaut.">
-                                                <TextBox Width="90" Height="30" VerticalContentAlignment="Center" Text="{Binding SimHubPort, UpdateSourceTrigger=LostFocus}"/>
-                                            </controls:SettingRow>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-
                                 <!-- Températures CPU / GPU uniquement -->
                                 <StackPanel x:Name="TemperatureCard" Visibility="Collapsed">
                                     <ContentControl Style="{StaticResource SectionHeader}" Content="Courbes"/>
@@ -1650,6 +1637,105 @@
                                             <controls:SettingRow Label="Courbe de la carte graphique" Description="Commune au PC et à la Switch.">
                                                 <controls:ColorSwatch Style="{StaticResource ColorDot}" Hex="{Binding GpuCurveColor}" Margin="0"/>
                                             </controls:SettingRow>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Barre de recherche uniquement ; DataContext = réglages SearchBar -->
+                                <StackPanel x:Name="SearchBarCard" Visibility="Collapsed">
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Recherche"/>
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Module="searchbar" local:SettingsSearch.Keywords="recherche moteur google bing duckduckgo brave ecosia qwant youtube suggestions favoris navigateur">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Label="Moteur de recherche" Description="Page de résultats ouverte dans le navigateur par défaut.">
+                                                <ComboBox x:Name="SearchEngineBox" Width="200" SelectionChanged="SearchEngine_Changed"/>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Suggestions pendant la frappe" Description="Le texte tapé est envoyé au moteur choisi pour proposer des recherches.">
+                                                <CheckBox Style="{StaticResource ToggleSwitch}" Margin="0" IsChecked="{Binding Suggestions}"/>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Favoris"
+                                                                 Description="Flèche à droite de la barre, et favoris proposés pendant la frappe (seulement ceux choisis ci-dessous).">
+                                                <CheckBox Style="{StaticResource ToggleSwitch}" Margin="0" IsChecked="{Binding Bookmarks}"/>
+                                            </controls:SettingRow>
+                                        </StackPanel>
+                                    </Border>
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Favoris de la barre"/>
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Module="searchbar" local:SettingsSearch.Keywords="favoris marque-pages navigateur chrome edge brave opera renommer">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Description="Aucun favori par défaut : choisis ceux que tu veux, depuis les favoris de ton navigateur (Chrome, Edge, Brave ou Opera) ou à la main, et renomme-les librement."/>
+                                            <StackPanel x:Name="SearchFavoritesItems"/>
+                                            <Border Style="{StaticResource RowBorder}" BorderThickness="0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button x:Name="SearchFavoriteBrowserButton" Content="Ajouter depuis le navigateur…" Click="SearchFavoriteFromBrowser_Click"/>
+                                                    <Button Content="Ajouter à la main" Margin="8,0,0,0" Click="SearchFavoriteAdd_Click"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Moteurs ajoutés"/>
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Module="searchbar" local:SettingsSearch.Keywords="moteur personnalisé ajouter site recherche wikipedia amazon adresse">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Description="Ajoute tes propres moteurs : un nom et l'adresse de recherche du site, avec {texte} à la place des mots cherchés (ex. https://fr.wikipedia.org/w/index.php?search={texte}). Ils apparaissent dans la liste des moteurs de la barre."/>
+                                            <StackPanel x:Name="SearchEnginesItems"/>
+                                            <Border Style="{StaticResource RowBorder}" BorderThickness="0">
+                                                <Button x:Name="SearchEngineAddButton" Content="Ajouter un moteur…" HorizontalAlignment="Left" Click="SearchEngineAdd_Click"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Apparence et taille de la barre"/>
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Module="searchbar" local:SettingsSearch.Keywords="couleur fond contour transparence opacité taille largeur hauteur barre recherche">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Description="Le module n'a ni carte ni ombre : seule la barre est visible. Fais-la glisser pour la déplacer."/>
+                                            <controls:SettingRow Label="Couleurs">
+                                                <WrapPanel>
+                                                    <controls:ColorSwatch Content="Fond" Hex="{Binding BarColor}" Margin="0"/>
+                                                    <controls:ColorSwatch Content="Contour" Hex="{Binding BorderColor}" Margin="10,0,0,0"/>
+                                                </WrapPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Largeur">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BarWidth, StringFormat={}{0:0} px}"/>
+                                                    <Slider Minimum="240" Maximum="1200" Value="{Binding BarWidth}" IsSnapToTickEnabled="True" TickFrequency="10"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Hauteur" Description="Les textes suivent la hauteur.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BarHeight, StringFormat={}{0:0} px}"/>
+                                                    <Slider Minimum="28" Maximum="90" Value="{Binding BarHeight}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Opacité du fond" Description="0 % : fond invisible.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BarOpacity, Converter={StaticResource Percent}}"/>
+                                                    <Slider Minimum="0" Maximum="1" Value="{Binding BarOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Opacité de la fenêtre de saisie" Description="Fond de la zone où tu tapes et de la liste (suggestions, commandes, favoris).">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding PopupOpacity, Converter={StaticResource Percent}}"/>
+                                                    <Slider Minimum="0" Maximum="1" Value="{Binding PopupOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Opacité du contour" Description="0 % : sans contour.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BorderOpacity, Converter={StaticResource Percent}}"/>
+                                                    <Slider Minimum="0" Maximum="1" Value="{Binding BorderOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Valeurs d'origine">
+                                                <Button Content="Réinitialiser" Click="SearchBarLookReset_Click"/>
+                                            </controls:SettingRow>
+                                        </StackPanel>
+                                    </Border>
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Commandes /xxx"/>
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Module="searchbar" local:SettingsSearch.Keywords="commandes prompt ia intelligence artificielle google mode ia slash correction">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Description="Aucune commande par défaut : ajoute seulement celles que tu veux. Dans la barre, tape « /nom ton texte » : le prompt (avec {texte} remplacé par ton texte) est envoyé au mode IA de Google ; la correction orthographique corrige le texte hors ligne et le copie. Le nom se renomme librement."/>
+                                            <StackPanel x:Name="SearchCommandsItems"/>
+                                            <Border Style="{StaticResource RowBorder}" BorderThickness="0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button x:Name="SearchCommandAddButton" Content="Ajouter une commande…" Click="SearchCommandAdd_Click"/>
+                                                </StackPanel>
+                                            </Border>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
@@ -2950,90 +3036,22 @@
 
 
 
-                <!-- ===== Page : Outils (correction de texte + sélecteur d'émojis) ===== -->
+                <!-- ===== Page : Outils (correction orthographique) ===== -->
                 <ScrollViewer x:Name="PageTools" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
                     <StackPanel>
                         <TextBlock Text="Outils" Style="{StaticResource PageTitle}"/>
                         <TextBlock Text="Petits outils utilisables dans toutes les applications." Style="{StaticResource PageSubtitle}"/>
 
-                        <StackPanel x:Name="PageCorrection">
-                            <ContentControl Style="{StaticResource SectionHeader}" Content="Correction de texte (IA)"/>
-                            <TextBlock Text="Sélectionne du texte dans n'importe quelle fenêtre puis appuie sur CTRL+ESPACE pour le corriger via l'API Gemini."
+                        <StackPanel>
+                            <ContentControl Style="{StaticResource SectionHeader}" Content="Correction orthographique"/>
+                            <TextBlock Text="Sélectionne du texte dans n'importe quelle fenêtre puis appuie sur CTRL+ESPACE : les fautes sont corrigées avec le correcteur orthographique de Windows, sans connexion Internet."
                                        Style="{StaticResource PageSubtitle}" Margin="0,0,0,10"/>
-                            <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="gemini google api clé correction orthographe ia">
+                            <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="correction correcteur orthographe faute texte ctrl espace dictionnaire">
                                 <StackPanel Style="{StaticResource RowsPanel}">
-                                    <controls:SettingRow Label="Clé API Gemini" Description="Nécessaire pour corriger le texte sélectionné.">
-                                        <StackPanel Orientation="Horizontal">
-                                            <PasswordBox x:Name="GeminiApiKeyBox" Width="240"/>
-                                            <Button Content="Enregistrer la clé" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="SaveGeminiKey_Click"/>
-                                        </StackPanel>
+                                    <controls:SettingRow Label="Dictionnaire utilisé" Description="Langue du correcteur de Windows (Paramètres Windows › Heure et langue › Langue).">
+                                        <TextBlock x:Name="SpellLanguageText" Style="{StaticResource FieldValue}"/>
                                     </controls:SettingRow>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-
-                        <StackPanel x:Name="PageEmoji">
-                            <ContentControl Style="{StaticResource SectionHeader}" Content="Émojis : raccourci clavier"/>
-                            <TextBlock Text="Un raccourci ouvre le sélecteur d'émojis ; un clic insère l'émoji dans le champ de texte où tu écris (navigateur, Discord, Word…). Le sélecteur reste ouvert jusqu'à ce que tu cliques sur sa croix."
-                                       Style="{StaticResource PageSubtitle}" Margin="0,0,0,10"/>
-                            <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="hotkey touche combinaison emoji émoji ctrl">
-                                <StackPanel Style="{StaticResource RowsPanel}">
-                                    <controls:SettingRow Label="Combinaison"
-                                                         Description="Clique dans la zone puis appuie sur ta combinaison (avec Ctrl, Maj, Alt ou Win). Évite Ctrl+Alt : sur un clavier AZERTY, c'est la touche AltGr (€, @, #…).">
-                                        <StackPanel Orientation="Horizontal">
-                                            <controls:HotkeyBox x:Name="EmojiHotkeyBox" Width="200" Style="{StaticResource {x:Type TextBox}}"
-                                                                GestureCaptured="EmojiHotkeyBox_GestureCaptured" CaptureStateChanged="EmojiHotkeyBox_CaptureStateChanged"/>
-                                            <Button Content="Désactiver" Margin="8,0,0,0" Click="ClearEmojiHotkey_Click"/>
-                                        </StackPanel>
-                                    </controls:SettingRow>
-                                    <Border Style="{StaticResource RowBorder}" BorderThickness="0">
-                                        <TextBlock x:Name="EmojiHotkeyStatus" Style="{StaticResource FieldLabel}" TextWrapping="Wrap" Margin="0"/>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Apparence du sélecteur ; DataContext = réglages EmojiPicker -->
-                            <ContentControl Style="{StaticResource SectionHeader}" Content="Émojis : apparence du sélecteur"/>
-                            <Border x:Name="EmojiAppearanceCard" Style="{StaticResource RowCard}">
-                                <StackPanel Style="{StaticResource RowsPanel}">
-                                    <controls:SettingRow Description="Le sélecteur est transparent : on voit ce qu'il y a derrière à travers son fond."/>
-                                    <controls:SettingRow Label="Couleurs">
-                                        <WrapPanel>
-                                            <controls:ColorSwatch Content="Fond" Hex="{Binding BackgroundColor}" Margin="0"/>
-                                            <controls:ColorSwatch Content="Bordure" Hex="{Binding BorderColor}" Margin="10,0,0,0"/>
-                                        </WrapPanel>
-                                    </controls:SettingRow>
-                                    <controls:SettingRow Label="Opacité du fond">
-                                        <DockPanel Width="260">
-                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BackgroundOpacity, Converter={StaticResource Percent}}"/>
-                                            <Slider Minimum="0" Maximum="1" Value="{Binding BackgroundOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
-                                        </DockPanel>
-                                    </controls:SettingRow>
-                                    <controls:SettingRow Label="Opacité de la bordure">
-                                        <DockPanel Width="260">
-                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BorderOpacity, Converter={StaticResource Percent}}"/>
-                                            <Slider Minimum="0" Maximum="1" Value="{Binding BorderOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
-                                        </DockPanel>
-                                    </controls:SettingRow>
-                                    <controls:SettingRow Label="Arrondi des coins">
-                                        <DockPanel Width="260">
-                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding CornerRadius, StringFormat={}{0:0} px}"/>
-                                            <Slider Minimum="0" Maximum="36" Value="{Binding CornerRadius}" IsSnapToTickEnabled="True" TickFrequency="1"/>
-                                        </DockPanel>
-                                    </controls:SettingRow>
-                                    <controls:SettingRow Label="Valeurs d'origine">
-                                        <Button Content="Réinitialiser" Click="ResetEmojiAppearance_Click"/>
-                                    </controls:SettingRow>
-                                </StackPanel>
-                            </Border>
-
-                            <ContentControl Style="{StaticResource SectionHeader}" Content="Émojis : récents"/>
-                            <Border Style="{StaticResource RowCard}">
-                                <StackPanel Style="{StaticResource RowsPanel}">
-                                    <controls:SettingRow Label="Effacer les émojis récents"
-                                                         Description="Les derniers émojis insérés sont proposés en premier, dans l'onglet « Récents » du sélecteur.">
-                                        <Button Content="Effacer" Click="ClearRecentEmojis_Click"/>
-                                    </controls:SettingRow>
+                                    <controls:SettingRow Description="Aussi dans le module Barre de recherche : tape /correction suivi de ton texte."/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>

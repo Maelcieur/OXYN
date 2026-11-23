@@ -52,6 +52,11 @@ public partial class SettingsWindow
                 ? "Aucune Google TV trouvée : vérifie qu'elle est allumée et sur le même réseau."
                 : $"{found.Count} TV trouvée(s). Choisis la tienne puis « Appairer ».";
         }
+        catch (Exception ex)
+        {
+            Log.Warn("TV réseau : recherche impossible", ex);
+            ConsoleTvRemoteStatus.Text = $"Recherche impossible ({ex.Message}).";
+        }
         finally
         {
             ConsoleTvFindButton.IsEnabled = true;
@@ -160,13 +165,22 @@ public partial class SettingsWindow
         var (label, command) = _wizardCandidates[_wizardIndex];
         ConsoleTvWizardYes.IsEnabled = ConsoleTvWizardNo.IsEnabled = false;
         ConsoleTvWizardText.Text = $"Essai {_wizardIndex + 1}/{_wizardCandidates.Count} : retour à l'accueil de la TV…";
-        if (!await _widgetManager.TvRemote.HomeAsync())
+        try
         {
-            ConsoleTvWizardText.Text = "La TV ne répond pas : allume-la puis relance « Trouver la méthode ».";
+            if (!await _widgetManager.TvRemote.HomeAsync())
+            {
+                ConsoleTvWizardText.Text = "La TV ne répond pas : allume-la puis relance « Trouver la méthode ».";
+                return;
+            }
+            await Task.Delay(2500);
+            await _widgetManager.TvRemote.RunInputCommandAsync(command);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("TV réseau : essai de l'assistant en échec", ex);
+            ConsoleTvWizardText.Text = $"La TV ne répond pas ({ex.Message}) : allume-la puis relance « Trouver la méthode ».";
             return;
         }
-        await Task.Delay(2500);
-        await _widgetManager.TvRemote.RunInputCommandAsync(command);
         ConsoleTvWizardText.Text = $"Essai {_wizardIndex + 1}/{_wizardCandidates.Count} ({label}) : la TV est-elle passée sur HDMI {n} ? " +
                                    "(bandeau « HDMI », ou « pas de signal » sur cette entrée)";
         ConsoleTvWizardYes.IsEnabled = ConsoleTvWizardNo.IsEnabled = true;
@@ -195,9 +209,17 @@ public partial class SettingsWindow
         var n = ConsoleTvHdmiBox.SelectedIndex;
         if (n < 1) { ConsoleTvRemoteStatus.Text = "Choisis d'abord l'entrée HDMI du PC."; return; }
         if (!_widgetManager.TvRemote.IsPaired) { ConsoleTvRemoteStatus.Text = "Appaire d'abord la TV."; return; }
-        ConsoleTvRemoteStatus.Text = await _widgetManager.TvRemote.SelectPcInputAsync(string.IsNullOrWhiteSpace(ConsoleConfig.TvInputCommand) ? n : null)
-            ? $"Entrée HDMI {n} demandée à la TV."
-            : "La TV ne répond pas (est-elle allumée ?).";
+        try
+        {
+            ConsoleTvRemoteStatus.Text = await _widgetManager.TvRemote.SelectPcInputAsync(string.IsNullOrWhiteSpace(ConsoleConfig.TvInputCommand) ? n : null)
+                ? $"Entrée HDMI {n} demandée à la TV."
+                : "La TV ne répond pas (est-elle allumée ?).";
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("TV réseau : test de l'entrée HDMI en échec", ex);
+            ConsoleTvRemoteStatus.Text = $"La TV ne répond pas ({ex.Message}).";
+        }
     }
 
     private void ConsoleTvAutoPower_Changed(object sender, RoutedEventArgs e)

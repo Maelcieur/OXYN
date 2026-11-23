@@ -61,11 +61,27 @@ public sealed partial class DeckLayoutEditor : Border
         InitActionDrop();
     }
 
+    private RoutedEventHandler? _elementsChanged;
+
+    private void OnLoadedWatch(object? sender, RoutedEventArgs e) => WatchElements(true);
+    private void OnUnloadedWatch(object? sender, RoutedEventArgs e) => WatchElements(false);
+
+    private void WatchElements(bool on)
+    {
+        if (_deck == null || _elementsChanged == null) return;
+        _deck.Screen.RemoveHandler(Movable.ElementsChangedEvent, _elementsChanged);
+        if (on) _deck.Screen.AddHandler(Movable.ElementsChangedEvent, _elementsChanged, handledEventsToo: true);
+    }
+
     public void Attach(DeckController deck)
     {
         _deck = deck;
         // Un module change ses éléments (lecteur qui change de disposition, disque branché) : nouveaux cadres.
-        deck.Screen.AddHandler(Movable.ElementsChangedEvent, new RoutedEventHandler((_, _) => ScheduleElementBoxes()), handledEventsToo: true);
+        _elementsChanged ??= (_, _) => ScheduleElementBoxes();
+        WatchElements(true);
+        // L'écran vit autant que l'appli : sans désabonnement, chaque fenêtre de Paramètres fermée resterait en mémoire.
+        Loaded -= OnLoadedWatch; Loaded += OnLoadedWatch;
+        Unloaded -= OnUnloadedWatch; Unloaded += OnUnloadedWatch;
         // Aperçu : pinceau qui reproduit en direct le visuel de l'écran Switch (rendu par la carte graphique).
         var preview = new System.Windows.Shapes.Rectangle
         {

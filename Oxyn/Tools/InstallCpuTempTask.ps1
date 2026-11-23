@@ -15,6 +15,12 @@ $dir = 'C:\ProgramData\Oxyn'
 $script = Join-Path $dir 'CpuTempBridge.ps1'
 
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
+# Le script y est exécuté avec les privilèges élevés : dossier réservé aux administrateurs (un compte standard qui
+# l'aurait créé avant l'installation ne doit plus pouvoir remplacer le script). Les utilisateurs gardent la lecture ;
+# le compte de la tâche peut écrire (s'il n'est pas administrateur, la tâche tourne sans élévation : rien à gagner).
+& icacls.exe $dir /setowner '*S-1-5-32-544' /T /C /Q | Out-Null
+& icacls.exe $dir /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' "${User}:(OI)(CI)M" /Q | Out-Null
+& icacls.exe "$dir\*" /reset /T /C /Q 2>$null | Out-Null
 
 # Ancienne tâche d'avant le renommage (SysDeck) : arrêtée et supprimée avec son dossier, remplacée par celle-ci.
 $legacyTask = 'SysDeck-CpuTempBridge'

@@ -298,7 +298,6 @@ public sealed class ConsoleModeService
 
     // ---------- Divers ----------
 
-    /// <summary>Désactive la TV hors mode console (Windows ne la voit plus). Sans effet si le mode console est actif.</summary>
     /// <summary>
     /// Démarrage hors mode console avec la TV comme SEUL écran allumé (Windows a repris une disposition « TV seule »,
     /// ou le PC s'est éteint pendant le mode console) : les écrans du PC sont rallumés.
@@ -413,6 +412,7 @@ public sealed class ConsoleModeService
 
     private void SetInactive()
     {
+        StopAudioGuard();   // une entrée encore en cours pendant ExitAsync a pu relancer la garde audio
         if (!IsActive) return;
         IsActive = false;
         RaiseChanged();

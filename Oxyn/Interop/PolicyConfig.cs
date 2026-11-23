@@ -26,23 +26,6 @@ internal interface IPolicyConfig
     [PreserveSig] int SetEndpointVisibility(string pszDeviceName, bool bVisible);
 }
 
-[Guid("568B9108-44BF-40B4-9006-86AFE5B5A620"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-internal interface IPolicyConfigVista
-{
-    [PreserveSig] int GetMixFormat(string pszDeviceName, IntPtr ppFormat);
-    [PreserveSig] int GetDeviceFormat(string pszDeviceName, bool bDefault, IntPtr ppFormat);
-    [PreserveSig] int ResetDeviceFormat(string pszDeviceName);
-    [PreserveSig] int SetDeviceFormat(string pszDeviceName, IntPtr pEndpointFormat, IntPtr MixFormat);
-    [PreserveSig] int GetProcessingPeriod(string pszDeviceName, bool bDefault, IntPtr pmftDefaultPeriod, IntPtr pmftMinimumPeriod);
-    [PreserveSig] int SetProcessingPeriod(string pszDeviceName, IntPtr pmftPeriod);
-    [PreserveSig] int GetShareMode(string pszDeviceName, IntPtr pMode);
-    [PreserveSig] int SetShareMode(string pszDeviceName, IntPtr mode);
-    [PreserveSig] int GetPropertyValue(string pszDeviceName, bool bFxStore, IntPtr key, IntPtr pv);
-    [PreserveSig] int SetPropertyValue(string pszDeviceName, bool bFxStore, IntPtr key, IntPtr pv);
-    [PreserveSig] int SetDefaultEndpoint(string pszDeviceName, ERole role);
-    [PreserveSig] int SetEndpointVisibility(string pszDeviceName, bool bVisible);
-}
-
 [ComImport, Guid("870af99c-171d-4f9e-af0d-e63df40c2bc9")]
 internal class PolicyConfigClientCoClass
 {
@@ -51,18 +34,13 @@ internal class PolicyConfigClientCoClass
 internal sealed class PolicyConfigClient
 {
     private readonly IPolicyConfig? _policyConfig;
-    private readonly IPolicyConfigVista? _policyConfigVista;
 
     public PolicyConfigClient()
     {
         var obj = new PolicyConfigClientCoClass();
 
+        // Pas de repli Vista / « IPolicyConfig10 » : leurs tables de méthodes ne correspondaient pas à Windows 10/11.
         _policyConfig = obj as IPolicyConfig;
-        if (_policyConfig != null) return;
-
-        // Plus de repli « IPolicyConfig10 » : son IID était celui d'IUnknown, le cast réussissait toujours
-        // et appelait une table de méthodes qui n'était pas forcément la bonne.
-        _policyConfigVista = obj as IPolicyConfigVista;
     }
 
     public void SetDefaultEndpoint(string deviceId, ERole role)
@@ -70,11 +48,6 @@ internal sealed class PolicyConfigClient
         if (_policyConfig != null)
         {
             Marshal.ThrowExceptionForHR(_policyConfig.SetDefaultEndpoint(deviceId, role));
-            return;
-        }
-        if (_policyConfigVista != null)
-        {
-            Marshal.ThrowExceptionForHR(_policyConfigVista.SetDefaultEndpoint(deviceId, role));
             return;
         }
         throw new InvalidOperationException("Aucune interface IPolicyConfig compatible : impossible de changer la sortie audio par défaut.");

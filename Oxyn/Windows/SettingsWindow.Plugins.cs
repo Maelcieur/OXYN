@@ -159,7 +159,7 @@ public partial class SettingsWindow
             RefreshDeckActions();
             MessageBox.Show(this, InstalledMessage(manifest, null), "Plugin installé", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-        catch (InvalidDataException ex)
+        catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
         {
             MessageBox.Show(this, ex.Message, "Installer un plugin", MessageBoxButton.OK, MessageBoxImage.Warning);
         }

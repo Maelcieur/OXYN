@@ -68,8 +68,15 @@ public partial class SettingsWindow
         {
             _previewRefreshHooked = true;
             // Un module annonce ses éléments changés (masqués, réaffichés, déplacés) : l'aperçu suit.
-            _widgetManager.Deck.Screen.AddHandler(Controls.Movable.ElementsChangedEvent,
-                new RoutedEventHandler((_, _) => { if (_inspectedWidget is not null) SchedulePreviewRefresh(); }), handledEventsToo: true);
+            var screen = _widgetManager.Deck.Screen;
+            var handler = new RoutedEventHandler((_, _) => { if (_inspectedWidget is not null) SchedulePreviewRefresh(); });
+            screen.AddHandler(Controls.Movable.ElementsChangedEvent, handler, handledEventsToo: true);
+            // L'écran de la Switch vit plus longtemps que la fenêtre : le handler et le minuteur sont retirés à la fermeture.
+            Closed += (_, _) =>
+            {
+                screen.RemoveHandler(Controls.Movable.ElementsChangedEvent, handler);
+                _previewRefreshTimer?.Stop();
+            };
         }
         _previewRefreshTimer ??= new DispatcherTimer(TimeSpan.FromMilliseconds(120), DispatcherPriority.Background, (_, _) =>
         {

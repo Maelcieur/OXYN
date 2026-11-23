@@ -66,9 +66,9 @@ public static class ShortcutIcons
             ("Switch et homebrew", new (string, string)[]
             {
                 ("brand:nintendoswitch", "Nintendo Switch"),
-                ("🚀", "hekate — démarrage"),
-                ("🌌", "Atmosphère"),
-                ("⚡", "Mode RCM")
+                ("\uE72C", "hekate — démarrage"),
+                ("\uE909", "Atmosphère"),
+                ("\uE945", "Mode RCM")
             }),
             ("Communication", new (string, string)[]
             {
@@ -163,20 +163,15 @@ public static class ShortcutIcons
     }
 
     /// <summary>
-    /// Symbole (police ; couleur <paramref name="color"/>, sinon celle du texte du thème) ou émoji (image en couleur,
-    /// comme le sélecteur d'émojis ; la couleur ne s'y applique pas).
+    /// Symbole (police ; couleur <paramref name="color"/>, sinon celle du texte du thème). Un ancien émoji (les émojis ne
+    /// sont plus proposés) est remplacé par un symbole proche, sinon par l'icône d'application générique.
     /// </summary>
     public static FrameworkElement CreateGlyph(string glyph, double size, string? color = null)
     {
         if (BrandIcons.IsBrand(glyph))
             return CreateBrand(glyph, size, color) ?? new Grid { Width = size, Height = size }; // slug inconnu : vide, sans exception
 
-        if (!IsSymbol(glyph))
-        {
-            var emoji = new Image { Width = size, Height = size };
-            Emoji.Wpf.Image.SetSource(emoji, glyph);
-            return emoji;
-        }
+        if (!IsSymbol(glyph)) glyph = ReplaceLegacyEmoji(glyph);
 
         var text = new TextBlock
         {
@@ -190,4 +185,13 @@ public static class ShortcutIcons
         else text.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
         return new Grid { Width = size, Height = size, Children = { text } };
     }
+
+    /// <summary>Anciennes icônes émoji (tuiles Switch, raccourcis) : symbole équivalent, sinon icône d'application générique.</summary>
+    public static string ReplaceLegacyEmoji(string glyph) => glyph switch
+    {
+        "🚀" => "\uE72C",
+        "🌌" => "\uE909",
+        "⚡" => "\uE945",
+        _ => "\uECAA"
+    };
 }

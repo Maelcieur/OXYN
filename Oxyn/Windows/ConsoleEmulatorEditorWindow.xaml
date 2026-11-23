@@ -13,7 +13,7 @@
         </ResourceDictionary>
     </Window.Resources>
     <StackPanel Margin="20">
-        <TextBlock x:Name="TitleText" Text="Modifier l'émulateur" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
+        <TextBlock Text="Modifier l'émulateur" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
 
         <TextBlock Text="Nom" Style="{StaticResource FieldLabel}"/>
         <TextBox x:Name="NameBox" Margin="0,0,0,14" MaxLength="60"/>

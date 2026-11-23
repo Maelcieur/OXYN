@@ -52,7 +52,7 @@
             <ContentControl x:Name="IconHost" Width="32" Height="32" VerticalAlignment="Center" Margin="0,0,12,0"/>
             <Button Content="Icône…" Click="Icon_Click"/>
         </StackPanel>
-        <TextBlock x:Name="IconHint" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,20"
+        <TextBlock FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,20"
                    Text="Sans choix, l'icône suit l'action et l'état (micro barré quand l'entrée est coupée, œil barré quand la source est masquée)."/>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

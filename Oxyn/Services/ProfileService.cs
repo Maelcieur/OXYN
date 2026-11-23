@@ -268,10 +268,13 @@ public sealed partial class ProfileService
         {
             var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var file in Directory.EnumerateFiles(_profilesDir, "*.json"))
-                if (ReadFile(file) is { } profile)
-                    foreach (var a in profile.AllImageSlots())
+            {
+                // Profil illisible (verrouillé par l'antivirus, abîmé) : ses images sont peut-être utilisées, on ne touche à rien.
+                if (ReadFile(file) is not { } profile) return;
+                foreach (var a in profile.AllImageSlots())
                         if (a.Value is { } r && r.StartsWith(BackgroundsPrefix, StringComparison.Ordinal))
                             used.Add(r[BackgroundsPrefix.Length..]);
+            }
 
             foreach (var file in Directory.EnumerateFiles(_filesDir))
                 if (!used.Contains(Path.GetFileName(file)))

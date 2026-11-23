@@ -26,9 +26,10 @@ public sealed partial class DeckController : IDisposable
         new("apps", "Tuiles de la page"),
     };
 
-    /// <summary>Tous les éléments plaçables sur la Switch (modules du bureau sauf la barre, + éléments propres).</summary>
+    /// <summary>Tous les éléments plaçables sur la Switch (modules du bureau sauf les barres de raccourcis et de recherche,
+    /// réservées au PC, + éléments propres).</summary>
     public static IEnumerable<WidgetDescriptor> AllElements
-        => ExtraElements.Concat(WidgetManager.AllWidgets.Where(w => w.Id != "shortcuts"));
+        => ExtraElements.Concat(WidgetManager.AllWidgets.Where(w => w.Id is not ("shortcuts" or "searchbar")));
 
     private readonly DeckSettings _settings;
     private readonly Action<ShortcutItem> _launch;
@@ -90,7 +91,8 @@ public sealed partial class DeckController : IDisposable
             StatusChanged?.Invoke(status);
         };
         _link.Touch += OnTouch;
-        _link.VolumeStep += step => MasterVolume.Change(step * 2); // boutons VOL± de la Switch : pas de 2 %
+        // Boutons VOL± de la Switch : pas de 2 %. Hors du thread USB (appel COM parfois lent qui retarderait les images).
+        _link.VolumeStep += step => ThreadPool.QueueUserWorkItem(_ => MasterVolume.Change(step * 2));
         _link.JoyCon += OnJoyCon;
 
         _nightTimer.Tick += (_, _) => NightTick();

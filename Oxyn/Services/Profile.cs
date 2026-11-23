@@ -56,7 +56,7 @@ internal sealed class ImageSlot
 
 /// <summary>
 /// Instantané nommé de la personnalisation : thème global, apparences des modules (bureau et Switch),
-/// barre de raccourcis, sélecteur d'émojis et disposition. Ne contient jamais la clé Gemini, le mot de passe OBS, les jetons Twitch, les
+/// barre de raccourcis et disposition. Ne contient jamais le mot de passe OBS, les jetons Twitch, les
 /// raccourcis clavier, l'historique d'énergie ni le prix de l'électricité.
 /// </summary>
 public sealed class Profile
@@ -79,7 +79,6 @@ public sealed class Profile
     public ProfileDeckScreen? DeckScreen { get; set; } = new();
 
     public ProfileDock Dock { get; set; } = new();
-    public EmojiPickerSettings EmojiPicker { get; set; } = new();
 
     /// <summary>Modules affichés et positions ; toujours enregistrée, appliquée seulement à la demande.</summary>
     public List<WidgetPosition> Layout { get; set; } = new();
@@ -111,13 +110,12 @@ public sealed class Profile
             IconSize = config.DockIconSize,
             IconSpacing = config.DockIconSpacing
         },
-        EmojiPicker = SettingsCopier.Clone(config.EmojiPicker),
         Layout = SettingsCopier.Clone(config.Layout)
     };
 
     /// <summary>
     /// Remplace les valeurs de <paramref name="config"/> par celles du profil, SUR PLACE : les instances
-    /// de ThemeSettings / ModuleAppearance / EmojiPickerSettings existantes sont conservées (leurs
+    /// de ThemeSettings / ModuleAppearance existantes sont conservées (leurs
     /// abonnés, fenêtres et Paramètres, sont ainsi prévenus). N'affiche rien : c'est WidgetManager qui réapplique.
     /// </summary>
     public void ApplyTo(AppConfig config, bool includeLayout)
@@ -172,8 +170,6 @@ public sealed class Profile
         config.DockIconSize = Math.Clamp(Dock.IconSize, 16, 160);
         config.DockIconSpacing = Math.Clamp(Dock.IconSpacing, 0, 60);
 
-        SettingsCopier.CopyInto(EmojiPicker, config.EmojiPicker);
-
         if (includeLayout)
         {
             config.Layout.Clear();
@@ -199,7 +195,6 @@ public sealed class Profile
         Modules ??= new();
         DeckModules ??= new();
         Dock ??= new ProfileDock();
-        EmojiPicker ??= new EmojiPickerSettings();
         Layout ??= new();
         Name ??= "";
         foreach (var key in Modules.Where(m => m.Value is null).Select(m => m.Key).ToList()) Modules.Remove(key);

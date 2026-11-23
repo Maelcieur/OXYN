@@ -49,11 +49,11 @@ public partial class SettingsWindow
             var max = new TextBox
             {
                 Width = 64, Height = 30, Margin = new Thickness(8, 0, 0, 0), VerticalContentAlignment = VerticalAlignment.Center,
-                Text = item.Max > 0 ? item.Max.ToString("0.##") : "", ToolTip = "Valeur qui remplit la barre (vide : 100 pour % et °C, 3000 tr/min…)"
+                Text = item.Max > 0 ? item.Max.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) : "", ToolTip = "Valeur qui remplit la barre (vide : 100 pour % et °C, 3000 tr/min…)"
             };
             max.LostFocus += (_, _) =>
             {
-                item.Max = double.TryParse(max.Text.Replace('.', ','), out var m) && m > 0 ? m : 0;
+                item.Max = double.TryParse(max.Text.Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var m) && m > 0 ? m : 0;
                 SensorBars.ItemsChanged();
             };
 

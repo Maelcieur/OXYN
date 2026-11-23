@@ -128,15 +128,6 @@ public static class TextPart
             new("level", "Niveau (bon, moyen…)"),
             new("pollutant", "Polluants"),
         },
-        ["simhub"] = new TextPartInfo[]
-        {
-            new("title", "Jeu"),
-            new("gear", "Rapport"),
-            new("speed", "Vitesse"),
-            new("rpm", "Régime"),
-            new("lap", "Temps au tour"),
-            new("info", "Position, carburant"),
-        },
         ["sensorbars"] = new TextPartInfo[]
         {
             new("label", "Noms des barres"),

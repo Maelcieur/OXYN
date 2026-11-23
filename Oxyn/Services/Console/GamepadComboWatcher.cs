@@ -112,6 +112,8 @@ public sealed class GamepadComboWatcher : IDisposable
             }
             Thread.Sleep(50);
         }
+        foreach (var pad in switchPads.Values) pad.Close();   // libère les HidStream et leurs threads
+        switchPads.Clear();
     }
 
     public void Dispose()
@@ -119,14 +121,6 @@ public sealed class GamepadComboWatcher : IDisposable
         _running = false;
     }
 
-    /// <summary>Libellés des combinaisons pour une manette Switch (même ordre que <see cref="Combos"/>).</summary>
-    public static string SwitchLabel(string? id) => id switch
-    {
-        "ViewMenu" => "− + + (manette Switch)",
-        "LbRbMenu" => "L + R + + (manette Switch)",
-        "LbRbView" => "L + R + − (manette Switch)",
-        _ => "",
-    };
 
     [StructLayout(LayoutKind.Sequential)]
     private struct State

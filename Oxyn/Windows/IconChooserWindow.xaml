@@ -27,7 +27,6 @@
                 <TextBlock x:Name="PreviewName" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8" TextTrimming="CharacterEllipsis"/>
                 <WrapPanel>
                     <Button Content="Image…" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Click="Image_Click"/>
-                    <Button Content="Émoji…" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Click="Emoji_Click"/>
                     <Button Content="Icône d'origine" Margin="0,0,8,8" Click="Reset_Click"/>
                     <Button Content="Pack d'icônes…" Margin="0,0,8,8" Click="ImportPack_Click"
                             ToolTip="Importer un pack d'icônes (.streamDeckIconPack du Stream Deck, zip ou dossier d'images)"/>

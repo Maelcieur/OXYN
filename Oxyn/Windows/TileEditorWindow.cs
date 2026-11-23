@@ -44,6 +44,11 @@ public abstract class TileEditorWindow : Window
         return true;
     }
 
+    /// <summary>Éditeur intégré terminé (validé ou annulé) : sa fenêtre n'étant jamais fermée, c'est ici qu'on libère ses fichiers temporaires.</summary>
+    protected virtual void OnCompleting(bool accepted)
+    {
+    }
+
     protected void Complete(bool accepted)
     {
         if (!IsEmbedded)
@@ -52,6 +57,7 @@ public abstract class TileEditorWindow : Window
             return;
         }
 
+        OnCompleting(accepted);
         Completed?.Invoke(accepted);
     }
 }

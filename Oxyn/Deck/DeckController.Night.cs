@@ -83,7 +83,7 @@ public sealed partial class DeckController
             var now = DateTime.Now;
             // Luminosité en cours de réglage : on attend le prochain passage (la signature est déjà vide, rien n'est perdu).
             if (!force && now - _nightBrightnessChanged < NightBrightnessDebounce) return;
-            if (_nightActive && signature == _nightSignature && (now - _nightChecked).TotalSeconds < NightRefreshSeconds) return;
+            if (!force && _nightActive && signature == _nightSignature && (now - _nightChecked).TotalSeconds < NightRefreshSeconds) return;
             _nightSignature = signature;
             _nightChecked = now;
 

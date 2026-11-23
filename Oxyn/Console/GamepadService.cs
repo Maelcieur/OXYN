@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using System.Windows.Threading;
-using HidSharp;
 using Oxyn.Infrastructure;
 
 namespace Oxyn.ConsoleMode;
@@ -18,7 +17,7 @@ public sealed class GamepadService : IDisposable
     private readonly object _gate = new();
     private readonly Dictionary<string, SwitchPadReader> _switchPads = new();
     private IReadOnlyList<ControllerInfo> _controllers = Array.Empty<ControllerInfo>();
-    private Thread? _thread;
+    private volatile Thread? _thread;
     private volatile bool _running;
 
     public GamepadService(Dispatcher dispatcher) => _dispatcher = dispatcher;
@@ -89,15 +88,17 @@ public sealed class GamepadService : IDisposable
         var xinputBattery = new (int Percent, bool Wired)[4];
         var xinputBatteryAt = new long[4];
         var prev = PadButtons.None;
-        long dirSince = 0, nextRepeat = 0, guideSince = 0, volRepeat = 0;
+        long nextRepeat = 0, guideSince = 0, volRepeat = 0;
         var guideLongDone = false;
         long lastScan = -10000, lastBt = -60000;
         var btXbox = new List<int>();          // batteries Bluetooth des manettes Xbox (ordre d'énumération)
+        Task<List<int>>? btRead = null;        // lecture SetupAPI lente : hors du thread de sondage
         string? activeId = null;
         var xinputOk = XInput.Available;
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
-        while (_running)
+        var me = Thread.CurrentThread;
+        while (_running && _thread == me)   // un Stop() suivi d'un Start() rapide ne laisse pas deux boucles
         {
             try
             {
@@ -105,10 +106,16 @@ public sealed class GamepadService : IDisposable
                 var combined = PadButtons.None;
                 var list = new List<ControllerInfo>();
 
-                if (xinputOk && now - lastBt >= 30000)
+                if (xinputOk && btRead == null && now - lastBt >= 30000)
                 {
                     lastBt = now;
-                    btXbox = BluetoothBattery.Read().Where(e => BluetoothBattery.IsXboxName(e.Name)).Select(e => e.Percent).ToList();
+                    btRead = Task.Run(() => BluetoothBattery.Read().Where(e => BluetoothBattery.IsXboxName(e.Name)).Select(e => e.Percent).ToList());
+                }
+                if (btRead is { IsCompleted: true })
+                {
+                    if (btRead.Status == TaskStatus.RanToCompletion) btXbox = btRead.Result;
+                    else Log.WarnOnce("gamepad-bt", "Batterie Bluetooth des manettes", btRead.Exception);
+                    btRead = null;
                 }
 
                 if (xinputOk)
@@ -187,10 +194,9 @@ public sealed class GamepadService : IDisposable
                     if ((prev & d) != 0) { prevDir = d; break; }
                 if (dir != PadButtons.None)
                 {
-                    if (dir != prevDir) { dirSince = now; nextRepeat = now + RepeatDelayMs; var dd = dir; Post(() => ButtonPressed?.Invoke(dd)); }
+                    if (dir != prevDir) { nextRepeat = now + RepeatDelayMs; var dd = dir; Post(() => ButtonPressed?.Invoke(dd)); }
                     else if (now >= nextRepeat) { nextRepeat = now + RepeatIntervalMs; var dd = dir; Post(() => ButtonPressed?.Invoke(dd)); }
                 }
-                _ = dirSince;
                 // Volume (gâchettes) : répété tant qu'on appuie.
                 var vol = (combined & PadButtons.VolumeUp) != 0 ? PadButtons.VolumeUp : (combined & PadButtons.VolumeDown) != 0 ? PadButtons.VolumeDown : PadButtons.None;
                 var prevVol = prev & (PadButtons.VolumeUp | PadButtons.VolumeDown);
@@ -207,6 +213,13 @@ public sealed class GamepadService : IDisposable
                 Log.WarnOnce("gamepad-loop", "Erreur du sondage des manettes", ex);
             }
             Thread.Sleep(16);
+        }
+        // Stop() n'attend que 500 ms : une manette ajoutée par un scan encore en cours est fermée ici.
+        lock (_gate)
+        {
+            if (_thread != null) return;
+            foreach (var p in _switchPads.Values) p.Close();
+            _switchPads.Clear();
         }
     }
 

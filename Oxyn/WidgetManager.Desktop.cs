@@ -97,8 +97,10 @@ public sealed partial class WidgetManager
         }
 
         // Les deux côtés suivent le même facteur, dans la limite des bornes : les proportions restent proches.
-        var f = Math.Clamp(factor, Math.Max(MinCardWidth / appearance.Width, MinCardHeight / appearance.Height),
-            Math.Min(MaxCardWidth / appearance.Width, MaxCardHeight / appearance.Height));
+        // Carte très allongée : la borne basse peut dépasser la haute (Math.Clamp lèverait).
+        var maxFactor = Math.Min(MaxCardWidth / appearance.Width, MaxCardHeight / appearance.Height);
+        var minFactor = Math.Min(maxFactor, Math.Max(MinCardWidth / appearance.Width, MinCardHeight / appearance.Height));
+        var f = Math.Clamp(factor, minFactor, maxFactor);
         appearance.Width = Math.Round(Math.Clamp(appearance.Width * f, MinCardWidth, MaxCardWidth));
         appearance.Height = Math.Round(Math.Clamp(appearance.Height * f, MinCardHeight, MaxCardHeight));
         ApplyModuleAppearance(id);

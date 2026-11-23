@@ -66,7 +66,6 @@ public partial class IconChooserWindow : Window
     /// <summary>Fond de tuile transparent : sur la Switch, seuls le bord du verre, l'icône et le nom restent.</summary>
     private const string TransparentHex = "#00000000";
 
-    private readonly Func<EmojiPickerWindow> _createEmojiPicker;
     private readonly ShortcutItem _preview; // copie de la tuile, modifiée au fil des choix pour l'aperçu
     private IconChoiceKind _kind = IconChoiceKind.Keep;
     private readonly bool _tileOptions;
@@ -96,14 +95,13 @@ public partial class IconChooserWindow : Window
 
     /// <param name="current">Tuile actuelle (icône et couleurs de départ de l'aperçu) ; null pour une nouvelle tuile.</param>
     /// <param name="tileOptions">Vrai pour une tuile de la Switch : taille de l'icône et nom masqué se règlent aussi ici.</param>
-    public IconChooserWindow(Window owner, string itemName, Func<EmojiPickerWindow> createEmojiPicker, ShortcutItem? current = null,
+    public IconChooserWindow(Window owner, string itemName, ShortcutItem? current = null,
         bool tileOptions = false)
     {
         InitializeComponent();
         Owner = owner;
         TitleText.Text = $"Icône de « {itemName} »";
         PreviewName.Text = itemName;
-        _createEmojiPicker = createEmojiPicker;
         _preview = new ShortcutItem
         {
             Name = itemName,
@@ -405,7 +403,7 @@ public partial class IconChooserWindow : Window
             if (pack.SkippedSvg > 0) message += $"\n{pack.SkippedSvg} icône(s) SVG n'ont pas pu être converties et sont ignorées.";
             MessageBox.Show(DialogOwner, message, "Pack d'icônes", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-        catch (InvalidDataException ex)
+        catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
         {
             MessageBox.Show(DialogOwner, ex.Message, "Pack d'icônes", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
@@ -560,7 +558,7 @@ public partial class IconChooserWindow : Window
     {
         var current = _preview.HasActiveIcon ? _preview.ActiveDisplay() : new ShortcutItem { IconGlyph = _preview.IconGlyph, CustomIconPath = _preview.CustomIconPath, IconColor = _preview.IconColor, ImageTint = _preview.ImageTint };
         current.TileColor = _preview.TileColor;
-        var chooser = new IconChooserWindow(DialogOwner, $"{PreviewName.Text} (active)", _createEmojiPicker, current);
+        var chooser = new IconChooserWindow(DialogOwner, $"{PreviewName.Text} (active)", current);
         if (_isEmbedded && NestedChooserRequested is { } requested)
         {
             requested(chooser, accepted =>
@@ -682,10 +680,6 @@ public partial class IconChooserWindow : Window
         };
         if (dialog.ShowDialog(DialogOwner) == true) SetIcon(IconChoiceKind.Image, dialog.FileName);
     }
-
-    private void Emoji_Click(object sender, RoutedEventArgs e)
-        // Le sélecteur d'émojis habituel, en mode « choix » : il rend l'émoji ici au lieu de le taper dans une autre application.
-        => _createEmojiPicker().ShowForPick(DialogOwner, emoji => SetIcon(IconChoiceKind.Glyph, emoji));
 
     private void Reset_Click(object sender, RoutedEventArgs e) => SetIcon(IconChoiceKind.Reset, null);
 

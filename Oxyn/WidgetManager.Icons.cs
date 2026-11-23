@@ -85,16 +85,12 @@ public sealed partial class WidgetManager
         RefreshVolumeMixer(force: true);
     }
 
-    /// <summary>Sélecteur d'émojis du choix d'icône (même fenêtre que la page Switch).</summary>
-    public EmojiPickerWindow CreateEmojiPickerForChoice()
-        => new(() => _config.RecentEmojis, _config.EmojiPicker);
-
     /// <summary>Clic droit sur une application du mixeur › « Changer l'icône… ».</summary>
     private void ChooseAppIcon(AudioSessionInfo info)
     {
         var current = _config.AppIcons.GetValueOrDefault(info.AppKey);
         // Propriétaire invisible (un widget rattaché au bureau ne peut pas posséder de fenêtre) : centré sur l'écran.
-        var pick = IconPicker.Choose(_hiddenOwner, info.DisplayName, current?.Icon, current?.IconColor, CreateEmojiPickerForChoice, centerOnScreen: true);
+        var pick = IconPicker.Choose(_hiddenOwner, info.DisplayName, current?.Icon, current?.IconColor, centerOnScreen: true);
         if (pick is not null) SetAppIcon(info.AppKey, info.DisplayName, pick.Value, pick.Color);
     }
 }

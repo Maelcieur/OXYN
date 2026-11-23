@@ -17,7 +17,6 @@ public sealed partial class WidgetManager
     // Garde anti-appels simultanés (entrée et sortie prennent plusieurs secondes) ; une sortie demandée en cours d'entrée est reportée.
     private bool _consoleBusy, _consoleExitPending;
     private bool _desktopWidgetsHidden;
-    private readonly List<WidgetWindow> _widgetsHiddenForConsole = new();
     // Applications réduites à l'entrée du mode console, rouvertes à la sortie.
     private List<IntPtr> _minimizedForConsole = new();
 
@@ -326,7 +325,6 @@ public sealed partial class WidgetManager
             Log.Warn("Mode console : sortie à la fermeture en échec", ex);
         }
         _desktopWidgetsHidden = false;
-        _widgetsHiddenForConsole.Clear();
         TileRuntime.ConsoleActive = false;
     }
 
@@ -341,7 +339,6 @@ public sealed partial class WidgetManager
         _desktopWidgetsHidden = true;
         foreach (var id in _windows.Keys.ToList())
             CloseWidget(id);
-        _widgetsHiddenForConsole.Clear();
         UpdateSensorDemand();
     }
 
@@ -351,7 +348,6 @@ public sealed partial class WidgetManager
         _desktopWidgetsHidden = false;
         foreach (var id in _windows.Keys.ToList())
             CloseWidget(id); // créés pendant le mode (cachés) : recréés proprement
-        _widgetsHiddenForConsole.Clear();
         try
         {
             CreateWidgets();

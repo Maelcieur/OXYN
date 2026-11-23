@@ -186,7 +186,7 @@ public sealed class RadialGauge : FrameworkElement
         if (r <= 1) return;
 
         var g = new Frame(cx, cy, r, t, 90 + (360 - sweep) / 2, sweep,
-            sweep * (Maximum > 0 ? Math.Clamp(DisplayValue / Maximum, 0, 1) : 0), glow, StartColor, EndColor);
+            sweep * (Maximum > 0 && double.IsFinite(DisplayValue) ? Math.Clamp(DisplayValue / Maximum, 0, 1) : 0), glow, StartColor, EndColor);
 
         if (ticks) DrawTicks(dc, g);
 

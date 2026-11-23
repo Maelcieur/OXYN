@@ -264,31 +264,6 @@ public sealed class TwitchSettings
 
 public sealed class AppConfig
 {
-    /// <summary>Clé API Gemini, chiffrée pour le compte Windows courant (DPAPI) : illisible copiée ailleurs.</summary>
-    [JsonIgnore]
-    public string? GeminiApiKey
-    {
-        get
-        {
-            if (string.IsNullOrEmpty(GeminiApiKeyProtected)) return null;
-            try
-            {
-                var bytes = ProtectedData.Unprotect(Convert.FromBase64String(GeminiApiKeyProtected), null, DataProtectionScope.CurrentUser);
-                return Encoding.UTF8.GetString(bytes);
-            }
-            catch (Exception ex) when (ex is CryptographicException or FormatException)
-            {
-                Log.WarnOnce("gemini-key", "Clé Gemini illisible (copiée depuis un autre compte ou PC ?) : à ressaisir.", ex);
-                return null;
-            }
-        }
-        set => GeminiApiKeyProtected = string.IsNullOrWhiteSpace(value)
-            ? null
-            : Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(value.Trim()), null, DataProtectionScope.CurrentUser));
-    }
-
-    public string? GeminiApiKeyProtected { get; set; }
-
     public List<WidgetPosition> Layout { get; set; } = new();
     public List<string> HiddenAudioDeviceIds { get; set; } = new();
 
@@ -316,13 +291,13 @@ public sealed class AppConfig
     /// <summary>Module Barres de capteurs : données choisies et style des barres.</summary>
     public SensorBarsSettings SensorBars { get; set; } = new() { Items = SensorBarsSettings.DefaultItems() };
 
+    /// <summary>Module Barre de recherche : moteur, suggestions, favoris et commandes /xxx.</summary>
+    public SearchBarSettings SearchBar { get; set; } = new();
+
     /// <summary>Apparence propre à chaque module, par identifiant de widget.</summary>
     public Dictionary<string, ModuleAppearance> Modules { get; set; } = new();
 
     // Anciens réglages : lus une seule fois pour migrer, jamais réécrits.
-    [JsonPropertyName("GeminiApiKey"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? LegacyGeminiApiKey { get; set; }
-
     [JsonPropertyName("PanelOpacity"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public double? LegacyPanelOpacity { get; set; }
 
@@ -352,15 +327,6 @@ public sealed class AppConfig
 
     /// <summary>Espacement entre les icônes du dock, en pixels.</summary>
     public double DockIconSpacing { get; set; } = 6;
-
-    /// <summary>Raccourci global qui ouvre le sélecteur d'émojis (« Ctrl+Maj+E »…) ; vide = désactivé.</summary>
-    public string? EmojiHotkey { get; set; }
-
-    /// <summary>Apparence du sélecteur d'émojis (verre, flou, zoom, couleurs).</summary>
-    public EmojiPickerSettings EmojiPicker { get; set; } = new();
-
-    /// <summary>Derniers émojis insérés, le plus récent en premier.</summary>
-    public List<string> RecentEmojis { get; set; } = new();
 
     /// <summary>Alertes (températures, batterie de la souris, quota Claude) : activation et seuils.</summary>
     public AlertSettings Alerts { get; set; } = new();
@@ -419,10 +385,17 @@ public sealed class AppConfig
         WidgetExtras ??= new();
         SensorBars ??= new() { Items = SensorBarsSettings.DefaultItems() };
         SensorBars.Items ??= new();
+        SearchBar ??= new();
+        SearchBar.Commands ??= new();
+        SearchBar.CustomEngines ??= new();
+        SearchBar.Favorites ??= new();
+        if (Services.SearchBar.IsOldDefaultList(SearchBar.Commands))
+        {
+            SearchBar.Commands.Clear();
+            changed = true;
+        }
         HiddenAudioDeviceIds ??= new();
         HiddenVolumeMixerApps ??= new();
-        RecentEmojis ??= new();
-        EmojiPicker ??= new();
         Modules ??= new();
         AudioDevices ??= new();
         AppIcons ??= new();
@@ -449,13 +422,6 @@ public sealed class AppConfig
             changed = true;
         }
         Deck.Migrate();
-
-        if (!string.IsNullOrWhiteSpace(LegacyGeminiApiKey))
-        {
-            GeminiApiKey = LegacyGeminiApiKey;
-            LegacyGeminiApiKey = null;
-            changed = true; // la clé en clair doit disparaître du disque tout de suite
-        }
 
         if (Theme is null)
         {

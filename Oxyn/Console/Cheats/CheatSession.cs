@@ -35,6 +35,7 @@ public sealed class CheatStore
         catch (Exception ex)
         {
             Log.Warn("Triches du Mode console illisibles", ex);
+            JsonFile.KeepCorruptCopy(_file);
             _games = new();
         }
     }
@@ -103,7 +104,8 @@ public sealed class CheatSession : IDisposable
         _store = store ?? new CheatStore();
         _mem = new ProcessMemory(pid);
         _saved = _store.For(gameId);
-        Resolve();
+        try { Resolve(); }
+        catch { _mem.Dispose(); throw; }   // sinon le handle du processus resterait ouvert
         _freeze = new System.Threading.Timer(_ => WriteFrozen(), null, 100, 100);
     }
 

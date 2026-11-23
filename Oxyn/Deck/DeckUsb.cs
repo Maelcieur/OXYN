@@ -79,8 +79,6 @@ public sealed class DeckUsb : IDisposable
 
     public DeckProtocol.Reply Ping() => Send(DeckProtocol.Cmd.Ping);
 
-    public DeckProtocol.Reply Present() => Send(DeckProtocol.Cmd.Present);
-
     public DeckProtocol.Reply SetBrightness(int percent) =>
         Send(DeckProtocol.Cmd.Brightness, arg: (uint)Math.Clamp(percent, 0, 100));
 
@@ -104,11 +102,11 @@ public sealed class DeckUsb : IDisposable
         return Send(DeckProtocol.Cmd.Night, data: kit, dataLen: kit.Length);
     }
 
-    /// <summary>Recale l'horloge de nuit de la Switch (heure locale en secondes epoch « locale »).</summary>
     /// <summary>Change la luminosité de veille du kit déjà stocké (un seul bloc de 512 octets, firmware v5+).</summary>
     public DeckProtocol.Reply SendNightBrightness(int percent) =>
         Send(DeckProtocol.Cmd.NightBrightness, arg: (uint)Math.Clamp(percent, 0, 100));
 
+    /// <summary>Recale l'horloge de nuit de la Switch (heure locale en secondes epoch « locale »).</summary>
     public DeckProtocol.Reply SendNightTime(uint localTime) => Send(DeckProtocol.Cmd.NightTime, arg: localTime);
 
     /// <summary>
@@ -199,6 +197,7 @@ public sealed class DeckUsb : IDisposable
                 return null;
 
             SetupDiGetDeviceInterfaceDetail(set, ref data, IntPtr.Zero, 0, out uint size, IntPtr.Zero);
+            if (size < 8) return null;
             IntPtr detail = Marshal.AllocHGlobal((int)size);
             try
             {

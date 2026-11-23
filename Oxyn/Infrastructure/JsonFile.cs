@@ -36,9 +36,7 @@ public static class JsonFile
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or InvalidOperationException)
         {
-            var backup = Path.Combine(Path.GetDirectoryName(path)!,
-                $"{Path.GetFileNameWithoutExtension(path)}.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}.json");
-            try { File.Copy(path, backup, overwrite: true); } catch { /* best effort */ }
+            var backup = KeepCorruptCopy(path);
             Log.Error($"{Path.GetFileName(path)} illisible : copie conservée dans {Path.GetFileName(backup)}, valeurs par défaut utilisées.", ex);
             return createDefault();
         }
@@ -49,6 +47,15 @@ public static class JsonFile
             Log.Error($"Lecture impossible de {path} : valeurs par défaut utilisées et écriture désactivée pour cette session (le fichier n'est pas écrasé).", ex);
             return createDefault();
         }
+    }
+
+    /// <summary>Met de côté un fichier illisible (*.corrupt-date.json) avant qu'il soit remplacé par des valeurs par défaut.</summary>
+    public static string KeepCorruptCopy(string path)
+    {
+        var backup = Path.Combine(Path.GetDirectoryName(path)!,
+            $"{Path.GetFileNameWithoutExtension(path)}.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+        try { if (File.Exists(path)) File.Copy(path, backup, overwrite: true); } catch { /* best effort */ }
+        return backup;
     }
 
     /// <summary>Relit quelques fois : un antivirus ou une sauvegarde verrouille souvent le fichier très brièvement.</summary>
@@ -75,7 +82,12 @@ public static class JsonFile
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(tempPath, JsonSerializer.Serialize(value, WriteOptions));
+            // Écrit sur le disque AVANT le renommage : une coupure de courant juste après ne laisse pas un fichier vide.
+            using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                JsonSerializer.Serialize(stream, value, WriteOptions);
+                stream.Flush(flushToDisk: true);
+            }
             File.Move(tempPath, path, overwrite: true);
             return true;
         }

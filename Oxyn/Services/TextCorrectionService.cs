@@ -8,21 +8,17 @@ namespace Oxyn.Services;
 
 /// <summary>
 /// Correction du texte sélectionné dans n'importe quelle application (Ctrl+Espace) : copie la sélection,
-/// la fait corriger par Gemini, colle le résultat à la place, puis restaure le presse-papiers d'origine.
+/// la corrige avec le correcteur orthographique de Windows (hors ligne), colle le résultat à la place,
+/// puis restaure le presse-papiers d'origine.
 /// </summary>
 public sealed class TextCorrectionService
 {
-    private readonly GeminiCorrector _corrector;
     private readonly Action<string> _showWarning;
     private bool _busy;
 
-    public TextCorrectionService(GeminiCorrector corrector, Action<string> showWarning)
-    {
-        _corrector = corrector;
-        _showWarning = showWarning;
-    }
+    public TextCorrectionService(Action<string> showWarning) => _showWarning = showWarning;
 
-    // Au-delà, la sélection n'est pas envoyée : vie privée (texte copié par erreur) et coût de l'appel.
+    // Au-delà, la sélection est sans doute copiée par erreur (document entier) : on n'y touche pas.
     private const int MaxSelectionLength = 20_000;
 
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
@@ -50,28 +46,23 @@ public sealed class TextCorrectionService
 
             if (selectedText.Length > MaxSelectionLength)
             {
-                _showWarning($"Sélection trop longue ({selectedText.Length} caractères, maximum {MaxSelectionLength}) : rien n'a été envoyé à Gemini.");
+                _showWarning($"Sélection trop longue ({selectedText.Length} caractères, maximum {MaxSelectionLength}) : rien n'a été corrigé.");
                 return;
             }
 
-            TrayIconService.ShowNotice("Envoi du texte à Gemini…");
-
-            string? corrected;
-            try
+            var corrected = SpellCorrector.Correct(selectedText);
+            if (corrected is null)
             {
-                corrected = await _corrector.CorrectAsync(selectedText);
+                _showWarning("Le correcteur orthographique de Windows est indisponible (dictionnaire français ou anglais absent ?).");
+                return;
             }
-            catch (Exception ex)
+            if (corrected == selectedText)
             {
-                Log.Warn("Correction Gemini en échec", ex);
-                _showWarning($"Échec de la correction :\n{ex.Message}");
+                TrayIconService.ShowNotice("Aucune faute trouvée.");
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(corrected))
-                return;
-
-            // L'utilisateur a pu changer de fenêtre pendant l'appel réseau : coller ailleurs serait dangereux.
+            // L'utilisateur a pu changer de fenêtre pendant la copie : coller ailleurs serait dangereux.
             if (GetForegroundWindow() != sourceWindow)
             {
                 _showWarning("La fenêtre active a changé pendant la correction : le texte n'a pas été collé.");
