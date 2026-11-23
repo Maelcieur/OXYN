@@ -533,6 +533,7 @@ void night_show()
 		return;
 
 	memcpy(screen_fb(), image, DECK_NIGHT_IMAGE_BYTES);
+	screen_forget(); // l'écran d'attente n'est plus affiché : ses points ne s'animent plus
 	shown = true;
 	shown_minute = -1;
 	drawn_w = 0;

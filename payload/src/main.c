@@ -150,33 +150,101 @@ static bool _launch_hekate()
 // Sans appui pendant ce délai, le menu (ouvert par erreur ?) se referme et l'attente du PC reprend.
 #define MENU_TIMEOUT_MS 30000
 
-// Menu ouvert par VOL+ et VOL- pendant l'attente du PC.
+enum { MENU_POWER_OFF, MENU_REBOOT, MENU_HEKATE, MENU_CLOSE };
+
+// Exécute un choix du menu ; renvoie vrai si le menu doit se fermer.
+static bool _menu_run(int item, int *selected, const char **note)
+{
+	switch (item)
+	{
+	case MENU_POWER_OFF:
+		_power_off();
+		break;
+	case MENU_REBOOT:
+		_reboot();
+		break;
+	case MENU_HEKATE:
+		if (!_launch_hekate()) // Ne revient que si hekate est introuvable.
+		{
+			*selected = MENU_HEKATE;
+			*note = "hekate introuvable sur la SD (bootloader/update.bin ou payload.bin).";
+		}
+		return false;
+	}
+	return true;
+}
+
+// Menu ouvert par VOL+ et VOL- pendant l'attente du PC : toucher un bouton, ou VOL+ / VOL- pour se déplacer
+// puis POWER pour valider.
 static void _menu()
 {
 	night_hide();
+	screen_forget();
 	screen_brightness(BRIGHTNESS_NORMAL);
-	screen_draw_menu(NULL);
+	int selected = MENU_CLOSE;
+	const char *note = NULL;
+	screen_draw_menu(selected, note);
 	_wait_buttons_released();
 
+	int touched = -1; // Bouton sous le doigt depuis l'appui (validé au relâchement s'il n'a pas changé).
+	u16 last_x = 0, last_y = 0;
 	u32 deadline = get_tmr_ms() + MENU_TIMEOUT_MS;
 	while (get_tmr_ms() < deadline)
 	{
+		int redraw = -1;
 		u8 btn = btn_read();
-
-		if (btn & BTN_POWER)
-			_power_off();
-		else if (btn & BTN_VOL_UP)
-			_reboot();
-		else if (btn & BTN_VOL_DOWN)
+		if (btn)
 		{
-			if (!_launch_hekate())
+			deadline = get_tmr_ms() + MENU_TIMEOUT_MS;
+			if (btn & BTN_POWER)
 			{
-				screen_draw_menu("hekate introuvable sur la SD (bootloader/update.bin ou payload.bin).");
 				_wait_buttons_released();
+				if (_menu_run(selected, &selected, &note))
+					break;
+				redraw = selected;
+			}
+			else if (btn & BTN_VOL_UP)
+				redraw = (selected + SCREEN_MENU_COUNT - 1) % SCREEN_MENU_COUNT;
+			else if (btn & BTN_VOL_DOWN)
+				redraw = (selected + 1) % SCREEN_MENU_COUNT;
+			_wait_buttons_released();
+		}
+
+		touch_event_t ev;
+		if (!touch_poll(&ev))
+		{
+			if (ev.touch)
+			{
 				deadline = get_tmr_ms() + MENU_TIMEOUT_MS;
+				last_x = ev.x;
+				last_y = ev.y;
+				int hit = screen_menu_hit(ev.x, ev.y);
+				if (touched == -1 && hit >= 0)
+				{
+					touched = hit;
+					redraw = hit; // Le bouton touché s'allume tout de suite.
+				}
+				else if (hit != touched)
+					touched = -2; // Le doigt a glissé hors du bouton : pas d'action au relâchement.
+			}
+			else if (touched != -1)
+			{
+				// Au relâchement, seul x est fiable : on garde la dernière position connue.
+				if (touched >= 0 && screen_menu_hit(last_x, last_y) == touched)
+				{
+					if (_menu_run(touched, &selected, &note))
+						break;
+					redraw = selected;
+				}
+				touched = -1;
 			}
 		}
 
+		if (redraw >= 0)
+		{
+			selected = redraw;
+			screen_draw_menu(selected, note);
+		}
 		msleep(10);
 	}
 
@@ -227,8 +295,9 @@ void ipl_main()
 		case DECK_LINK_LAUNCH_HEKATE:
 			if (!_launch_hekate())
 			{
-				screen_draw_menu("hekate introuvable sur la SD (bootloader/update.bin ou payload.bin).");
-				msleep(2000);
+				screen_brightness(BRIGHTNESS_NORMAL);
+				screen_draw_menu(MENU_HEKATE, "hekate introuvable sur la SD (bootloader/update.bin ou payload.bin).");
+				msleep(3000);
 			}
 			break;
 

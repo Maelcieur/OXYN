@@ -72,6 +72,9 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
   - `/xxx` commands picked from a list, renamable and editable, none by default. They send a ready-made prompt to
     Google's AI Mode (summarize, translate, explain, definition, synonyms, rephrase, compare, recipe, code or a custom
     command), except spell checking, which works offline.
+- **Switch payload** (`switchdeck.bin`, copy it to the SD card again): new waiting and connected screens with the OXYN
+  logo, a battery icon, and a touch menu (Power off, Restart, Back to hekate, Close): tap a button, or use VOL+ / VOL−
+  to move and POWER to confirm (no more accidental power-off).
 - **Offline spell checking** (Ctrl+Space on selected text, or the bar command) with the Windows spell checker: nothing is
   sent online, no key to enter.
 
@@ -87,6 +90,7 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 - Resource leaks (HID controllers, audio, TV network connections) and editor windows kept in memory.
 - Off-screen modules moved back; invalid sizes rejected in gauges, bars and volume controls.
 - Plugins: a malformed message no longer drops the connection; stricter file names on profile import.
+- Payload: the Joy-Con were read twice for every reply to the PC.
 - Various Settings fixes (confirmations, subscriptions, unhandled errors) and unused code removed.
 
 ## Modules
@@ -446,6 +450,7 @@ one instance runs per data folder.
 - [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0),
   [NAudio](https://github.com/naudio/NAudio) (MIT), [HidSharp](https://www.zer7.com/software/hidsharp) (Apache-2.0).
 - [PresentMon](https://github.com/GameTechDev/PresentMon) (Intel, MIT) for FPS measurement.
+- [Inter](https://github.com/rsms/inter) font (SIL Open Font License 1.1) for the Switch payload screens.
 - Brand logos: [Simple Icons](https://simpleicons.org) (CC0) — trademarks belong to their owners.
 - [SharpVectors](https://github.com/ElinamLLC/SharpVectors) (BSD-3-Clause) for SVG icons,
   [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (Microsoft) for plugin settings pages,

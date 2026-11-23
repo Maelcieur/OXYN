@@ -70,6 +70,9 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
   - commandes `/xxx` choisies dans une liste, renommables et modifiables, aucune par défaut. Elles envoient un prompt
     tout prêt au mode IA de Google (résumer, traduire, expliquer, définition, synonymes, reformuler, comparer,
     recette, code ou commande personnalisée), sauf la correction orthographique, qui fonctionne hors ligne.
+- **Payload Switch** (`switchdeck.bin`, à recopier sur la carte SD) : nouveaux écrans d'attente et de connexion avec le
+  logo OXYN, batterie en icône, et menu tactile (Éteindre, Redémarrer, Retour à hekate, Fermer) : toucher un bouton, ou
+  VOL+ / VOL− pour se déplacer et POWER pour valider (plus d'extinction par erreur).
 - **Correction orthographique hors ligne** (Ctrl+Espace sur un texte sélectionné, ou commande de la barre) avec le
   correcteur de Windows : rien n'est envoyé sur Internet, aucune clé à saisir.
 
@@ -86,6 +89,7 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 - Fuites de ressources (manettes HID, audio, connexions réseau de la TV) et fenêtres d'édition gardées en mémoire.
 - Modules hors de l'écran replacés ; tailles invalides refusées dans les jauges, barres et volumes.
 - Plugins : un message mal formé ne coupe plus la connexion ; import de profil plus strict sur les noms de fichiers.
+- Payload : les Joy-Con étaient lus deux fois à chaque réponse au PC.
 - Divers correctifs dans les Paramètres (confirmations, abonnements, erreurs non gérées) et code inutilisé retiré.
 
 ## Modules
@@ -455,6 +459,7 @@ portable) ; une instance par dossier de données.
 - [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0),
   [NAudio](https://github.com/naudio/NAudio) (MIT), [HidSharp](https://www.zer7.com/software/hidsharp) (Apache-2.0).
 - [PresentMon](https://github.com/GameTechDev/PresentMon) (Intel, MIT) pour la mesure des FPS.
+- Police [Inter](https://github.com/rsms/inter) (SIL Open Font License 1.1) pour les écrans du payload Switch.
 - Logos de marques : [Simple Icons](https://simpleicons.org) (CC0) — les marques appartiennent à leurs propriétaires.
 - [SharpVectors](https://github.com/ElinamLLC/SharpVectors) (BSD-3-Clause) pour les icônes SVG,
   [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (Microsoft) pour les pages de réglages des plugins,

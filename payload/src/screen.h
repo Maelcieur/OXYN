@@ -37,6 +37,14 @@ bool screen_has_external_power();
 
 void screen_draw_waiting(bool usb_ready);
 void screen_draw_connected(bool ram_fast);
-void screen_draw_menu(const char *note);
+// Menu : 0 Éteindre, 1 Redémarrer, 2 Retour à hekate, 3 Fermer.
+#define SCREEN_MENU_COUNT 4
+void screen_draw_menu(int selected, const char *note);
+int  screen_menu_hit(u32 x, u32 y); // Bouton du menu sous ce point, -1 si aucun.
+
+// Anime l'écran d'attente (points) ; à appeler souvent pendant l'attente.
+void screen_tick();
+// Un autre affichage (nuit, image du PC) a remplacé l'écran d'attente : plus d'animation.
+void screen_forget();
 
 #endif

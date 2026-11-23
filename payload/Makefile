@@ -20,7 +20,7 @@ VPATH  = $(SOURCEDIR) $(HKGFXDIR) $(HEKATE)/bootloader/libs/fatfs
 VPATH += $(BDKDIR) $(dir $(wildcard $(BDKDIR)/*/)) $(dir $(wildcard $(BDKDIR)/*/*/))
 
 # Payload.
-OBJS = start exception_handlers main screen deck_link night heap gfx
+OBJS = start exception_handlers main screen ui deck_link night heap gfx
 
 # Matériel.
 OBJS += bpmp ccplex clock di vic i2c irq timer \

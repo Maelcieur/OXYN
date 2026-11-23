@@ -102,15 +102,17 @@ static void _touch_reset()
 }
 
 // Lit les Joy-Con (le pilote limite lui-même le rythme des échanges) et retient les nouveaux appuis.
-static void _jc_update()
+// Renvoie l'état lu (NULL si les Joy-Con sont coupés) : une seule lecture par réponse au PC.
+static jc_gamepad_rpt_t *_jc_update()
 {
 	if (!jc_on)
-		return;
+		return NULL;
 	jc_gamepad_rpt_t *pad = joycon_poll();
 	if (!pad)
-		return;
+		return NULL;
 	jc_pressed |= pad->buttons & ~jc_last;
 	jc_last = pad->buttons;
+	return pad;
 }
 
 void deck_link_jc_power(bool on)
@@ -130,8 +132,7 @@ u8 jc_debug_state(bool left); // joycon.c (copie locale du pilote de la BDK)
 
 static void _fill_jc(deck_reply_t *rpl)
 {
-	_jc_update();
-	jc_gamepad_rpt_t *pad = jc_on ? joycon_poll() : NULL;
+	jc_gamepad_rpt_t *pad = _jc_update();
 	if (!pad)
 		return;
 	rpl->jc_dbg_l = jc_debug_state(true);
@@ -221,6 +222,13 @@ static u16 _handle_rect(const deck_cmd_t *cmd, bool received_in_place)
 // active : session en cours, un silence de CMD_TIMEOUT_MS renvoie DECK_LINK_IDLE ; sinon (attente) on attend
 // sans limite. Retourne DECK_LINK_DISCONNECTED si un bloc est arrivé (à lire dans out_buf), sinon le motif d'arrêt.
 // L'hôte est perdu si le bus reste en suspension (PC éteint ou câble retiré) ou en erreur HOST_LOST_MS.
+// Pendant l'attente (y compris l'énumération USB de la BDK) : heure de la nuit et points de l'écran d'attente.
+static void _idle_tick()
+{
+	night_tick();
+	screen_tick();
+}
+
 static deck_link_res_t _wait_cmd(bool active, bool *received)
 {
 	static u32 next_dram_train;
@@ -233,6 +241,7 @@ static deck_link_res_t _wait_cmd(bool active, bool *received)
 	while (!active || get_tmr_ms() < deadline)
 	{
 		night_tick();
+		screen_tick();
 
 		// DRAM à 1600 MHz : entraînement périodique obligatoire (sans effet sinon).
 		if (get_tmr_ms() >= next_dram_train)
@@ -427,7 +436,7 @@ deck_link_res_t deck_link_session(void (*on_connected)(), void (*on_idle)())
 
 	// Attente du PC (jusqu'à ~90 s, VOL+ et VOL- pour interrompre).
 	// Pendant ce temps, l'heure de nuit continue d'avancer.
-	btn_vol_hook = night_tick;
+	btn_vol_hook = _idle_tick;
 	int enum_res = usb_ops.usb_device_enumerate(USB_GADGET_UMS);
 	btn_vol_hook = NULL;
 	if (enum_res)
