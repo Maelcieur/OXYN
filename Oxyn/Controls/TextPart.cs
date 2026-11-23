@@ -99,6 +99,7 @@ public static class TextPart
         },
         ["tileclock"] = new TextPartInfo[] { new("digits", "Chiffres") },
         ["analogclock"] = new TextPartInfo[] { new("date", "Date") },
+        ["digitalclock"] = new TextPartInfo[] { new("time", "Heure"), new("seconds", "Secondes"), new("date", "Date") },
         ["calendar"] = new TextPartInfo[]
         {
             new("month", "Mois"),

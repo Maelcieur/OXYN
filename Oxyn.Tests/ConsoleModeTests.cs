@@ -181,4 +181,60 @@ public class ConsoleModeTests
         Assert.Equal("Hier", ConsoleFormat.LastPlayed(now.AddDays(-1), now));
         Assert.Equal("Jamais joué", ConsoleFormat.LastPlayed(null, now));
     }
+
+    [Fact]
+    public void SwitchButtons_TranslateToXInput_ForLaunchComboAndVolume()
+    {
+        // Rapport 0x30 : octet 3 = boutons droits, 4 = partagés, 5 = gauches.
+        var r = new byte[49];
+        r[0] = 0x30;
+        r[4] = 0x01 | 0x02;          // − et +
+        var x = GamepadDecoder.SwitchToXInput(r, r.Length, ControllerKind.SwitchPro)!;
+        Assert.Equal(0x0020 | 0x0010, x.Buttons & 0x0030);   // View + Menu (combinaison par défaut)
+
+        r[4] = 0x01;                  // −
+        r[3] = 0x80 | 0x40;           // ZR + R
+        r[5] = 0x40;                  // L
+        x = GamepadDecoder.SwitchToXInput(r, r.Length, ControllerKind.SwitchPro)!;
+        Assert.Equal(255, x.RT);
+        Assert.Equal(0, x.LT);
+        Assert.Equal(0x0100 | 0x0200 | 0x0020, x.Buttons & 0x0320);   // LB + RB + View
+
+        // Joy-Con gauche seul : pas de + ni de boutons droits.
+        r[4] = 0x03;
+        x = GamepadDecoder.SwitchToXInput(r, r.Length, ControllerKind.JoyConLeft)!;
+        Assert.Equal(0, x.Buttons & 0x0010);
+        Assert.Equal(0, x.RT);
+
+        Assert.Null(GamepadDecoder.SwitchToXInput(new byte[] { 0x3F, 0, 0, 0, 0, 0 }, 6, ControllerKind.SwitchPro));
+    }
+
+    [Fact]
+    public void BatteryAlerts_FireOnceAt50AndLow_AndRearmAfterCharging()
+    {
+        var tracker = new BatteryAlertTracker();
+        ControllerInfo Pad(int pct, bool charging = false, string id = "x0") => new(id, "Manette Xbox", ControllerKind.Xbox, pct, charging, false);
+
+        Assert.Empty(tracker.Check(new[] { Pad(80) }));                 // première vue : rien
+        Assert.Empty(tracker.Check(new[] { Pad(60) }));
+        var a = tracker.Check(new[] { Pad(50) });
+        Assert.Single(a); Assert.False(a[0].Low); Assert.Equal(1, a[0].Number);
+        Assert.Empty(tracker.Check(new[] { Pad(40) }));                 // 50 % déjà signalé
+        a = tracker.Check(new[] { Pad(10) });
+        Assert.Single(a); Assert.True(a[0].Low);
+        Assert.Empty(tracker.Check(new[] { Pad(5) }));
+        Assert.Empty(tracker.Check(new[] { Pad(60, charging: true) }));  // en charge : rien, réarmé
+        Assert.Empty(tracker.Check(new[] { Pad(70) }));
+        Assert.Single(tracker.Check(new[] { Pad(45) }));                // de nouveau 50 %
+
+        // Manette Switch (niveaux par quarts) : faible à 25 % ; numéro = position dans la liste.
+        var sw = new ControllerInfo("sw", "Manette Switch Pro", ControllerKind.SwitchPro, 75, false, false);
+        Assert.Empty(tracker.Check(new[] { Pad(45), sw }));
+        a = tracker.Check(new[] { Pad(45), sw with { BatteryPercent = 25 } });
+        Assert.Single(a); Assert.True(a[0].Low); Assert.Equal(2, a[0].Number);
+
+        // Déjà faible à la connexion : signalée tout de suite.
+        var fresh = new BatteryAlertTracker();
+        Assert.Single(fresh.Check(new[] { Pad(8, id: "x1") }));
+    }
 }

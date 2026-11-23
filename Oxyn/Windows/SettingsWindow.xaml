@@ -92,6 +92,7 @@
             </Style>
 
             <!-- Titre de section : petites capitales grises au-dessus d'une carte (le texte est saisi en casse normale). -->
+            <!-- Titre de section. Repliable (Tag = open / closed, posé par le code) : chevron et survol. -->
             <Style x:Key="SectionHeader" TargetType="ContentControl">
                 <Setter Property="Margin" Value="2,22,0,8"/>
                 <Setter Property="Focusable" Value="False"/>
@@ -99,8 +100,41 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ContentControl">
-                            <TextBlock Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Upper}}"
-                                       FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Muted}"/>
+                            <Grid Background="Transparent">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Path x:Name="Chevron" Width="10" Height="10" Margin="0,0,9,0" VerticalAlignment="Center" Visibility="Collapsed"
+                                      Data="M2,1 L6,5 L2,9" Stroke="{StaticResource UiAccent}" StrokeThickness="2"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <TextBlock x:Name="Label" Grid.Column="1"
+                                           Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Upper}}"
+                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Muted}"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="Tag" Value="closed">
+                                    <Setter TargetName="Chevron" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="Tag" Value="open">
+                                    <Setter TargetName="Chevron" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="Chevron" Property="Data" Value="M1,2 L5,6 L9,2"/>
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="Tag" Value="closed"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Label" Property="Foreground" Value="{StaticResource UiText}"/>
+                                </MultiTrigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="Tag" Value="open"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Label" Property="Foreground" Value="{StaticResource UiText}"/>
+                                </MultiTrigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
@@ -301,26 +335,18 @@
                     <Grid>
                         <ScrollViewer x:Name="NavScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel>
-                                <TextBlock Text="MODULES" Style="{StaticResource NavSection}" Margin="14,2,0,6"/>
+                                <TextBlock Text="BUREAU" Style="{StaticResource NavSection}" Margin="14,2,0,6"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE71D;" Content="Modules" x:Name="NavModules" GroupName="SettingsNav" Checked="Nav_Checked" Click="NavModules_Click" IsChecked="True"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE718;" Content="Barre de raccourcis" x:Name="NavDock" GroupName="SettingsNav" Checked="Nav_Checked"/>
-                                <TextBlock Text="APPARENCE" Style="{StaticResource NavSection}"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE790;" Content="Thème" x:Name="NavTheme" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE77B;" Content="Profils" x:Name="NavProfiles" GroupName="SettingsNav" Checked="Nav_Checked"/>
+                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xEA8F;" Content="Alertes" x:Name="NavAlerts" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <TextBlock Text="APPAREILS" Style="{StaticResource NavSection}"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE7FC;" Content="Switch" x:Name="NavSwitch" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE7F4;" Content="Mode console" x:Name="NavConsole" GroupName="SettingsNav" Checked="Nav_Checked"/>
-                                <TextBlock Text="APPLICATIONS" Style="{StaticResource NavSection}"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE71B;" Content="Applications connectées" x:Name="NavIntegrations" GroupName="SettingsNav" Checked="Nav_Checked"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xEA86;" Content="Plugins" x:Name="NavPlugins" GroupName="SettingsNav" Checked="Nav_Checked"/>
-                                <TextBlock Text="NOTIFICATIONS" Style="{StaticResource NavSection}"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xEA8F;" Content="Alertes" x:Name="NavAlerts" GroupName="SettingsNav" Checked="Nav_Checked"/>
-                                <TextBlock Text="OUTILS" Style="{StaticResource NavSection}"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE70F;" Content="Correction de texte" x:Name="NavCorrection" GroupName="SettingsNav" Checked="Nav_Checked"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE76E;" Content="Émojis" x:Name="NavEmoji" GroupName="SettingsNav" Checked="Nav_Checked"/>
+                                <TextBlock Text="CONNEXIONS" Style="{StaticResource NavSection}"/>
+                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE71B;" Content="Applications et plugins" x:Name="NavIntegrations" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <TextBlock Text="SYSTÈME" Style="{StaticResource NavSection}"/>
+                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE70F;" Content="Outils" x:Name="NavTools" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE713;" Content="Général" x:Name="NavGeneral" GroupName="SettingsNav" Checked="Nav_Checked"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE945;" Content="Énergie" x:Name="NavEnergy" GroupName="SettingsNav" Checked="Nav_Checked"/>
                             </StackPanel>
                         </ScrollViewer>
 
@@ -379,11 +405,34 @@
                 <ScrollViewer x:Name="PageModules" Grid.Row="1" Style="{StaticResource PageScroller}">
                     <StackPanel>
                         <TextBlock Text="Modules" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Choisis les modules affichés sur le bureau. « Personnaliser » ouvre les réglages d'apparence propres à chaque module."
+                        <TextBlock Text="Choisis les modules affichés sur le bureau, rangés par catégorie. « Personnaliser » ouvre les réglages propres à chaque module, avec son interrupteur en haut."
                                    Style="{StaticResource PageSubtitle}"/>
 
-                        <Border Style="{StaticResource RowCard}" Margin="0,16,0,12">
-                            <ItemsControl x:Name="WidgetsList" Margin="0,0,0,-1">
+                        <ItemsControl x:Name="WidgetsList" Margin="0,10,0,12">
+                                <ItemsControl.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.ContainerStyle>
+                                            <Style TargetType="GroupItem">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="GroupItem">
+                                                            <Expander Style="{StaticResource SectionExpander}" IsExpanded="True" Margin="0,6,0,4">
+                                                                <Expander.Header>
+                                                                    <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource UiText}">
+                                                                        <Run Text="{Binding Name, Mode=OneWay}"/><Run Text="   " /><Run Text="{Binding ItemCount, Mode=OneWay}" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
+                                                                    </TextBlock>
+                                                                </Expander.Header>
+                                                                <Border Style="{StaticResource RowCard}">
+                                                                    <ItemsPresenter Margin="0,0,0,-1"/>
+                                                                </Border>
+                                                            </Expander>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </GroupStyle.ContainerStyle>
+                                    </GroupStyle>
+                                </ItemsControl.GroupStyle>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Style="{StaticResource RowBorder}" Padding="0,9">
@@ -408,31 +457,6 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <!-- ===== Page : Thème (sous-onglets : un éditeur par groupe de réglages) ===== -->
-                <ScrollViewer x:Name="PageTheme" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
-                    <StackPanel>
-                        <TextBlock Text="Thème" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Appliqué à tous les modules qui n'ont pas leur propre style. Les changements s'affichent en direct sur le bureau."
-                                   Style="{StaticResource PageSubtitle}" Margin="0,4,0,14"/>
-                        <WrapPanel>
-                            <RadioButton x:Name="GlobalTabColorsButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Couleurs et polices"
-                                         IsChecked="True" Checked="GlobalThemeTab_Checked"/>
-                            <RadioButton x:Name="GlobalTabCardButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Carte"
-                                         Checked="GlobalThemeTab_Checked"/>
-                            <RadioButton x:Name="GlobalTabGaugesButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Jauges"
-                                         Checked="GlobalThemeTab_Checked"/>
-                            <RadioButton x:Name="GlobalTabAnimationsButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Animations"
-                                         Checked="GlobalThemeTab_Checked"/>
-                        </WrapPanel>
-                        <Border Height="1" Background="{StaticResource CardBorder}" Margin="0,0,0,16"/>
-                        <controls:ThemeEditor x:Name="GlobalThemeEditor" Section="ColorsFonts"/>
-                        <controls:ThemeEditor x:Name="GlobalCardEditor" Section="Card" Visibility="Collapsed"/>
-                        <controls:ThemeEditor x:Name="GlobalGaugesEditor" Section="Gauges" Visibility="Collapsed"/>
-                        <controls:ThemeEditor x:Name="GlobalAnimationsEditor" Section="Animations" Visibility="Collapsed"/>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -471,17 +495,27 @@
                         </StackPanel.Resources>
 
                         <TextBlock Text="Profils" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Change d'ambiance en un clic avec un thème prêt à l'emploi, ou enregistre ta configuration pour la retrouver plus tard."
+                        <TextBlock Text="Change d'ambiance en un clic avec un profil prêt à l'emploi, enregistre ta configuration pour la retrouver plus tard, ou règle finement le style de tous les modules."
                                    Style="{StaticResource PageSubtitle}"/>
 
-                        <!-- Thèmes prêts à l'emploi -->
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Thèmes prêts à l'emploi"/>
+                        <!-- Profils prêts à l'emploi (anciens thèmes) -->
+                        <ContentControl Style="{StaticResource SectionHeader}" Content="Profils prêts à l'emploi"/>
                         <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="thème préréglage palette ambiance couleurs style prêt galerie néon clair sombre">
                             <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Description="Un clic remplace le thème global (couleurs, polices, carte, jauges, animations). La disposition des modules ne change pas."/>
+                                <controls:SettingRow Description="Un clic remplace le style de tous les modules (couleurs, polices, carte, jauges, animations). La disposition des modules ne change pas."/>
                                 <Border Style="{StaticResource RowBorder}" Padding="0,14,0,2">
                                     <WrapPanel x:Name="PresetGallery"/>
                                 </Border>
+                                <controls:SettingRow Label="Créer mon style" Stacked="True"
+                                                     Description="Règle les couleurs dans « Réglage fin du style » plus bas, donne un nom, puis enregistre : ton style rejoint la galerie. Clic droit sur un de tes styles pour le remplacer ou le supprimer.">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0"
+                                                Content="Enregistrer le style actuel" Click="CustomStyleSave_Click"/>
+                                        <TextBox x:Name="CustomStyleNameBox" MaxLength="40" VerticalContentAlignment="Center"/>
+                                    </DockPanel>
+                                </controls:SettingRow>
+                                <TextBlock x:Name="CustomStyleMessage" Visibility="Collapsed" TextWrapping="Wrap" Margin="0,0,0,10"
+                                           local:SettingsSearch.Ignore="True"/>
                                 <controls:SettingRow Label="Appliquer aussi aux modules qui ont leur propre style">
                                     <CheckBox x:Name="PresetResetModulesCheck" Style="{StaticResource ToggleSwitch}" Margin="0"/>
                                 </controls:SettingRow>
@@ -553,6 +587,28 @@
                                 </controls:SettingRow>
                             </StackPanel>
                         </Border>
+
+                        <!-- Réglage fin du style (ancienne page Thème) : appliqué aux modules qui n'ont pas leur propre style -->
+                        <ContentControl Style="{StaticResource SectionHeader}" Content="Réglage fin du style"/>
+                        <StackPanel x:Name="PageTheme">
+                            <TextBlock Text="Style commun à tous les modules qui n'ont pas leur propre style. Les changements s'affichent en direct sur le bureau ; enregistre-les dans un profil pour les garder."
+                                       Style="{StaticResource PageSubtitle}" Margin="0,0,0,12"/>
+                    <WrapPanel>
+                        <RadioButton x:Name="GlobalTabColorsButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Couleurs et polices"
+                                     IsChecked="True" Checked="GlobalThemeTab_Checked"/>
+                        <RadioButton x:Name="GlobalTabCardButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Carte"
+                                     Checked="GlobalThemeTab_Checked"/>
+                        <RadioButton x:Name="GlobalTabGaugesButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Jauges"
+                                     Checked="GlobalThemeTab_Checked"/>
+                        <RadioButton x:Name="GlobalTabAnimationsButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Animations"
+                                     Checked="GlobalThemeTab_Checked"/>
+                    </WrapPanel>
+                    <Border Height="1" Background="{StaticResource CardBorder}" Margin="0,0,0,16"/>
+                    <controls:ThemeEditor x:Name="GlobalThemeEditor" Section="ColorsFonts"/>
+                    <controls:ThemeEditor x:Name="GlobalCardEditor" Section="Card" Visibility="Collapsed"/>
+                    <controls:ThemeEditor x:Name="GlobalGaugesEditor" Section="Gauges" Visibility="Collapsed"/>
+                    <controls:ThemeEditor x:Name="GlobalAnimationsEditor" Section="Animations" Visibility="Collapsed"/>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -570,6 +626,12 @@
                             <ComboBox x:Name="ModuleSelector" DockPanel.Dock="Right" Width="200" DisplayMemberPath="Label"
                                       VerticalAlignment="Center" SelectionChanged="ModuleSelector_SelectionChanged"
                                       ToolTip="Changer de module"/>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,22,0"
+                                        ToolTip="Afficher ou masquer ce module sur le bureau">
+                                <TextBlock Text="Afficher" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <CheckBox x:Name="ModuleShownCheck" Style="{StaticResource ToggleSwitch}" Margin="0"
+                                          Checked="ModuleShown_Changed" Unchecked="ModuleShown_Changed"/>
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Style="{StaticResource LinkButton}" Content="Modules" FontSize="20" FontWeight="SemiBold"
                                         Foreground="{StaticResource Muted}" Padding="0,2" Click="CustomizeBack_Click"
@@ -640,6 +702,134 @@
                                 <StackPanel>
                                     <TextBlock Text="RÉGLAGES GÉNÉRAUX" FontSize="10.5" FontWeight="SemiBold"
                                                Foreground="{StaticResource Muted}" Margin="0,2,0,10"/>
+                                    <!-- Module regroupé : style d'horloge, ou parties affichées (météo et ciel, son) -->
+                                    <Expander x:Name="FamilyExpander" Style="{StaticResource SectionExpander}" Header="Parties affichées"
+                                              Margin="0,0,0,8" Visibility="Collapsed" IsExpanded="True">
+                                        <StackPanel x:Name="FamilyPanel" Margin="24,0,0,0"/>
+                                    </Expander>
+                                    <!-- Module Consommation : prix de l'électricité et estimation (ancienne page Énergie). DataContext = réglages Power -->
+                                    <Expander x:Name="PageEnergy" Style="{StaticResource SectionExpander}" Header="Prix et estimation de la consommation"
+                                              Margin="0,0,0,8" Visibility="Collapsed" IsExpanded="True">
+                                        <StackPanel x:Name="EnergyPanel">
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Prix de l'électricité"/>
+                                    <Border Style="{StaticResource RowCard}"
+                                            local:SettingsSearch.Keywords="prix tarif kwh facture euro électricité heures creuses pleines watts puissance coût estimation consommation">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Description="Prix TTC du kWh indiqué sur ta facture. Il est appliqué à chaque mesure : le changer ne modifie pas les montants déjà comptés."/>
+                                            <controls:SettingRow Label="Prix du kWh (€)" Description="Heures pleines si l'option heures creuses est active.">
+                                                <TextBox Width="120" Text="{Binding PricePerKwh, Converter={StaticResource DecimalText}, UpdateSourceTrigger=LostFocus}"/>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Heures pleines / heures creuses"
+                                                                 Description="Un second prix s'applique pendant la plage des heures creuses.">
+                                                <CheckBox Style="{StaticResource ToggleSwitch}" Margin="0" IsChecked="{Binding UseOffPeak}"/>
+                                            </controls:SettingRow>
+                                            <StackPanel Visibility="{Binding UseOffPeak, Converter={StaticResource BoolToVis}}">
+                                                <controls:SettingRow Label="Prix du kWh en heures creuses (€)">
+                                                    <TextBox Width="120" Text="{Binding OffPeakPricePerKwh, Converter={StaticResource DecimalText}, UpdateSourceTrigger=LostFocus}"/>
+                                                </controls:SettingRow>
+                                                <controls:SettingRow Label="Début des heures creuses">
+                                                    <DockPanel Width="260">
+                                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding OffPeakStartHour, Converter={StaticResource Hour}}"/>
+                                                        <Slider Minimum="0" Maximum="23.5" Value="{Binding OffPeakStartHour}" IsSnapToTickEnabled="True" TickFrequency="0.5"/>
+                                                    </DockPanel>
+                                                </controls:SettingRow>
+                                                <controls:SettingRow Label="Fin des heures creuses">
+                                                    <DockPanel Width="260">
+                                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding OffPeakEndHour, Converter={StaticResource Hour}}"/>
+                                                        <Slider Minimum="0" Maximum="23.5" Value="{Binding OffPeakEndHour}" IsSnapToTickEnabled="True" TickFrequency="0.5"/>
+                                                    </DockPanel>
+                                                </controls:SettingRow>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Estimation de la puissance"/>
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="watts puissance processeur écran alimentation rendement jauge estimation">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Description="La carte graphique est mesurée par son capteur. Le processeur aussi quand son capteur est accessible ; sinon (Intégrité de la mémoire activée) il est estimé selon sa charge, entre les deux valeurs ci-dessous. Le reste n'a aucun capteur : c'est un forfait."/>
+                                            <controls:SettingRow Label="Processeur au repos" Description="Si estimé.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding CpuIdleWatts, StringFormat={}{0:0} W}"/>
+                                                    <Slider Minimum="5" Maximum="100" Value="{Binding CpuIdleWatts}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Processeur à pleine charge" Description="Si estimé.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding CpuMaxWatts, StringFormat={}{0:0} W}"/>
+                                                    <Slider Minimum="30" Maximum="350" Value="{Binding CpuMaxWatts}" IsSnapToTickEnabled="True" TickFrequency="5"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Autres composants" Description="Carte mère, RAM, SSD, ventilateurs, USB.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding OtherWatts, StringFormat={}{0:0} W}"/>
+                                                    <Slider Minimum="0" Maximum="200" Value="{Binding OtherWatts}" IsSnapToTickEnabled="True" TickFrequency="5"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Écran(s)" Description="0 pour ne pas les compter.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding MonitorWatts, StringFormat={}{0:0} W}"/>
+                                                    <Slider Minimum="0" Maximum="300" Value="{Binding MonitorWatts}" IsSnapToTickEnabled="True" TickFrequency="5"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Rendement de l'alimentation" Description="80+ Gold ≈ 90 %.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding PsuEfficiency, Converter={StaticResource Percent}}"/>
+                                                    <Slider Minimum="0.7" Maximum="0.98" Value="{Binding PsuEfficiency}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Maximum de la jauge">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding GaugeMaxWatts, StringFormat={}{0:0} W}"/>
+                                                    <Slider Minimum="100" Maximum="1500" Value="{Binding GaugeMaxWatts}" IsSnapToTickEnabled="True" TickFrequency="50"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Heures d'utilisation"/>
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="jour soir heures début fin utilisation">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Description="Le temps d'allumage (hors veille) est réparti en « jour » et « soir ». Le soir va de la fin du jour jusqu'au début du jour suivant. Les heures déjà mesurées gardent la plage en vigueur au moment de la mesure ; les heures reprises du journal Windows suivent le réglage actuel."/>
+                                            <controls:SettingRow Label="Début du jour">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding DayStartHour, Converter={StaticResource Hour}}"/>
+                                                    <Slider Minimum="0" Maximum="23.5" Value="{Binding DayStartHour}" IsSnapToTickEnabled="True" TickFrequency="0.5"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Fin du jour" Description="Début du soir.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding DayEndHour, Converter={StaticResource Hour}}"/>
+                                                    <Slider Minimum="0" Maximum="23.5" Value="{Binding DayEndHour}" IsSnapToTickEnabled="True" TickFrequency="0.5"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <ContentControl Style="{StaticResource SectionHeader}" Content="Depuis la mise en service"/>
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="mise en service date installation windows journal moyenne remise zéro cumul réinitialiser session mois">
+                                        <StackPanel Style="{StaticResource RowsPanel}">
+                                            <controls:SettingRow Description="Avant OXYN, rien n'a été mesuré : les heures d'allumage sont reprises du journal Windows (qui ne garde que les derniers mois), puis extrapolées jusqu'à la mise en service au même rythme. Elles sont comptées à la puissance moyenne ci-dessous et au prix actuel. C'est une estimation."/>
+                                            <controls:SettingRow Label="Date de la première mise en service" Description="jj/mm/aaaa — vide = installation de Windows.">
+                                                <TextBox Width="120" Text="{Binding FirstPowerOnDate, Converter={StaticResource DateText}, UpdateSourceTrigger=LostFocus, TargetNullValue=''}"/>
+                                            </controls:SettingRow>
+                                            <controls:SettingRow Label="Puissance moyenne avant OXYN" Description="0 = moyenne mesurée par OXYN.">
+                                                <DockPanel Width="260">
+                                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding PastAverageWatts, StringFormat={}{0:0} W}"/>
+                                                    <Slider Minimum="0" Maximum="800" Value="{Binding PastAverageWatts}" IsSnapToTickEnabled="True" TickFrequency="10"/>
+                                                </DockPanel>
+                                            </controls:SettingRow>
+                                            <Border Style="{StaticResource RowBorder}">
+                                                <Border Background="{StaticResource UiHover}" CornerRadius="6" Padding="12,10">
+                                                    <TextBlock x:Name="LifetimeDetailsText" FontSize="11.5" Foreground="{StaticResource Muted}" TextWrapping="Wrap" LineHeight="18"/>
+                                                </Border>
+                                            </Border>
+                                            <controls:SettingRow Label="Compteurs de la période" Description="Le cumul depuis la mise en service est conservé.">
+                                                <Button x:Name="ResetPowerButton" Content="Réinitialiser session, jour et mois" Click="ResetPower_Click"/>
+                                            </controls:SettingRow>
+                                        </StackPanel>
+                                    </Border>
+                                        </StackPanel>
+                                    </Expander>
                                     <Expander x:Name="SizeExpander" Style="{StaticResource SectionExpander}" Header="Taille" Margin="0,0,0,8">
                                         <ContentControl x:Name="SizeExpanderHost"/>
                                     </Expander>
@@ -1568,8 +1758,21 @@
                 <!-- ===== Page : Barre de raccourcis ===== -->
                 <ScrollViewer x:Name="PageDock" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
                     <StackPanel>
-                        <TextBlock Text="Barre de raccourcis" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Apparence et comportement du dock de lancement rapide." Style="{StaticResource PageSubtitle}"/>
+                        <DockPanel Margin="0,0,0,4">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Afficher" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <CheckBox x:Name="DockShownCheck" Style="{StaticResource ToggleSwitch}" Margin="0" Tag="shortcuts"
+                                          Checked="WidgetCheck_Changed" Unchecked="WidgetCheck_Changed"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource LinkButton}" Content="Modules" FontSize="20" FontWeight="SemiBold"
+                                        Foreground="{StaticResource Muted}" Padding="0,2" Click="CustomizeBack_Click"
+                                        ToolTip="Revenir à la liste des modules"/>
+                                <TextBlock Text="›" FontSize="20" Foreground="{StaticResource Muted}" Margin="10,0,10,2" VerticalAlignment="Center"/>
+                                <TextBlock Text="Barre de raccourcis" Style="{StaticResource PageTitle}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DockPanel>
+                        <TextBlock Text="Apparence et comportement du dock de lancement rapide. Les raccourcis eux-mêmes s'ajoutent par clic droit sur la barre." Style="{StaticResource PageSubtitle}"/>
 
                         <ContentControl Style="{StaticResource SectionHeader}" Content="Disposition"/>
                         <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="dock orientation horizontale verticale icônes espacement taille animation survol">
@@ -2326,32 +2529,22 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- ===== Page : Correction de texte ===== -->
-                <ScrollViewer x:Name="PageCorrection" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
-                    <StackPanel>
-                        <TextBlock Text="Correction de texte" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Sélectionne du texte dans n'importe quelle fenêtre puis appuie sur CTRL+ESPACE pour le corriger via l'API Gemini."
-                                   Style="{StaticResource PageSubtitle}"/>
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Clé API Gemini"/>
-                        <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="gemini google api clé correction orthographe ia">
-                            <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Label="Clé API Gemini" Description="Nécessaire pour corriger le texte sélectionné.">
-                                    <StackPanel Orientation="Horizontal">
-                                        <PasswordBox x:Name="GeminiApiKeyBox" Width="240"/>
-                                        <Button Content="Enregistrer la clé" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="SaveGeminiKey_Click"/>
-                                    </StackPanel>
-                                </controls:SettingRow>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
 
                 <!-- ===== Page : Applications connectées (noms de code « Integrations ») ===== -->
                 <ScrollViewer x:Name="PageIntegrations" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
                     <StackPanel>
-                        <TextBlock Text="Applications connectées" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Pilote d'autres logiciels depuis les tuiles de la Switch et affiche leur état en direct."
+                        <TextBlock Text="Applications et plugins" Style="{StaticResource PageTitle}"/>
+                        <TextBlock Text="Pilote d'autres logiciels depuis les tuiles de la Switch (OBS, Twitch, Voicemod) et ajoute de nouvelles actions avec les plugins."
                                    Style="{StaticResource PageSubtitle}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,14,0,4">
+                            <RadioButton x:Name="ConnectionsTabApps" Content="Applications connectées" Style="{StaticResource TabButton}" GroupName="ConnectionsTabs"
+                                         IsChecked="True" Checked="ConnectionsTab_Checked" MinWidth="170"/>
+                            <RadioButton x:Name="ConnectionsTabPlugins" Content="Plugins" Style="{StaticResource TabButton}" GroupName="ConnectionsTabs"
+                                         Checked="ConnectionsTab_Checked" MinWidth="120"/>
+                        </StackPanel>
+                        <Border Height="1" Background="{StaticResource CardBorder}" Margin="0,0,0,4"/>
+
+                        <StackPanel x:Name="IntegrationsContent">
 
                         <Button x:Name="AddAppButton" Content="+ Ajouter une application" Style="{StaticResource PrimaryButton}"
                                 HorizontalAlignment="Left" Margin="0,14,0,0" Click="AddApp_Click"/>
@@ -2471,6 +2664,65 @@
                                 </Border>
                             </StackPanel>
                         </Border>
+                        </StackPanel>
+
+                        <!-- Plugins (installés / catalogue GitHub) -->
+                        <StackPanel x:Name="PagePlugins" Visibility="Collapsed">
+                            <TextBlock Text="Les plugins ajoutent de nouvelles actions de tuiles : plugins OXYN, et plugins du Stream Deck d'Elgato publiés en open source. Chacun est un petit programme lancé par OXYN."
+                                       Style="{StaticResource PageSubtitle}" Margin="0,10,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,14,0,4">
+                                <RadioButton Content="Installés" Style="{StaticResource TabButton}" GroupName="PluginsTabs"
+                                             IsChecked="True" Checked="PluginsTab_Checked" MinWidth="120"/>
+                                <RadioButton x:Name="PluginsTabCatalog" Content="Catalogue" Style="{StaticResource TabButton}" GroupName="PluginsTabs"
+                                             Checked="PluginsTab_Checked" MinWidth="120"/>
+                            </StackPanel>
+
+                            <!-- Plugins installés -->
+                            <StackPanel x:Name="PluginsInstalledPanel">
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="+ Installer un fichier…" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Click="InstallPlugin_Click"
+                                            local:SettingsSearch.Keywords="plugin extension installer oxynplugin streamdeckplugin elgato"/>
+                                    <Button Content="Vérifier les mises à jour" Margin="0,0,8,0" Click="CheckPluginUpdates_Click"/>
+                                    <Button Content="Ouvrir le dossier des plugins" Click="OpenPluginsFolder_Click"/>
+                                </WrapPanel>
+                                <TextBlock Text="Un plugin exécute du code sur ce PC avec tes droits : n'installe que des plugins de confiance."
+                                           FontSize="11.5" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                                <Border x:Name="PluginsEmptyCard" Style="{StaticResource Card}" Margin="0,16,0,0" Padding="20,28">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="&#xEA86;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="30"
+                                                   Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Aucun plugin installé" Foreground="{StaticResource UiText}" FontSize="14"
+                                                   FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                                        <TextBlock Text="Cherche-en un dans l'onglet Catalogue, ou installe un fichier .oxynplugin ou .streamDeckPlugin."
+                                                   Style="{StaticResource PageSubtitle}" TextAlignment="Center" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <StackPanel x:Name="PluginsList"/>
+                            </StackPanel>
+
+                            <!-- Catalogue : plugins vérifiés et dépôts GitHub -->
+                            <StackPanel x:Name="PluginsCatalogPanel" Visibility="Collapsed">
+                                <DockPanel Margin="0,12,0,0">
+                                    <Button DockPanel.Dock="Right" x:Name="CatalogSearchButton" Content="Rechercher" Style="{StaticResource PrimaryButton}"
+                                            Margin="8,0,0,0" Click="CatalogSearch_Click"/>
+                                    <Border Height="34" CornerRadius="8" Background="{StaticResource InputBg}" BorderBrush="{StaticResource InputBorder}" BorderThickness="1">
+                                        <Grid>
+                                            <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12" Foreground="{StaticResource Muted}"
+                                                       VerticalAlignment="Center" Margin="11,0,0,0"/>
+                                            <TextBox x:Name="CatalogSearchBox" Background="Transparent" BorderThickness="0" Height="32" Padding="30,0,6,0"
+                                                     KeyDown="CatalogSearchBox_KeyDown"/>
+                                            <TextBlock Text="Nom ou usage du plugin (ex. : spotify, obs, discord, météo…) — vide : les plus populaires"
+                                                       Foreground="{StaticResource Muted}" FontSize="12.5" IsHitTestVisible="False" VerticalAlignment="Center" Margin="32,0,0,0"
+                                                       Visibility="{Binding Text, ElementName=CatalogSearchBox, Converter={StaticResource EmptyToVis}}"/>
+                                        </Grid>
+                                    </Border>
+                                </DockPanel>
+                                <TextBlock x:Name="CatalogStatusText" FontSize="11.5" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="2,8,0,0"
+                                           Text="Plugins publiés sur GitHub avec le sujet « oxyn-plugin » ou « streamdeck-plugin ». Les plugins « Vérifiés » ont été testés avec OXYN ; les autres viennent de la communauté."/>
+                                <StackPanel x:Name="CatalogList" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -2568,7 +2820,7 @@
                                               Checked="ConsoleTvAutoOff_Changed" Unchecked="ConsoleTvAutoOff_Changed"/>
                                 </controls:SettingRow>
                                 <controls:SettingRow Label="Lancer le mode console avec la manette"
-                                                     Description="Appuie en même temps sur ces boutons de la manette Xbox, depuis le PC. En mode console (menu et jeux), View ⧉ + LT / RT règlent le volume.">
+                                                     Description="Appuie en même temps sur ces boutons depuis le PC. Manette Switch Pro / Joy-Con : − = View, + = Menu, L / R = LB / RB (ex. − et +). En mode console (menu et jeux), View ⧉ + LT / RT (Switch : − + ZL / ZR) règlent le volume.">
                                     <ComboBox x:Name="ConsoleComboBox" Width="300" SelectionChanged="ConsoleCombo_Changed"/>
                                 </controls:SettingRow>
                             </StackPanel>
@@ -2696,136 +2948,95 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- ===== Page : Plugins (onglets : installés / catalogue GitHub) ===== -->
-                <ScrollViewer x:Name="PagePlugins" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
+
+
+                <!-- ===== Page : Outils (correction de texte + sélecteur d'émojis) ===== -->
+                <ScrollViewer x:Name="PageTools" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
                     <StackPanel>
-                        <TextBlock Text="Plugins" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Les plugins ajoutent de nouvelles actions de tuiles : plugins OXYN, et plugins du Stream Deck d'Elgato publiés en open source. Chacun est un petit programme lancé par OXYN."
-                                   Style="{StaticResource PageSubtitle}"/>
+                        <TextBlock Text="Outils" Style="{StaticResource PageTitle}"/>
+                        <TextBlock Text="Petits outils utilisables dans toutes les applications." Style="{StaticResource PageSubtitle}"/>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,14,0,4">
-                            <RadioButton Content="Installés" Style="{StaticResource TabButton}" GroupName="PluginsTabs"
-                                         IsChecked="True" Checked="PluginsTab_Checked" MinWidth="120"/>
-                            <RadioButton x:Name="PluginsTabCatalog" Content="Catalogue" Style="{StaticResource TabButton}" GroupName="PluginsTabs"
-                                         Checked="PluginsTab_Checked" MinWidth="120"/>
-                        </StackPanel>
-
-                        <!-- Plugins installés -->
-                        <StackPanel x:Name="PluginsInstalledPanel">
-                            <WrapPanel Margin="0,12,0,0">
-                                <Button Content="+ Installer un fichier…" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Click="InstallPlugin_Click"
-                                        local:SettingsSearch.Keywords="plugin extension installer oxynplugin streamdeckplugin elgato"/>
-                                <Button Content="Vérifier les mises à jour" Margin="0,0,8,0" Click="CheckPluginUpdates_Click"/>
-                                <Button Content="Ouvrir le dossier des plugins" Click="OpenPluginsFolder_Click"/>
-                            </WrapPanel>
-                            <TextBlock Text="Un plugin exécute du code sur ce PC avec tes droits : n'installe que des plugins de confiance."
-                                       FontSize="11.5" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0"/>
-
-                            <Border x:Name="PluginsEmptyCard" Style="{StaticResource Card}" Margin="0,16,0,0" Padding="20,28">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="&#xEA86;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="30"
-                                               Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Aucun plugin installé" Foreground="{StaticResource UiText}" FontSize="14"
-                                               FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                                    <TextBlock Text="Cherche-en un dans l'onglet Catalogue, ou installe un fichier .oxynplugin ou .streamDeckPlugin."
-                                               Style="{StaticResource PageSubtitle}" TextAlignment="Center" HorizontalAlignment="Center"/>
+                        <StackPanel x:Name="PageCorrection">
+                            <ContentControl Style="{StaticResource SectionHeader}" Content="Correction de texte (IA)"/>
+                            <TextBlock Text="Sélectionne du texte dans n'importe quelle fenêtre puis appuie sur CTRL+ESPACE pour le corriger via l'API Gemini."
+                                       Style="{StaticResource PageSubtitle}" Margin="0,0,0,10"/>
+                            <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="gemini google api clé correction orthographe ia">
+                                <StackPanel Style="{StaticResource RowsPanel}">
+                                    <controls:SettingRow Label="Clé API Gemini" Description="Nécessaire pour corriger le texte sélectionné.">
+                                        <StackPanel Orientation="Horizontal">
+                                            <PasswordBox x:Name="GeminiApiKeyBox" Width="240"/>
+                                            <Button Content="Enregistrer la clé" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="SaveGeminiKey_Click"/>
+                                        </StackPanel>
+                                    </controls:SettingRow>
                                 </StackPanel>
                             </Border>
-                            <StackPanel x:Name="PluginsList"/>
                         </StackPanel>
 
-                        <!-- Catalogue : plugins vérifiés et dépôts GitHub -->
-                        <StackPanel x:Name="PluginsCatalogPanel" Visibility="Collapsed">
-                            <DockPanel Margin="0,12,0,0">
-                                <Button DockPanel.Dock="Right" x:Name="CatalogSearchButton" Content="Rechercher" Style="{StaticResource PrimaryButton}"
-                                        Margin="8,0,0,0" Click="CatalogSearch_Click"/>
-                                <Border Height="34" CornerRadius="8" Background="{StaticResource InputBg}" BorderBrush="{StaticResource InputBorder}" BorderThickness="1">
-                                    <Grid>
-                                        <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12" Foreground="{StaticResource Muted}"
-                                                   VerticalAlignment="Center" Margin="11,0,0,0"/>
-                                        <TextBox x:Name="CatalogSearchBox" Background="Transparent" BorderThickness="0" Height="32" Padding="30,0,6,0"
-                                                 KeyDown="CatalogSearchBox_KeyDown"/>
-                                        <TextBlock Text="Nom ou usage du plugin (ex. : spotify, obs, discord, météo…) — vide : les plus populaires"
-                                                   Foreground="{StaticResource Muted}" FontSize="12.5" IsHitTestVisible="False" VerticalAlignment="Center" Margin="32,0,0,0"
-                                                   Visibility="{Binding Text, ElementName=CatalogSearchBox, Converter={StaticResource EmptyToVis}}"/>
-                                    </Grid>
-                                </Border>
-                            </DockPanel>
-                            <TextBlock x:Name="CatalogStatusText" FontSize="11.5" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="2,8,0,0"
-                                       Text="Plugins publiés sur GitHub avec le sujet « oxyn-plugin » ou « streamdeck-plugin ». Les plugins « Vérifiés » ont été testés avec OXYN ; les autres viennent de la communauté."/>
-                            <StackPanel x:Name="CatalogList" Margin="0,4,0,0"/>
+                        <StackPanel x:Name="PageEmoji">
+                            <ContentControl Style="{StaticResource SectionHeader}" Content="Émojis : raccourci clavier"/>
+                            <TextBlock Text="Un raccourci ouvre le sélecteur d'émojis ; un clic insère l'émoji dans le champ de texte où tu écris (navigateur, Discord, Word…). Le sélecteur reste ouvert jusqu'à ce que tu cliques sur sa croix."
+                                       Style="{StaticResource PageSubtitle}" Margin="0,0,0,10"/>
+                            <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="hotkey touche combinaison emoji émoji ctrl">
+                                <StackPanel Style="{StaticResource RowsPanel}">
+                                    <controls:SettingRow Label="Combinaison"
+                                                         Description="Clique dans la zone puis appuie sur ta combinaison (avec Ctrl, Maj, Alt ou Win). Évite Ctrl+Alt : sur un clavier AZERTY, c'est la touche AltGr (€, @, #…).">
+                                        <StackPanel Orientation="Horizontal">
+                                            <controls:HotkeyBox x:Name="EmojiHotkeyBox" Width="200" Style="{StaticResource {x:Type TextBox}}"
+                                                                GestureCaptured="EmojiHotkeyBox_GestureCaptured" CaptureStateChanged="EmojiHotkeyBox_CaptureStateChanged"/>
+                                            <Button Content="Désactiver" Margin="8,0,0,0" Click="ClearEmojiHotkey_Click"/>
+                                        </StackPanel>
+                                    </controls:SettingRow>
+                                    <Border Style="{StaticResource RowBorder}" BorderThickness="0">
+                                        <TextBlock x:Name="EmojiHotkeyStatus" Style="{StaticResource FieldLabel}" TextWrapping="Wrap" Margin="0"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Apparence du sélecteur ; DataContext = réglages EmojiPicker -->
+                            <ContentControl Style="{StaticResource SectionHeader}" Content="Émojis : apparence du sélecteur"/>
+                            <Border x:Name="EmojiAppearanceCard" Style="{StaticResource RowCard}">
+                                <StackPanel Style="{StaticResource RowsPanel}">
+                                    <controls:SettingRow Description="Le sélecteur est transparent : on voit ce qu'il y a derrière à travers son fond."/>
+                                    <controls:SettingRow Label="Couleurs">
+                                        <WrapPanel>
+                                            <controls:ColorSwatch Content="Fond" Hex="{Binding BackgroundColor}" Margin="0"/>
+                                            <controls:ColorSwatch Content="Bordure" Hex="{Binding BorderColor}" Margin="10,0,0,0"/>
+                                        </WrapPanel>
+                                    </controls:SettingRow>
+                                    <controls:SettingRow Label="Opacité du fond">
+                                        <DockPanel Width="260">
+                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BackgroundOpacity, Converter={StaticResource Percent}}"/>
+                                            <Slider Minimum="0" Maximum="1" Value="{Binding BackgroundOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
+                                        </DockPanel>
+                                    </controls:SettingRow>
+                                    <controls:SettingRow Label="Opacité de la bordure">
+                                        <DockPanel Width="260">
+                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BorderOpacity, Converter={StaticResource Percent}}"/>
+                                            <Slider Minimum="0" Maximum="1" Value="{Binding BorderOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
+                                        </DockPanel>
+                                    </controls:SettingRow>
+                                    <controls:SettingRow Label="Arrondi des coins">
+                                        <DockPanel Width="260">
+                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding CornerRadius, StringFormat={}{0:0} px}"/>
+                                            <Slider Minimum="0" Maximum="36" Value="{Binding CornerRadius}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                        </DockPanel>
+                                    </controls:SettingRow>
+                                    <controls:SettingRow Label="Valeurs d'origine">
+                                        <Button Content="Réinitialiser" Click="ResetEmojiAppearance_Click"/>
+                                    </controls:SettingRow>
+                                </StackPanel>
+                            </Border>
+
+                            <ContentControl Style="{StaticResource SectionHeader}" Content="Émojis : récents"/>
+                            <Border Style="{StaticResource RowCard}">
+                                <StackPanel Style="{StaticResource RowsPanel}">
+                                    <controls:SettingRow Label="Effacer les émojis récents"
+                                                         Description="Les derniers émojis insérés sont proposés en premier, dans l'onglet « Récents » du sélecteur.">
+                                        <Button Content="Effacer" Click="ClearRecentEmojis_Click"/>
+                                    </controls:SettingRow>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <!-- ===== Page : Émojis ===== -->
-                <ScrollViewer x:Name="PageEmoji" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
-                    <StackPanel>
-                        <TextBlock Text="Émojis" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Un raccourci ouvre le sélecteur d'émojis ; un clic insère l'émoji dans le champ de texte où tu écris (navigateur, Discord, Word…). Le sélecteur reste ouvert jusqu'à ce que tu cliques sur sa croix."
-                                   Style="{StaticResource PageSubtitle}"/>
-
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Raccourci clavier"/>
-                        <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="hotkey touche combinaison emoji émoji ctrl">
-                            <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Label="Combinaison"
-                                                     Description="Clique dans la zone puis appuie sur ta combinaison (avec Ctrl, Maj, Alt ou Win). Évite Ctrl+Alt : sur un clavier AZERTY, c'est la touche AltGr (€, @, #…).">
-                                    <StackPanel Orientation="Horizontal">
-                                        <controls:HotkeyBox x:Name="EmojiHotkeyBox" Width="200" Style="{StaticResource {x:Type TextBox}}"
-                                                            GestureCaptured="EmojiHotkeyBox_GestureCaptured" CaptureStateChanged="EmojiHotkeyBox_CaptureStateChanged"/>
-                                        <Button Content="Désactiver" Margin="8,0,0,0" Click="ClearEmojiHotkey_Click"/>
-                                    </StackPanel>
-                                </controls:SettingRow>
-                                <Border Style="{StaticResource RowBorder}" BorderThickness="0">
-                                    <TextBlock x:Name="EmojiHotkeyStatus" Style="{StaticResource FieldLabel}" TextWrapping="Wrap" Margin="0"/>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Apparence du sélecteur ; DataContext = réglages EmojiPicker -->
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Apparence du sélecteur"/>
-                        <Border x:Name="EmojiAppearanceCard" Style="{StaticResource RowCard}">
-                            <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Description="Le sélecteur est transparent : on voit ce qu'il y a derrière à travers son fond."/>
-                                <controls:SettingRow Label="Couleurs">
-                                    <WrapPanel>
-                                        <controls:ColorSwatch Content="Fond" Hex="{Binding BackgroundColor}" Margin="0"/>
-                                        <controls:ColorSwatch Content="Bordure" Hex="{Binding BorderColor}" Margin="10,0,0,0"/>
-                                    </WrapPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Opacité du fond">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BackgroundOpacity, Converter={StaticResource Percent}}"/>
-                                        <Slider Minimum="0" Maximum="1" Value="{Binding BackgroundOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Opacité de la bordure">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding BorderOpacity, Converter={StaticResource Percent}}"/>
-                                        <Slider Minimum="0" Maximum="1" Value="{Binding BorderOpacity}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Arrondi des coins">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding CornerRadius, StringFormat={}{0:0} px}"/>
-                                        <Slider Minimum="0" Maximum="36" Value="{Binding CornerRadius}" IsSnapToTickEnabled="True" TickFrequency="1"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Valeurs d'origine">
-                                    <Button Content="Réinitialiser" Click="ResetEmojiAppearance_Click"/>
-                                </controls:SettingRow>
-                            </StackPanel>
-                        </Border>
-
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Émojis récents"/>
-                        <Border Style="{StaticResource RowCard}">
-                            <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Label="Effacer les émojis récents"
-                                                     Description="Les derniers émojis insérés sont proposés en premier, dans l'onglet « Récents » du sélecteur.">
-                                    <Button Content="Effacer" Click="ClearRecentEmojis_Click"/>
-                                </controls:SettingRow>
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -2909,132 +3120,6 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- ===== Page : Énergie (module Consommation électrique) ===== DataContext = réglages Power -->
-                <ScrollViewer x:Name="PageEnergy" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
-                    <StackPanel x:Name="EnergyPanel">
-                        <TextBlock Text="Énergie" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Prix de l'électricité et estimation de la consommation, utilisés par le module Consommation électrique."
-                                   Style="{StaticResource PageSubtitle}"/>
-
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Prix de l'électricité"/>
-                        <Border Style="{StaticResource RowCard}"
-                                local:SettingsSearch.Keywords="prix tarif kwh facture euro électricité heures creuses pleines watts puissance coût estimation consommation">
-                            <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Description="Prix TTC du kWh indiqué sur ta facture. Il est appliqué à chaque mesure : le changer ne modifie pas les montants déjà comptés."/>
-                                <controls:SettingRow Label="Prix du kWh (€)" Description="Heures pleines si l'option heures creuses est active.">
-                                    <TextBox Width="120" Text="{Binding PricePerKwh, Converter={StaticResource DecimalText}, UpdateSourceTrigger=LostFocus}"/>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Heures pleines / heures creuses"
-                                                     Description="Un second prix s'applique pendant la plage des heures creuses.">
-                                    <CheckBox Style="{StaticResource ToggleSwitch}" Margin="0" IsChecked="{Binding UseOffPeak}"/>
-                                </controls:SettingRow>
-                                <StackPanel Visibility="{Binding UseOffPeak, Converter={StaticResource BoolToVis}}">
-                                    <controls:SettingRow Label="Prix du kWh en heures creuses (€)">
-                                        <TextBox Width="120" Text="{Binding OffPeakPricePerKwh, Converter={StaticResource DecimalText}, UpdateSourceTrigger=LostFocus}"/>
-                                    </controls:SettingRow>
-                                    <controls:SettingRow Label="Début des heures creuses">
-                                        <DockPanel Width="260">
-                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding OffPeakStartHour, Converter={StaticResource Hour}}"/>
-                                            <Slider Minimum="0" Maximum="23.5" Value="{Binding OffPeakStartHour}" IsSnapToTickEnabled="True" TickFrequency="0.5"/>
-                                        </DockPanel>
-                                    </controls:SettingRow>
-                                    <controls:SettingRow Label="Fin des heures creuses">
-                                        <DockPanel Width="260">
-                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding OffPeakEndHour, Converter={StaticResource Hour}}"/>
-                                            <Slider Minimum="0" Maximum="23.5" Value="{Binding OffPeakEndHour}" IsSnapToTickEnabled="True" TickFrequency="0.5"/>
-                                        </DockPanel>
-                                    </controls:SettingRow>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Estimation de la puissance"/>
-                        <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="watts puissance processeur écran alimentation rendement jauge estimation">
-                            <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Description="La carte graphique est mesurée par son capteur. Le processeur aussi quand son capteur est accessible ; sinon (Intégrité de la mémoire activée) il est estimé selon sa charge, entre les deux valeurs ci-dessous. Le reste n'a aucun capteur : c'est un forfait."/>
-                                <controls:SettingRow Label="Processeur au repos" Description="Si estimé.">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding CpuIdleWatts, StringFormat={}{0:0} W}"/>
-                                        <Slider Minimum="5" Maximum="100" Value="{Binding CpuIdleWatts}" IsSnapToTickEnabled="True" TickFrequency="1"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Processeur à pleine charge" Description="Si estimé.">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding CpuMaxWatts, StringFormat={}{0:0} W}"/>
-                                        <Slider Minimum="30" Maximum="350" Value="{Binding CpuMaxWatts}" IsSnapToTickEnabled="True" TickFrequency="5"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Autres composants" Description="Carte mère, RAM, SSD, ventilateurs, USB.">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding OtherWatts, StringFormat={}{0:0} W}"/>
-                                        <Slider Minimum="0" Maximum="200" Value="{Binding OtherWatts}" IsSnapToTickEnabled="True" TickFrequency="5"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Écran(s)" Description="0 pour ne pas les compter.">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding MonitorWatts, StringFormat={}{0:0} W}"/>
-                                        <Slider Minimum="0" Maximum="300" Value="{Binding MonitorWatts}" IsSnapToTickEnabled="True" TickFrequency="5"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Rendement de l'alimentation" Description="80+ Gold ≈ 90 %.">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding PsuEfficiency, Converter={StaticResource Percent}}"/>
-                                        <Slider Minimum="0.7" Maximum="0.98" Value="{Binding PsuEfficiency}" IsSnapToTickEnabled="True" TickFrequency="0.01"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Maximum de la jauge">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding GaugeMaxWatts, StringFormat={}{0:0} W}"/>
-                                        <Slider Minimum="100" Maximum="1500" Value="{Binding GaugeMaxWatts}" IsSnapToTickEnabled="True" TickFrequency="50"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                            </StackPanel>
-                        </Border>
-
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Heures d'utilisation"/>
-                        <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="jour soir heures début fin utilisation">
-                            <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Description="Le temps d'allumage (hors veille) est réparti en « jour » et « soir ». Le soir va de la fin du jour jusqu'au début du jour suivant. Les heures déjà mesurées gardent la plage en vigueur au moment de la mesure ; les heures reprises du journal Windows suivent le réglage actuel."/>
-                                <controls:SettingRow Label="Début du jour">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding DayStartHour, Converter={StaticResource Hour}}"/>
-                                        <Slider Minimum="0" Maximum="23.5" Value="{Binding DayStartHour}" IsSnapToTickEnabled="True" TickFrequency="0.5"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Fin du jour" Description="Début du soir.">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding DayEndHour, Converter={StaticResource Hour}}"/>
-                                        <Slider Minimum="0" Maximum="23.5" Value="{Binding DayEndHour}" IsSnapToTickEnabled="True" TickFrequency="0.5"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                            </StackPanel>
-                        </Border>
-
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Depuis la mise en service"/>
-                        <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="mise en service date installation windows journal moyenne remise zéro cumul réinitialiser session mois">
-                            <StackPanel Style="{StaticResource RowsPanel}">
-                                <controls:SettingRow Description="Avant OXYN, rien n'a été mesuré : les heures d'allumage sont reprises du journal Windows (qui ne garde que les derniers mois), puis extrapolées jusqu'à la mise en service au même rythme. Elles sont comptées à la puissance moyenne ci-dessous et au prix actuel. C'est une estimation."/>
-                                <controls:SettingRow Label="Date de la première mise en service" Description="jj/mm/aaaa — vide = installation de Windows.">
-                                    <TextBox Width="120" Text="{Binding FirstPowerOnDate, Converter={StaticResource DateText}, UpdateSourceTrigger=LostFocus, TargetNullValue=''}"/>
-                                </controls:SettingRow>
-                                <controls:SettingRow Label="Puissance moyenne avant OXYN" Description="0 = moyenne mesurée par OXYN.">
-                                    <DockPanel Width="260">
-                                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding PastAverageWatts, StringFormat={}{0:0} W}"/>
-                                        <Slider Minimum="0" Maximum="800" Value="{Binding PastAverageWatts}" IsSnapToTickEnabled="True" TickFrequency="10"/>
-                                    </DockPanel>
-                                </controls:SettingRow>
-                                <Border Style="{StaticResource RowBorder}">
-                                    <Border Background="{StaticResource UiHover}" CornerRadius="6" Padding="12,10">
-                                        <TextBlock x:Name="LifetimeDetailsText" FontSize="11.5" Foreground="{StaticResource Muted}" TextWrapping="Wrap" LineHeight="18"/>
-                                    </Border>
-                                </Border>
-                                <controls:SettingRow Label="Compteurs de la période" Description="Le cumul depuis la mise en service est conservé.">
-                                    <Button x:Name="ResetPowerButton" Content="Réinitialiser session, jour et mois" Click="ResetPower_Click"/>
-                                </controls:SettingRow>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
             </Grid>
         </Grid>
     </Border>

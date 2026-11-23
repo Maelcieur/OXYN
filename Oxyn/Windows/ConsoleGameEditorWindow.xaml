@@ -70,6 +70,10 @@
                     <TextBox x:Name="CoreBox" Margin="0,0,0,14"/>
                 </StackPanel>
 
+                <CheckBox x:Name="BorderlessCheck" Style="{StaticResource ToggleSwitch}" Content="Plein écran fenêtré" Margin="0,0,0,2"/>
+                <TextBlock Text="Pour un jeu qui n'a que « plein écran » et « fenêtré » : mets-le en fenêtré, OXYN retire la bordure et l'étend sur toute la TV (le menu Guide ne le fait plus sortir)."
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="0,0,0,14"/>
+
                 <TextBlock Text="Plateforme (facultatif)" Style="{StaticResource FieldLabel}"/>
                 <TextBox x:Name="PlatformBox" Margin="0,0,0,14" MaxLength="40"/>
 

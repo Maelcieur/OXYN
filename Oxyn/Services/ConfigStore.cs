@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using Oxyn.Deck;
@@ -371,6 +371,15 @@ public sealed class AppConfig
     /// <summary>Menu de gauche des Paramètres masqué (bouton ☰ ou Ctrl+B).</summary>
     public bool SettingsNavCollapsed { get; set; }
 
+    /// <summary>Parties affichées de chaque module regroupé (horloge, météo et ciel, son), retenues quand on le masque.</summary>
+    public Dictionary<string, List<string>> FamilyParts { get; set; } = new();
+
+    /// <summary>Styles créés par l'utilisateur, affichés après les profils prêts à l'emploi.</summary>
+    public List<CustomStyle> CustomStyles { get; set; } = new();
+
+    /// <summary>Sections ouvertes des pages de réglages (« page:titre ») ; null = par défaut (la première de chaque page).</summary>
+    public List<string>? SettingsOpenSections { get; set; }
+
     /// <summary>Écran de la Switch (payload SwitchDeck) : disposition des éléments, fond, luminosité.</summary>
     public DeckSettings Deck { get; set; } = new();
 
@@ -474,4 +483,11 @@ public sealed class ConfigStore
     }
 
     public void Save(AppConfig config) => JsonFile.Save(AppPaths.ConfigFile, config);
+}
+
+/// <summary>Style personnel : un nom et une copie du style global (couleurs, polices, carte, jauges, animations).</summary>
+public sealed class CustomStyle
+{
+    public string Name { get; set; } = "";
+    public ThemeSettings Theme { get; set; } = new();
 }

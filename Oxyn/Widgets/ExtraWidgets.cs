@@ -123,6 +123,37 @@ public sealed class TileClockWidgetContent : UserControl, ITickingWidget
 // ---------------------------------------------------------------------------------------------------------
 
 /// <summary>Horloge ronde à aiguilles (cadran gradué, trotteuse de la couleur d'accent) avec la date en dessous.</summary>
+/// <summary>Horloge numérique sobre : l'heure en grands chiffres fins, la date dessous.</summary>
+public sealed class DigitalClockWidgetContent : UserControl, ITickingWidget
+{
+    private readonly TextBlock _time, _seconds, _date;
+    private int _lastSecond = -1;
+
+    public DigitalClockWidgetContent()
+    {
+        MinWidth = 200;
+        _time = WidgetUi.Text("time", 54, number: true, weight: FontWeights.Light);
+        _seconds = WidgetUi.Text("seconds", 20, sub: true, number: true);
+        _seconds.VerticalAlignment = VerticalAlignment.Bottom;
+        _seconds.Margin = new Thickness(6, 0, 0, 10);
+        var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Children = { _time, _seconds } };
+        _date = WidgetUi.Text("date", 13, sub: true, weight: FontWeights.SemiBold);
+        _date.HorizontalAlignment = HorizontalAlignment.Center;
+        _date.Margin = new Thickness(0, 2, 0, 0);
+        Content = new StackPanel { Margin = new Thickness(4, 2, 4, 4), Children = { row, _date } };
+        Tick(DateTime.Now);
+    }
+
+    public void Tick(DateTime now)
+    {
+        if (now.Second == _lastSecond) return;
+        _lastSecond = now.Second;
+        _time.Text = now.ToString("HH:mm");
+        _seconds.Text = now.ToString("ss");
+        _date.Text = WidgetUi.Capitalize(now.ToString("dddd d MMMM", WidgetUi.Fr));
+    }
+}
+
 public sealed class AnalogClockWidgetContent : UserControl, ITickingWidget
 {
     private const double D = 170, C = D / 2;

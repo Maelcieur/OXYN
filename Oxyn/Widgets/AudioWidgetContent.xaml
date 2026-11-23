@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:Oxyn.Controls"
              xmlns:local="clr-namespace:Oxyn"
-             MinWidth="150" MaxWidth="270">
+             MinWidth="150">
     <UserControl.Resources>
         <local:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <local:InverseBooleanConverter x:Key="InverseBool"/>
@@ -16,11 +16,32 @@
         <ItemsControl x:Name="DevicesList" controls:Movable.Key="list" Margin="0,12,0,0">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Background="{DynamicResource TileStrongBrush}" CornerRadius="8" Padding="8" Margin="0,0,0,6">
+                    <!-- La ligne entière est le bouton : un clic choisit cette sortie (la sortie en cours a un contour lumineux). -->
+                    <Button Click="SetDefault_Click" Tag="{Binding}" Margin="0,0,0,6" Padding="8" Cursor="Hand"
+                            HorizontalContentAlignment="Stretch" ToolTip="Utiliser cette sortie audio"
+                            controls:ButtonPart.Key="{Binding IsDefault, Converter={StaticResource UseKey}}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Grid>
+                                    <Border Background="{DynamicResource TileStrongBrush}" CornerRadius="8"/>
+                                    <Border x:Name="Hover" Background="{DynamicResource AccentBrush}" CornerRadius="8" Opacity="0"/>
+                                    <Border x:Name="Active" BorderBrush="{DynamicResource GaugeGradientBrush}" BorderThickness="1.5" CornerRadius="8"
+                                            Visibility="{Binding IsDefault, Converter={StaticResource BoolToVis}}"/>
+                                    <ContentPresenter Margin="{TemplateBinding Padding}"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Hover" Property="Opacity" Value="0.22"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="Hover" Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <!-- Icône choisie dans Paramètres › Personnaliser › Sortie audio › Éléments (absente par défaut) -->
@@ -28,18 +49,16 @@
                                 <controls:CustomIconView DockPanel.Dock="Left" Icon="{Binding Icon}" IconColor="{Binding IconColor}" Size="16"
                                                          Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock controls:TextPart.Key="device" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontSize="12"/>
+                                    <TextBlock controls:TextPart.Key="device" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontSize="12"
+                                               Foreground="{DynamicResource TextBrush}"/>
                                     <TextBlock Text="Par défaut" Style="{StaticResource SubText}"
                                                Visibility="{Binding IsDefault, Converter={StaticResource BoolToVis}}"/>
                                 </StackPanel>
                             </DockPanel>
-                            <Button Grid.Column="1" Content="Utiliser" Margin="0,0,4,0" Padding="6,3" FontSize="11"
-                                    Click="SetDefault_Click" Tag="{Binding}" controls:ButtonPart.Key="{Binding IsDefault, Converter={StaticResource UseKey}}"
-                                    IsEnabled="{Binding IsDefault, Converter={StaticResource InverseBool}}"/>
-                            <Button Grid.Column="2" Content="&#10005;" Style="{StaticResource IconButtonStyle}"
+                            <Button Grid.Column="1" Content="&#10005;" Style="{StaticResource IconButtonStyle}"
                                     Click="Hide_Click" Tag="{Binding}" ToolTip="Masquer ce périphérique" controls:ButtonPart.Key="hide"/>
                         </Grid>
-                    </Border>
+                    </Button>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

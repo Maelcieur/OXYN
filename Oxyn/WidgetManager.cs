@@ -30,23 +30,24 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         new("network", "Réseau"),
         new("disk", "Disques"),
         new("media", "Lecture en cours"),
-        new("volumemixer", "Volume par application"),
+        new("volumemixer", "Son · volume par application"),
         new("mouse", "Souris"),
-        new("audio", "Sortie audio"),
+        new("audio", "Son · sortie audio"),
         new("power", "Consommation électrique"),
         new("claude", "Claude (quota)"),
         new("visualizer", "Visualiseur audio"),
-        new("tileclock", "Horloge à cases"),
-        new("analogclock", "Horloge ronde"),
+        new("tileclock", "Horloge · à cases"),
+        new("analogclock", "Horloge · ronde"),
+        new("digitalclock", "Horloge · numérique"),
         new("calendar", "Calendrier"),
-        new("weather", "Météo"),
+        new("weather", "Météo et ciel · prévisions"),
         new("temperatures", "Températures CPU / GPU"),
-        new("airquality", "Qualité de l'air"),
+        new("airquality", "Météo et ciel · qualité de l'air"),
         new("simhub", "SimHub (course)"),
         new("sensorbars", "Barres de capteurs"),
-        new("moon", "Phases de la Lune"),
-        new("sun", "Lever et coucher du soleil"),
-        new("shortcuts", "Raccourcis"),
+        new("moon", "Météo et ciel · Lune"),
+        new("sun", "Météo et ciel · soleil"),
+        new("shortcuts", "Barre de raccourcis"),
     };
 
     /// <summary>Construction du contenu et position par défaut (première apparition) de chaque module.</summary>
@@ -130,6 +131,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             ["visualizer"] = (BuildVisualizerContent, () => new Point(620, 580)),
             ["tileclock"] = (() => new TileClockWidgetContent(), () => new Point(900, 40)),
             ["analogclock"] = (() => new AnalogClockWidgetContent(), () => new Point(900, 200)),
+            ["digitalclock"] = (() => new DigitalClockWidgetContent(), () => new Point(900, 120)),
             ["calendar"] = (() => new CalendarWidgetContent(), () => new Point(1120, 200)),
             ["weather"] = (() => new WeatherWidgetContent(), () => new Point(900, 460)),
             ["temperatures"] = (() => new TemperatureWidgetContent(), () => new Point(1220, 460)),
@@ -201,6 +203,9 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         };
         if (_lastArtwork is not null) _deck.SetMediaArtwork(_lastArtwork);
         UpdateSensorDemand();
+        // Modules du démarrage (bureau et première page de la Switch) : leurs réglages propres (barres de capteurs,
+        // courbes, horloge à cases, météo...) ne leur étaient envoyés qu'au premier changement de page ou de réglage.
+        RefreshExtraWidgets();
 
         _fpsTimer.Tick += (_, _) => RefreshFps();
         _fpsTimer.Start();
@@ -344,7 +349,9 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         var existing = _config.Layout.FirstOrDefault(w => w.Id == id);
         if (existing is null)
         {
-            existing = new WidgetPosition { Id = id };
+            // Première apparition : position par défaut du module (et non le coin 0,0 de l'écran principal).
+            var position = _registry.TryGetValue(id, out var entry) ? entry.DefaultPosition() : new Point();
+            existing = new WidgetPosition { Id = id, X = position.X, Y = position.Y };
             _config.Layout.Add(existing);
         }
         UpdateConfig(_ => existing.Visible = visible);
@@ -359,6 +366,24 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             CloseWidget(id);
         }
         UpdateSensorDemand();
+    }
+
+    /// <summary>Remplace un module affiché par un autre, à la même place (styles d'horloge).</summary>
+    public void ReplaceWidget(string oldId, string newId)
+    {
+        var old = _config.Layout.FirstOrDefault(w => w.Id == oldId);
+        if (old is not null && IsWidgetShown(oldId))
+        {
+            var entry = _config.Layout.FirstOrDefault(w => w.Id == newId);
+            if (entry is null)
+            {
+                entry = new WidgetPosition { Id = newId };
+                _config.Layout.Add(entry);
+            }
+            UpdateConfig(_ => { entry.X = old.X; entry.Y = old.Y; });
+        }
+        ToggleWidget(oldId, false);
+        ToggleWidget(newId, true);
     }
 
     private void CloseWidget(string id)

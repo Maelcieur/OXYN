@@ -120,7 +120,13 @@ public partial class SettingsWindow
     {
         var section = (sender as FrameworkElement)?.Tag as string;
 
-        NavTheme.IsChecked = true;
+        NavigateTo(NavProfiles);
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            RevealSectionsOf(PageTheme);
+            UpdateLayout();
+            PageTheme.BringIntoView();
+        });
         (section switch
         {
             "Card" => GlobalTabCardButton,

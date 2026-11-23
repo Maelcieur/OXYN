@@ -55,28 +55,9 @@ $failure = $null          # dernière erreur constatée (null = lecture correcte
 $failures = 0             # échecs d'affilée
 $failingSince = $null
 $lastReminder = $null
-$lastDriverRestart = [datetime]::MinValue
-$driverRestarts = 0
-
-# Pilote du SDK AMD (nom versionné, ex. AMDRyzenMasterDriverV29), retrouvé par son fichier.
-function Get-AmdDriverName {
-    $svc = Get-CimInstance Win32_SystemDriver | Where-Object { $_.PathName -like '*AMDRyzenMasterDriver.sys' } | Select-Object -First 1
-    if ($svc) { return $svc.Name }
-    return $null
-}
-
-# « Platform init failed » ne se répare pas tout seul (seul un redémarrage du PC le corrigeait, 10/11 et 16/11) :
-# le pilote AMD est arrêté puis redémarré, comme le fait Ryzen Master en se fermant. La tâche est élevée, sc.exe le permet.
-function Restart-AmdDriver {
-    $driver = Get-AmdDriverName
-    if (-not $driver) { Write-BridgeLog 'Pilote AMD introuvable : relance impossible.'; return }
-    & sc.exe stop $driver | Out-Null
-    $stopCode = $LASTEXITCODE
-    Start-Sleep -Seconds 2
-    & sc.exe start $driver | Out-Null
-    $startCode = $LASTEXITCODE
-    Write-BridgeLog ("Pilote AMD {0} relancé (tentative {1}) : arrêt code {2}, démarrage code {3} (0 = réussi, 1062 = déjà arrêté, 1056 = déjà démarré)." -f $driver, $script:driverRestarts, $stopCode, $startCode)
-}
+# Pas de relance du pilote AMD : essayée le 16/11 (sc stop / start), elle aggravait la panne (19/11 : pilote « introuvable »
+# jusqu'au redémarrage du PC). Une lecture qui échoue est seulement réessayée, de plus en plus espacée, pour laisser
+# l'autre logiciel qui interroge le processeur (MSI Center...) finir son accès.
 
 while ($true) {
     $problem = $null
@@ -115,17 +96,17 @@ while ($true) {
             Write-BridgeLog ("Toujours en échec depuis {0:HH:mm} ({1} tentatives) : {2}" -f $failingSince, $failures, $problem)
             $lastReminder = $now
         }
-        # Après 5 échecs « Platform init failed » d'affilée (~15 s), relance du pilote AMD, au plus toutes les 10 minutes.
-        if ($problem -like '*Platform init failed*' -and $failures -ge 5 -and ($now - $lastDriverRestart).TotalMinutes -ge 10) {
-            $lastDriverRestart = $now
-            $driverRestarts++
-            Restart-AmdDriver
-        }
     } elseif ($failure) {
         Write-BridgeLog ("Température de nouveau lue, après {0} échec(s) depuis {1:HH:mm}." -f $failures, $failingSince)
         $failure = $null
         $failures = 0
     }
 
-    Start-Sleep -Seconds 3
+    # 3 s normalement ; en cas d'échec, attente croissante (5, 10, 20, puis 30 s au plus).
+    $pause = 3
+    if ($failures -ge 1) { $pause = 5 }
+    if ($failures -ge 3) { $pause = 10 }
+    if ($failures -ge 6) { $pause = 20 }
+    if ($failures -ge 10) { $pause = 30 }
+    Start-Sleep -Seconds $pause
 }

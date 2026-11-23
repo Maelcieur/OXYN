@@ -4,8 +4,9 @@ using Oxyn.Infrastructure;
 namespace Oxyn.Services.ConsoleMode;
 
 /// <summary>
-/// Surveille en arrière-plan (20 fois par seconde, XInput) une combinaison de touches de la manette qui lance le mode
-/// console depuis le PC. Déclenche une seule fois par appui (tous les boutons enfoncés ensemble), puis 3 s de pause.
+/// Surveille en arrière-plan (20 fois par seconde) une combinaison de touches de la manette qui lance le mode console
+/// depuis le PC : manettes Xbox (XInput) et manettes Switch Pro / Joy-Con (HID, − = View, + = Menu, L / R = LB / RB,
+/// ZL / ZR = gâchettes). Déclenche une seule fois par appui (tous les boutons enfoncés ensemble), puis 3 s de pause.
 /// </summary>
 public sealed class GamepadComboWatcher : IDisposable
 {
@@ -59,6 +60,8 @@ public sealed class GamepadComboWatcher : IDisposable
         long pauseUntil = 0, volNext = 0;
         var volPrev = 0;
         var sw = System.Diagnostics.Stopwatch.StartNew();
+        var switchPads = new Dictionary<string, Oxyn.ConsoleMode.SwitchPadReader>();
+        long lastSwitchScan = -10_000;
         while (_running)
         {
             try
@@ -76,6 +79,15 @@ public sealed class GamepadComboWatcher : IDisposable
                     connected[i] = true;
                     if (mask != 0 && (st.Buttons & mask) == mask) down = true;
                     if ((st.Buttons & BtnBack) != 0) vol = st.RT > 160 ? 1 : st.LT > 160 ? -1 : vol;
+                }
+                // Manettes Switch (HID) : mêmes combinaisons, boutons traduits au format XInput.
+                if (now - lastSwitchScan >= 3000) { lastSwitchScan = now; Oxyn.ConsoleMode.SwitchPadReader.Scan(switchPads); }
+                foreach (var pad in switchPads.Values.ToList())
+                {
+                    if (pad.Dead) { pad.Close(); switchPads.Remove(pad.Path); continue; }
+                    if (pad.LatestXInput is not { } x) continue;
+                    if (mask != 0 && (x.Buttons & mask) == mask) down = true;
+                    if ((x.Buttons & BtnBack) != 0) vol = x.RT > 160 ? 1 : x.LT > 160 ? -1 : vol;
                 }
                 // Volume : 1er cran tout de suite, puis un cran toutes les 150 ms après 400 ms.
                 if (!VolumeEnabled) vol = 0;
@@ -106,6 +118,15 @@ public sealed class GamepadComboWatcher : IDisposable
     {
         _running = false;
     }
+
+    /// <summary>Libellés des combinaisons pour une manette Switch (même ordre que <see cref="Combos"/>).</summary>
+    public static string SwitchLabel(string? id) => id switch
+    {
+        "ViewMenu" => "− + + (manette Switch)",
+        "LbRbMenu" => "L + R + + (manette Switch)",
+        "LbRbView" => "L + R + − (manette Switch)",
+        _ => "",
+    };
 
     [StructLayout(LayoutKind.Sequential)]
     private struct State

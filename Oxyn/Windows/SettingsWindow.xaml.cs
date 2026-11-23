@@ -34,6 +34,7 @@ public partial class SettingsWindow : Window
         ["visualizer"] = "\uE9D9",
         ["tileclock"] = "\uE916",
         ["analogclock"] = "\uE823",
+        ["digitalclock"] = "\uE917",
         ["calendar"] = "\uE787",
         ["weather"] = "\uE9CA",
         ["temperatures"] = "\uE9D2",
@@ -44,7 +45,43 @@ public partial class SettingsWindow : Window
         ["sun"] = "\uE706",
     };
 
-    private sealed record WidgetRow(string Id, string Label, string Glyph, bool IsVisible, bool CanCustomize);
+    private sealed record WidgetRow(string Id, string Label, string Glyph, bool IsVisible, bool CanCustomize, string Category);
+
+    /// <summary>Catégories de la page Modules, dans l'ordre d'affichage.</summary>
+    private static readonly (string Name, string[] Ids)[] ModuleCategories =
+    {
+        ("Matériel", new[] { "cpu", "gpu", "ram", "disk", "network", "temperatures", "sensorbars", "power" }),
+        ("Audio et médias", new[] { "sound", "media", "visualizer" }),
+        ("Heure et météo", new[] { "clock", "calendar", "sky" }),
+        ("Outils", new[] { "shortcuts", "mouse", "claude", "simhub" }),
+    };
+
+    /// <summary>Liste de la page Modules, groupée par catégorie (les modules inconnus vont dans « Autres »).</summary>
+    private System.ComponentModel.ICollectionView BuildWidgetRows()
+    {
+        int Order(string id)
+        {
+            for (var c = 0; c < ModuleCategories.Length; c++)
+            {
+                var i = Array.IndexOf(ModuleCategories[c].Ids, id);
+                if (i >= 0) return c * 100 + i;
+            }
+            return 10_000;
+        }
+        string Category(string id) => ModuleCategories.FirstOrDefault(c => c.Ids.Contains(id)).Name ?? "Autres";
+        // Les parties d'un module regroupé (horloges, météo et ciel, son) n'ont qu'une ligne : celle du regroupement.
+        var rows = WidgetManager.AllWidgets
+            .Where(w => !IsFamilyMember(w.Id))
+            .Select(w => new WidgetRow(w.Id, w.Label, Glyphs.GetValueOrDefault(w.Id, ""), _widgetManager.IsWidgetShown(w.Id), true, Category(w.Id)))
+            .Concat(Families.Select(f => new WidgetRow(f.Id, f.Label, f.Glyph, FamilyShown(f), true, Category(f.Id))))
+            .OrderBy(r => Order(r.Id))
+            .ToList();
+        var view = new System.Windows.Data.ListCollectionView(rows);
+        view.GroupDescriptions.Add(new System.Windows.Data.PropertyGroupDescription(nameof(WidgetRow.Category)));
+        return view;
+    }
+
+    private void RefreshWidgetRows() => WidgetsList.ItemsSource = BuildWidgetRows();
 
     // ToString = libellé : affiché tel quel par la liste des modules, même si la liaison sur Label échoue.
     public sealed record ModuleRow(string Id, string Label, ModuleAppearance Appearance)
@@ -59,6 +96,7 @@ public partial class SettingsWindow : Window
         InitializeCustomizeGroups();
         ShowVersion();
         InitUpdates();
+        InitCollapsibleSections();
         var config = widgetManager.Config;
 
         _saveTimer.Tick += (_, _) =>
@@ -68,10 +106,7 @@ public partial class SettingsWindow : Window
         };
 
         // Page Modules
-        WidgetsList.ItemsSource = WidgetManager.AllWidgets
-            .Select(w => new WidgetRow(w.Id, w.Label, Glyphs.GetValueOrDefault(w.Id, ""),
-                widgetManager.IsWidgetShown(w.Id), w.Id != "shortcuts"))
-            .ToList();
+        RefreshWidgetRows();
 
         // Page Thème global : un éditeur par sous-onglet, tous sur le même thème
         GlobalThemeEditor.DataContext = GlobalCardEditor.DataContext = GlobalGaugesEditor.DataContext
@@ -183,11 +218,13 @@ public partial class SettingsWindow : Window
 
     /// <summary>Vrai : l'entrée « Modules » du menu affiche la page Personnaliser d'un module au lieu de la liste.</summary>
     private bool _customizing;
+    /// <summary>Vrai (avec _customizing) : le module personnalisé est la barre de raccourcis, qui a sa propre page.</summary>
+    private bool _customizingDock;
 
     private void Nav_Checked(object sender, RoutedEventArgs e)
     {
         if (sender is not RadioButton nav) return;
-        if (nav != NavModules) _customizing = false; // quitter Modules ferme la personnalisation
+        if (nav != NavModules) _customizing = _customizingDock = false; // quitter Modules ferme la personnalisation
         ShowPageFor(nav);
     }
 
@@ -195,14 +232,14 @@ public partial class SettingsWindow : Window
     private void NavModules_Click(object sender, RoutedEventArgs e)
     {
         if (!_customizing) return;
-        _customizing = false;
+        _customizing = _customizingDock = false;
         ShowPageFor(NavModules);
     }
 
-    /// <summary>Fil d'Ariane de Personnaliser : retour à la liste des modules.</summary>
+    /// <summary>Fil d'Ariane de Personnaliser (et de la barre de raccourcis) : retour à la liste des modules.</summary>
     private void CustomizeBack_Click(object sender, RoutedEventArgs e)
     {
-        _customizing = false;
+        _customizing = _customizingDock = false;
         ShowPageFor(NavModules);
     }
 
@@ -216,7 +253,7 @@ public partial class SettingsWindow : Window
         }
         else
         {
-            _customizing = false;
+            _customizing = _customizingDock = false;
         }
 
         if (nav.IsChecked == true) ShowPageFor(nav);
@@ -229,35 +266,30 @@ public partial class SettingsWindow : Window
 
         var pages = new Dictionary<RadioButton, FrameworkElement>
         {
-            [NavModules] = _customizing ? PageCustomize : PageModules,
-            [NavTheme] = PageTheme,
+            [NavModules] = !_customizing ? PageModules : _customizingDock ? PageDock : PageCustomize,
             [NavProfiles] = PageProfiles,
-            [NavDock] = PageDock,
+            [NavAlerts] = PageAlerts,
             [NavSwitch] = PageSwitch,
             [NavConsole] = PageConsole,
             [NavIntegrations] = PageIntegrations,
-            [NavPlugins] = PagePlugins,
-            [NavCorrection] = PageCorrection,
-            [NavEmoji] = PageEmoji,
-            [NavAlerts] = PageAlerts,
+            [NavTools] = PageTools,
             [NavGeneral] = PageGeneral,
-            [NavEnergy] = PageEnergy,
         };
         var target = pages[nav];
-        foreach (var page in pages.Values.Append(PageCustomize).Append(PageModules).Distinct())
+        foreach (var page in pages.Values.Append(PageCustomize).Append(PageModules).Append(PageDock).Distinct())
             page.Visibility = page == target ? Visibility.Visible : Visibility.Collapsed;
 
         if (target == PageProfiles) RefreshProfilesList(); // un profil a pu être ajouté ou retiré depuis la dernière visite
-        if (target == PageEnergy) UpdateLifetimeDetails();
         if (target == PageGeneral) UpdateFpsStatus();
-        if (target == PagePlugins) RefreshPluginsList();
+        if (target == PageIntegrations && ConnectionsTabPlugins.IsChecked == true) RefreshPluginsList();
+        if (target == PageDock) SyncShownChecks();
         if (target == PageConsole) RefreshConsolePage();
         if (target == PageCustomize)
         {
             ReturnModuleEditor(); // éditeur prêté à l'inspecteur de la page Switch
             RefreshPreviewElements();
         }
-        SetIntegrationsTimer(target == PageIntegrations);
+        SetIntegrationsTimer(target == PageIntegrations && ConnectionsTabApps.IsChecked == true);
         if (target != PageSwitch) ClosePluginPage(); // la page de réglages d'un plugin ne reste pas ouverte en arrière-plan
         else if (_inspected is not null) ShowPluginPage(_inspected);
         if (target is ScrollViewer scroller) scroller.ScrollToTop();
@@ -301,10 +333,13 @@ public partial class SettingsWindow : Window
 
     private void WidgetCheck_Changed(object sender, RoutedEventArgs e)
     {
-        if (!IsLoaded || sender is not CheckBox { Tag: string id } checkBox)
+        if (!IsLoaded || _syncingShown || sender is not CheckBox { Tag: string id } checkBox)
             return;
 
-        _widgetManager.ToggleWidget(id, checkBox.IsChecked == true);
+        if (Families.FirstOrDefault(f => f.Id == id) is { } family) ToggleFamily(family, checkBox.IsChecked == true);
+        else _widgetManager.ToggleWidget(id, checkBox.IsChecked == true);
+        if (sender == DockShownCheck) RefreshWidgetRows();
+        else SyncShownChecks();
     }
 
     private void CustomizeModule_Click(object sender, RoutedEventArgs e)
@@ -315,17 +350,56 @@ public partial class SettingsWindow : Window
     /// <summary>Ouvre la personnalisation de ce module, sous l'entrée « Modules » (aussi depuis le menu clic droit du bureau).</summary>
     public void ShowModule(string id)
     {
+        if (Families.FirstOrDefault(f => f.Id == id) is { } family) id = FamilyTarget(family);
+        if (id == "shortcuts")
+        {
+            NavigateTo(NavModules, customize: true);
+            _customizingDock = true;
+            ShowPageFor(NavModules);
+            return;
+        }
         ModuleSelector.SelectedItem = ModuleSelector.Items.Cast<ModuleRow>().FirstOrDefault(m => m.Id == id);
         NavigateTo(NavModules, customize: true);
+    }
+
+    private bool _syncingShown;
+
+    /// <summary>Interrupteurs « Afficher » (Personnaliser et barre de raccourcis) alignés sur l'état réel des modules.</summary>
+    private void SyncShownChecks()
+    {
+        _syncingShown = true;
+        try
+        {
+            DockShownCheck.IsChecked = _widgetManager.IsWidgetShown("shortcuts");
+            if (SelectedModule is { } module) ModuleShownCheck.IsChecked = _widgetManager.IsWidgetShown(module.Id);
+        }
+        finally { _syncingShown = false; }
+    }
+
+    /// <summary>Interrupteur « Afficher » en haut de Personnaliser : affiche ou masque le module sur le bureau.</summary>
+    private void ModuleShown_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded || _syncingShown || SelectedModule is not { } module) return;
+        _widgetManager.ToggleWidget(module.Id, ModuleShownCheck.IsChecked == true);
+        RefreshWidgetRows();
+    }
+
+    /// <summary>Onglets de la page Applications et plugins.</summary>
+    private void ConnectionsTab_Checked(object sender, RoutedEventArgs e)
+    {
+        if (!IsInitialized || IntegrationsContent is null || PagePlugins is null) return;
+        var plugins = ConnectionsTabPlugins.IsChecked == true;
+        IntegrationsContent.Visibility = plugins ? Visibility.Collapsed : Visibility.Visible;
+        PagePlugins.Visibility = plugins ? Visibility.Visible : Visibility.Collapsed;
+        SetIntegrationsTimer(!plugins && PageIntegrations.IsVisible);
+        if (plugins) RefreshPluginsList();
     }
 
     /// <summary>Module masqué ou verrouillage changé depuis le bureau : la liste de la page Modules suit.</summary>
     private void OnDesktopStateChanged()
     {
-        WidgetsList.ItemsSource = WidgetManager.AllWidgets
-            .Select(w => new WidgetRow(w.Id, w.Label, Glyphs.GetValueOrDefault(w.Id, ""),
-                _widgetManager.IsWidgetShown(w.Id), w.Id != "shortcuts"))
-            .ToList();
+        RefreshWidgetRows();
+        SyncShownChecks();
         LockWidgetsCheck.IsChecked = _widgetManager.Config.WidgetsLocked;
     }
 

@@ -94,6 +94,10 @@ public partial class SettingsWindow
         SensorBarsCard.Visibility = id == "sensorbars" ? Visibility.Visible : Visibility.Collapsed;
         if (id == "sensorbars") BuildSensorBarsEditor();
         TemperatureCard.Visibility = id == "temperatures" ? Visibility.Visible : Visibility.Collapsed;
+        PageEnergy.Visibility = id == "power" ? Visibility.Visible : Visibility.Collapsed;
+        if (id == "power") UpdateLifetimeDetails();
+        SyncShownChecks();
+        BuildFamilyPanel();
         BreadcrumbModuleText.Text = SelectedModule?.Label ?? "";
         _selectedPreviewPart = null;
         SelectedPartTitle.Text = "Sélectionnez un élément dans l'aperçu";

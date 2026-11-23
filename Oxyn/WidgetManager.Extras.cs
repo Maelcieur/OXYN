@@ -10,7 +10,7 @@ namespace Oxyn;
 public sealed partial class WidgetManager
 {
     /// <summary>Modules ajoutés en 1.12 : masqués tant qu'on ne les a pas affichés (pas d'apparition surprise).</summary>
-    private static readonly HashSet<string> HiddenByDefault = new() { "tileclock", "analogclock", "calendar", "weather", "temperatures", "airquality", "simhub", "sensorbars", "moon", "sun" };
+    private static readonly HashSet<string> HiddenByDefault = new() { "tileclock", "analogclock", "digitalclock", "calendar", "weather", "temperatures", "airquality", "simhub", "sensorbars", "moon", "sun" };
 
     private readonly DispatcherTimer _clockTimer = new(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(250) };
     private readonly List<(double? Cpu, double? Gpu)> _temperatureHistory = new();

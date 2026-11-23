@@ -16,7 +16,7 @@ public partial class SettingsWindow
     /// <summary>Où un résultat doit mener : page, module et onglet de Personnaliser (sous « Modules »), sous-onglet du thème.</summary>
     private sealed record SearchContext(
         RadioButton Nav, string Prefix, bool Customize = false, RadioButton? Tab = null, string? TabLabel = null,
-        RadioButton? GlobalTab = null, Func<string, bool>? ModuleFilter = null);
+        RadioButton? GlobalTab = null, Func<string, bool>? ModuleFilter = null, Action? After = null);
 
     private sealed class SearchEntry
     {
@@ -78,23 +78,25 @@ public partial class SettingsWindow
         var headerStyle = (Style)FindResource("SectionHeader");
         var navLabels = new Dictionary<RadioButton, (string Group, string Label, string Keywords)>
         {
-            [NavModules] = ("Modules", "Modules", "liste afficher masquer personnaliser"),
-            [NavDock] = ("Modules", "Barre de raccourcis", "dock lancement rapide"),
-            [NavTheme] = ("Apparence", "Thème", "thème global couleurs polices carte jauges animations"),
-            [NavProfiles] = ("Apparence", "Profils", "profils thèmes prêts préréglages"),
+            [NavModules] = ("Bureau", "Modules", "liste afficher masquer personnaliser catégories"),
+            [NavProfiles] = ("Bureau", "Profils", "profils thèmes thème prêts préréglages style couleurs polices carte jauges animations"),
+            [NavAlerts] = ("Bureau", "Alertes", "notifications seuils température batterie quota"),
             [NavSwitch] = ("Appareils", "Switch", "écran câble usb"),
             [NavConsole] = ("Appareils", "Mode console", "mode console tv télévision manette jeux émulateurs jaquettes steamgriddb raccourci de secours"),
-            [NavIntegrations] = ("Applications", "Applications connectées", "applications connectées intégrations obs studio websocket stream enregistrement twitch clip marqueur tchat bouclier compte voicemod voix soundboard"),
-            [NavAlerts] = ("Notifications", "Alertes", "notifications seuils température batterie quota"),
-            [NavCorrection] = ("Outils", "Correction de texte", "correction ia gemini orthographe"),
-            [NavEmoji] = ("Outils", "Émojis", "emoji sélecteur"),
-            [NavGeneral] = ("Système", "Général", "avancé fps éléments masqués réinitialiser"),
-            [NavEnergy] = ("Système", "Énergie", "électricité prix consommation puissance kwh"),
+            [NavIntegrations] = ("Connexions", "Applications et plugins", "applications connectées intégrations obs studio websocket stream enregistrement twitch clip marqueur tchat bouclier compte voicemod voix soundboard"),
+            [NavTools] = ("Système", "Outils", "outils correction ia gemini orthographe emoji émojis sélecteur"),
+            [NavGeneral] = ("Système", "Général", "avancé fps éléments masqués réinitialiser mises à jour"),
         };
 
         // Pages elles-mêmes, puis modules (affichage et personnalisation).
         foreach (var (nav, (group, label, keywords)) in navLabels)
             list.Add(new SearchEntry(label, group, "", keywords, new SearchContext(nav, label), null, null));
+        list.Add(new SearchEntry("Plugins", "Connexions › Applications et plugins", "", "plugins catalogue github stream deck elgato installer",
+            new SearchContext(NavIntegrations, "Plugins", After: () => ConnectionsTabPlugins.IsChecked = true), null, null));
+        list.Add(new SearchEntry("Barre de raccourcis", "Modules", "", "dock lancement rapide raccourcis",
+            new SearchContext(NavModules, "Modules", After: () => ShowModule("shortcuts")), null, null));
+        list.Add(new SearchEntry("Énergie", "Modules › Consommation électrique", "", "électricité prix consommation puissance kwh heures creuses",
+            new SearchContext(NavModules, "Modules", true, TabSizeButton, "Taille", ModuleFilter: id => id == "power"), "power", null));
         foreach (var widget in WidgetManager.AllWidgets)
         {
             list.Add(new SearchEntry(widget.Label, "Modules", "", "afficher masquer module",
@@ -195,15 +197,14 @@ public partial class SettingsWindow
 
         Walk(PageProfiles, new SearchContext(NavProfiles, "Profils"));
         Walk(PageModules, new SearchContext(NavModules, "Modules"));
-        Walk(PageDock, new SearchContext(NavDock, "Barre de raccourcis"));
+        Walk(PageDock, new SearchContext(NavModules, "Modules › Barre de raccourcis", After: () => ShowModule("shortcuts")));
         Walk(SwitchSettingsPanel, new SearchContext(NavSwitch, "Switch › Réglages", GlobalTab: SwitchTabSettings));
-        Walk(PageIntegrations, new SearchContext(NavIntegrations, "Applications connectées"));
+        Walk(IntegrationsContent, new SearchContext(NavIntegrations, "Applications et plugins", After: () => ConnectionsTabApps.IsChecked = true));
         Walk(PageConsole, new SearchContext(NavConsole, "Mode console"));
-        Walk(PageCorrection, new SearchContext(NavCorrection, "Correction de texte"));
-        Walk(PageEmoji, new SearchContext(NavEmoji, "Émojis"));
+        Walk(PageTools, new SearchContext(NavTools, "Outils"));
         Walk(PageAlerts, new SearchContext(NavAlerts, "Alertes"));
         Walk(PageGeneral, new SearchContext(NavGeneral, "Général"));
-        Walk(PageEnergy, new SearchContext(NavEnergy, "Énergie"));
+        Walk(PageEnergy, new SearchContext(NavModules, "Modules › Consommation électrique", true, TabSizeButton, "Taille", ModuleFilter: id => id == "power"));
 
         // Thème : un éditeur par sous-onglet.
         foreach (var (button, editor, label) in new[]
@@ -213,7 +214,7 @@ public partial class SettingsWindow
             (GlobalTabGaugesButton, GlobalGaugesEditor, "Jauges"),
             (GlobalTabAnimationsButton, GlobalAnimationsEditor, "Animations"),
         })
-            AddEditorCards(editor, new SearchContext(NavTheme, $"Thème › {label}", GlobalTab: button));
+            AddEditorCards(editor, new SearchContext(NavProfiles, $"Profils › Réglage fin du style › {label}", GlobalTab: button));
 
         // Personnaliser : un contexte par onglet (Style : une section à la fois) ; les parties sans objet pour
         // le module courant imposent un filtre.
@@ -345,6 +346,8 @@ public partial class SettingsWindow
             ctx.Tab.IsChecked = true;
         }
 
+        ctx.After?.Invoke();
+
         if (entry.Target is { } target)
             Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => RevealAndFlash(target));
     }
@@ -359,6 +362,7 @@ public partial class SettingsWindow
     /// <summary>Fait défiler jusqu'à l'élément puis le met brièvement en évidence.</summary>
     private void RevealAndFlash(FrameworkElement target)
     {
+        RevealSectionsOf(target); // section repliée ou liste déroulante fermée
         UpdateLayout();
 
         // Carte réservée à l'autre cible (bureau / Switch) : on bascule sur la cible où elle existe.

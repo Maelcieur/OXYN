@@ -16,7 +16,7 @@ public sealed class GamepadService : IDisposable
 
     private readonly Dispatcher _dispatcher;
     private readonly object _gate = new();
-    private readonly Dictionary<string, SwitchPad> _switchPads = new();
+    private readonly Dictionary<string, SwitchPadReader> _switchPads = new();
     private IReadOnlyList<ControllerInfo> _controllers = Array.Empty<ControllerInfo>();
     private Thread? _thread;
     private volatile bool _running;
@@ -151,7 +151,7 @@ public sealed class GamepadService : IDisposable
                         if (inp == null) continue;
                         combined |= inp.Buttons;
                         if (inp.Buttons != PadButtons.None) activeId = p.Path;
-                        list.Add(new ControllerInfo(p.Path, p.Name, p.Kind, inp.BatteryPercent, inp.Charging, inp.Wired));
+                        list.Add(new ControllerInfo(p.Path, p.Name, p.Kind, p.RealBattery ? inp.BatteryPercent : -1, p.RealBattery && inp.Charging, inp.Wired));
                     }
                 }
                 // Manette active : la dernière qui a servi, sinon la première connectée.
@@ -228,118 +228,9 @@ public sealed class GamepadService : IDisposable
 
     // ---------- Switch (HID) ----------
 
-    private static readonly (int Pid, ControllerKind Kind, string Name)[] SwitchModels =
-    {
-        (0x2009, ControllerKind.SwitchPro, "Manette Switch Pro"),
-        (0x2006, ControllerKind.JoyConLeft, "Joy-Con (G)"),
-        (0x2007, ControllerKind.JoyConRight, "Joy-Con (D)"),
-    };
-
     private void ScanSwitch()
     {
-        try
-        {
-            foreach (var (pid, kind, name) in SwitchModels)
-            {
-                foreach (var dev in DeviceList.Local.GetHidDevices(0x057E, pid))
-                {
-                    var path = dev.DevicePath;
-                    lock (_gate) if (_switchPads.ContainsKey(path)) continue;
-                    if (!dev.TryOpen(out HidStream stream))
-                    {
-                        Log.WarnOnce("gamepad-hid-" + path, $"{name} : ouverture impossible (utilisée par Steam ?)");
-                        continue;
-                    }
-                    var pad = new SwitchPad(path, name, kind, stream, dev.GetMaxOutputReportLength());
-                    lock (_gate) _switchPads[path] = pad;
-                    pad.Start();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.WarnOnce("gamepad-scan", "Recherche des manettes Switch impossible", ex);
-        }
-    }
-
-    private sealed class SwitchPad
-    {
-        private readonly HidStream _stream;
-        private readonly int _outLen;
-        private byte _packet;
-        private volatile bool _closed;
-
-        public string Path { get; }
-        public string Name { get; }
-        public ControllerKind Kind { get; }
-        public volatile GamepadDecoder.SwitchInput? Latest;
-        public volatile bool Dead;
-
-        public SwitchPad(string path, string name, ControllerKind kind, HidStream stream, int outLen)
-        {
-            Path = path; Name = name; Kind = kind; _stream = stream; _outLen = Math.Max(outLen, 49);
-            _stream.ReadTimeout = 500;
-        }
-
-        public void Start() => new Thread(Read) { IsBackground = true, Name = "Oxyn.SwitchPad" }.Start();
-
-        public void Close()
-        {
-            _closed = true;
-            try { _stream.Dispose(); } catch { }
-        }
-
-        private void Read()
-        {
-            var buf = new byte[Math.Max(_stream.Device.GetMaxInputReportLength(), 64)];
-            long lastSet;
-            try
-            {
-                SetFullMode();
-                lastSet = Environment.TickCount64;
-                while (!_closed)
-                {
-                    int n;
-                    try { n = _stream.Read(buf, 0, buf.Length); }
-                    catch (TimeoutException) { continue; }
-                    if (n <= 0) continue;
-                    if (buf[0] == 0x30)
-                    {
-                        var inp = GamepadDecoder.ParseSwitchReport(buf, n, Kind);
-                        if (inp != null) Latest = inp;
-                    }
-                    else if (buf[0] == 0x3F && Environment.TickCount64 - lastSet > 1000)
-                    {
-                        lastSet = Environment.TickCount64;
-                        SetFullMode();     // mode simple : on demande le mode complet 0x30
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                if (!_closed) Log.WarnOnce("gamepad-read-" + Path, $"{Name} : lecture interrompue", ex);
-            }
-            Dead = true;
-        }
-
-        /// <summary>Sous-commande 0x03 (mode du rapport d'entrée) avec l'argument 0x30.</summary>
-        private void SetFullMode()
-        {
-            try
-            {
-                var o = new byte[_outLen];
-                o[0] = 0x01;
-                o[1] = (byte)(_packet++ & 0x0F);
-                o[2] = 0x00; o[3] = 0x01; o[4] = 0x40; o[5] = 0x40;   // vibration neutre
-                o[6] = 0x00; o[7] = 0x01; o[8] = 0x40; o[9] = 0x40;
-                o[10] = 0x03; o[11] = 0x30;
-                _stream.Write(o);
-            }
-            catch (Exception ex)
-            {
-                Log.WarnOnce("gamepad-write-" + Path, $"{Name} : changement de mode impossible", ex);
-            }
-        }
+        lock (_gate) SwitchPadReader.Scan(_switchPads);
     }
 
     // ---------- XInput ----------

@@ -117,6 +117,9 @@ public static class GameWindowTracker
         try
         {
             var fg = GetForegroundWindow();
+            // Déjà devant : rien à faire. Surtout pas l'appui simulé sur Alt ni l'attache aux entrées du jeu : certains
+            // jeux (Naruto Storm 4) passent alors en « mode clavier » et ignorent la manette après « Appuyez sur A ».
+            if (fg == hwnd && !IsIconic(hwnd)) return;
             var fgThread = fg == IntPtr.Zero ? 0 : GetWindowThreadProcessId(fg, out _);
             var me = GetCurrentThreadId();
             var attached = fgThread != 0 && fgThread != me && AttachThreadInput(me, fgThread, true);

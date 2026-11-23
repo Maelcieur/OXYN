@@ -35,7 +35,11 @@ public partial class SettingsWindow
     private void BuildPresetGallery()
     {
         var tileStyle = (Style)ProfilesContent.FindResource("PresetTile");
-        foreach (var preset in ThemePresets.All)
+        PresetGallery.Children.Clear();
+        // Styles fournis, puis styles personnels (copie figée de leur thème à chaque application).
+        var custom = _widgetManager.Config.CustomStyles
+            .Select(s => (Preset: new ThemePreset(s.Name, "Mon style", () => s.Theme.Clone()), Custom: s));
+        foreach (var (preset, mine) in ThemePresets.All.Select(p => (p, (CustomStyle?)null)).Concat(custom.Select(c => (c.Preset, (CustomStyle?)c.Custom))))
         {
             var (start, end, panel, text) = preset.Swatch;
             var startColor = ThemeService.Parse(start, Colors.Cyan);
@@ -91,8 +95,66 @@ public partial class SettingsWindow
                 HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch
             };
             tile.Click += PresetTile_Click;
+            if (mine is not null)
+            {
+                var menu = new ContextMenu();
+                var replace = new MenuItem { Header = "Remplacer par le style actuel" };
+                replace.Click += (_, _) => SaveCustomStyle(mine.Name);
+                var remove = new MenuItem { Header = "Supprimer ce style" };
+                remove.Click += (_, _) =>
+                {
+                    _widgetManager.Config.CustomStyles.Remove(mine);
+                    ScheduleSave();
+                    BuildPresetGallery();
+                    ShowStyleMessage($"Style « {mine.Name} » supprimé.", false);
+                };
+                menu.Items.Add(replace);
+                menu.Items.Add(remove);
+                tile.ContextMenu = menu;
+                tile.ToolTip = "Ton style : clic pour l'appliquer, clic droit pour le remplacer ou le supprimer";
+            }
             PresetGallery.Children.Add(tile);
         }
+    }
+
+    /// <summary>Enregistre le style global actuel sous ce nom (remplace un style personnel du même nom).</summary>
+    private void SaveCustomStyle(string name)
+    {
+        name = name.Trim();
+        if (name.Length == 0) return;
+        FlushApply();
+        var styles = _widgetManager.Config.CustomStyles;
+        var existing = styles.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null) existing.Theme = _widgetManager.Theme.Clone();
+        else styles.Add(new CustomStyle { Name = name, Theme = _widgetManager.Theme.Clone() });
+        ScheduleSave();
+        BuildPresetGallery();
+        ShowStyleMessage(existing is null ? $"Style « {name} » ajouté à la galerie." : $"Style « {name} » remplacé par le style actuel.", false);
+    }
+
+    private void ShowStyleMessage(string text, bool error)
+    {
+        CustomStyleMessage.Text = text;
+        CustomStyleMessage.Foreground = (Brush)FindResource(error ? "UiDanger" : "UiSuccess");
+        CustomStyleMessage.Visibility = Visibility.Visible;
+    }
+
+    private void CustomStyleSave_Click(object sender, RoutedEventArgs e)
+    {
+        ClearProfileMessages();
+        var name = CustomStyleNameBox.Text.Trim();
+        if (name.Length == 0)
+        {
+            ShowStyleMessage("Donne un nom à ton style avant de l'enregistrer.", true);
+            return;
+        }
+        if (ThemePresets.All.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            ShowStyleMessage("Ce nom est déjà celui d'un style fourni : choisis-en un autre.", true);
+            return;
+        }
+        SaveCustomStyle(name);
+        CustomStyleNameBox.Text = "";
     }
 
     private void PresetTile_Click(object sender, RoutedEventArgs e)
@@ -429,10 +491,7 @@ public partial class SettingsWindow
 
             if (includeLayout)
             {
-                WidgetsList.ItemsSource = WidgetManager.AllWidgets
-                    .Select(w => new WidgetRow(w.Id, w.Label, Glyphs.GetValueOrDefault(w.Id, ""),
-                        _widgetManager.IsWidgetShown(w.Id), w.Id != "shortcuts"))
-                    .ToList();
+                RefreshWidgetRows();
             }
 
             // Module sélectionné : éditeurs de style, textes, éléments et apparence Switch (instances éventuellement recréées).

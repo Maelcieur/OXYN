@@ -15,6 +15,9 @@ public sealed class ConsoleGame
     public string Arguments { get; set; } = "";
     public string WorkingDir { get; set; } = "";
 
+    /// <summary>« Plein écran fenêtré » forcé : OXYN retire la bordure de la fenêtre du jeu et l'étend sur la TV.</summary>
+    public bool Borderless { get; set; }
+
     /// <summary>Lancement par adresse, par exemple steam://rungameid/620.</summary>
     public string LaunchUri { get; set; } = "";
 

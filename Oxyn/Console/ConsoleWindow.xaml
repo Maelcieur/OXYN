@@ -19,13 +19,13 @@
 
         <Viewbox Stretch="Uniform">
             <Grid Width="1920" Height="1080">
-                <!-- Barre du haut : onglets à gauche, manette + heure à droite -->
+                <!-- Barre du haut : onglets à gauche, heure à droite ; manettes en petit au-dessus de l'heure -->
                 <StackPanel x:Name="TabsPanel" Orientation="Horizontal" Margin="100,46,0,0"
                             HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                <StackPanel Orientation="Horizontal" Margin="0,46,100,0" HorizontalAlignment="Right" VerticalAlignment="Top">
-                    <StackPanel x:Name="ControllersPanel" Orientation="Horizontal" Margin="0,0,44,0" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="ClockText" Foreground="White" FontSize="38" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                </StackPanel>
+                <StackPanel x:Name="ControllersPanel" Orientation="Horizontal" Margin="0,12,100,0"
+                            HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                <TextBlock x:Name="ClockText" Foreground="White" FontSize="38" FontWeight="SemiBold" Margin="0,46,100,0"
+                           HorizontalAlignment="Right" VerticalAlignment="Top"/>
 
                 <!-- Rangée de jaquettes -->
                 <Canvas x:Name="Shelf" Height="440" Margin="0,125,0,0" VerticalAlignment="Top" ClipToBounds="False"/>

@@ -69,6 +69,7 @@ public partial class ConsoleGameEditorWindow : Window
         UriBox.Text = _target.LaunchUri;
         RomBox.Text = _target.RomPath;
         CoreBox.Text = _target.Core;
+        BorderlessCheck.IsChecked = _target.Borderless;
         PlatformBox.Text = _target.Platform;
         DescriptionBox.Text = _target.Description;
         _cover = _target.CoverPath;
@@ -308,6 +309,7 @@ public partial class ConsoleGameEditorWindow : Window
         _target.EmulatorId = type == 2 ? emulator!.Id : null;
         _target.RomPath = type == 2 ? RomBox.Text.Trim() : "";
         _target.Core = type == 2 ? CoreBox.Text.Trim() : "";
+        _target.Borderless = BorderlessCheck.IsChecked == true;
         _target.CoverPath = _cover;
         _target.HeroPath = _hero;
         _target.LogoPath = _logo;

@@ -235,6 +235,7 @@ Jouer aux jeux du PC sur une TV branchée en HDMI, avec une interface de salon p
     [CheatSlips](https://www.cheatslips.com) avec un jeton gratuit), installés en add-ons de l'émulateur,
     désactivés par défaut, actifs au lancement suivant du jeu.
 - **Souris** : le curseur disparaît en jeu après 2 s d'immobilité et revient en sortant du mode console.
+- **Manettes** : Xbox et **Switch Pro / Joy-Con** (USB ou Bluetooth ; − = View, + = Menu, L / R = LB / RB, Home = bouton Xbox). Toutes les manettes connectées s'affichent en haut à droite avec leur batterie, et une notification discrète apparaît par-dessus le jeu, sans le déranger, quand une manette passe à 50 % puis devient faible (« Manette 1 · 50 % »).
 - **Manette Xbox** :
 
 | Action | Boutons |

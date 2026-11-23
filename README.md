@@ -229,6 +229,7 @@ Play your PC games on a TV connected over HDMI, with a living-room interface dri
     [CheatSlips](https://www.cheatslips.com) with a free token), installed as emulator add-ons, disabled by default,
     active the next time the game starts.
 - **Mouse**: the cursor hides in game after 2 s without moving and comes back when console mode ends.
+- **Controllers**: Xbox and **Switch Pro / Joy-Con** (USB or Bluetooth; − = View, + = Menu, L / R = LB / RB, Home = Xbox button). Every connected controller is shown top right with its battery, and a discreet notification appears over the game, without disturbing it, when a controller drops to 50 % then gets low ("Controller 1 · 50 %").
 - **Xbox controller**:
 
 | Action | Buttons |

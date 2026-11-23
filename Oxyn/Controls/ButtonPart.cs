@@ -87,8 +87,8 @@ public static class ButtonPart
     {
         ["audio"] = new ButtonPartInfo[]
         {
-            new("active", "Sortie par défaut (en cours d'utilisation)"),
-            new("use", "Autres sorties (bouton « Utiliser »)"),
+            new("active", "Sortie par défaut (ligne en cours d'utilisation)"),
+            new("use", "Autres sorties (ligne à cliquer)"),
             new("hide", "Bouton ✕ (masquer le périphérique)", 12),
         },
         ["volumemixer"] = new ButtonPartInfo[]
@@ -174,6 +174,8 @@ public static class ButtonPart
     {
         var saved = (Saved?)button.GetValue(SavedProperty);
         var glyph = style?.Glyph;
+        // Bouton qui est une ligne entière (sorties audio) : son contenu n'est jamais remplacé par une icône.
+        if (saved is null && button.Content is Panel) return;
 
         // Déjà affichée : rien à refaire (évite de recréer l'icône à chaque rafraîchissement).
         if (!string.IsNullOrEmpty(glyph) && !BrandIcons.IsBrand(glyph) && saved is not null && saved.Glyph == glyph && ReferenceEquals(button.Content, saved.Icon))

@@ -120,7 +120,7 @@ public partial class ConsoleWindow : Window
             CursorHider.Update(!_closed && _playing && _gameShown && _guide == null && !_resuming && _runningGame != null);
         };
         _fpsTimer.Start();
-        Closed += (_, _) => { _closed = true; _fpsTimer.Stop(); CursorHider.Show(); _fpsOverlay?.Close(); _fpsOverlay = null; _guide?.Close(); _guide = null; GameSuspender.ResumeAll(); CloseCheats(); _clock.Stop(); _gameWatch?.Stop(); _pad.Dispose(); _cts?.Cancel(); _introCts?.Cancel(); _backdrop?.Close(); _sounds?.Dispose(); _bgGlitchTimer?.Stop(); if (!_options.Preview) DesktopShell.ShowAll(); };
+        Closed += (_, _) => { _closed = true; _fpsTimer.Stop(); CursorHider.Show(); _fpsOverlay?.Close(); _fpsOverlay = null; _batteryToast?.Close(); _batteryToast = null; _guide?.Close(); _guide = null; GameSuspender.ResumeAll(); CloseCheats(); _clock.Stop(); _gameWatch?.Stop(); _pad.Dispose(); _cts?.Cancel(); _introCts?.Cancel(); _backdrop?.Close(); _sounds?.Dispose(); _bgGlitchTimer?.Stop(); if (!_options.Preview) DesktopShell.ShowAll(); };
     }
 
     // ---------- Thème ----------
@@ -1009,30 +1009,81 @@ public partial class ConsoleWindow : Window
 
     // ---------- Manettes ----------
 
-    /// <summary>En haut à droite : la manette utilisée (dernière qui a servi) avec sa batterie.</summary>
+    /// <summary>
+    /// En haut à droite : TOUTES les manettes connectées (Xbox, Switch Pro, Joy-Con), chacune avec son type, sa batterie
+    /// et son pourcentage (ou « Filaire »). La manette utilisée (dernière qui a servi) est en pleine lumière, les autres
+    /// légèrement estompées. Plus compact au-delà de deux manettes.
+    /// </summary>
     private void RefreshControllers()
     {
         ControllersPanel.Children.Clear();
         var list = _pad.Controllers;
-        var c = list.FirstOrDefault(x => x.Active) ?? list.FirstOrDefault();
-        if (c == null) return;
-
-        var row = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = System.Windows.VerticalAlignment.Center };
-        row.Children.Add(new TextBlock { Text = "", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 36, Foreground = TextBrush, VerticalAlignment = System.Windows.VerticalAlignment.Center });
-        if (list.Count > 1)
-            row.Children.Add(new TextBlock { Text = $"×{list.Count}", Foreground = SubBrush, FontSize = 20, Margin = new Thickness(4, 0, 0, 0), VerticalAlignment = System.Windows.VerticalAlignment.Bottom });
-
-        if (c.Wired)
+        if (list.Count == 0) return;
+        var single = list.Count == 1;
+        for (var i = 0; i < list.Count; i++)
         {
-            row.Children.Add(new TextBlock { Text = "Filaire", Foreground = TextBrush, FontSize = 24, Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = System.Windows.VerticalAlignment.Center });
+            var c = list[i];
+            // Une ligne compacte par manette : icône, petite pile, pourcentage (ou « Filaire »), type.
+            var row = new StackPanel
+            {
+                Orientation = Orientation.Horizontal, VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                Margin = new Thickness(i == 0 ? 0 : 24, 0, 0, 0), Opacity = single || c.Active ? 1 : 0.55,
+            };
+            row.Children.Add(new TextBlock
+            {
+                Text = "", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 20, Foreground = TextBrush,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            });
+            if (c.Wired)
+                row.Children.Add(new TextBlock { Text = "Filaire", Foreground = TextBrush, FontSize = 16, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = System.Windows.VerticalAlignment.Center });
+            else if (c.BatteryPercent >= 0)
+            {
+                var icon = BatteryIcon(c.BatteryPercent, c.Charging);
+                icon.Margin = new Thickness(8, 0, 0, 0);
+                icon.LayoutTransform = new ScaleTransform(0.6, 0.6);
+                row.Children.Add(icon);
+                row.Children.Add(new TextBlock
+                {
+                    Text = $"{c.BatteryPercent} %", Foreground = TextBrush, FontSize = 16, FontWeight = FontWeights.SemiBold,
+                    Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                });
+            }
+            else
+                // Batterie inconnue (manette qui n'annonce pas de vraie valeur, ex. HORI) : pas de faux pourcentage.
+                row.Children.Add(new TextBlock { Text = "batterie ?", Foreground = SubBrush, FontSize = 14, Margin = new Thickness(8, 1, 0, 0), VerticalAlignment = System.Windows.VerticalAlignment.Center });
+            row.Children.Add(new TextBlock
+            {
+                Text = ControllerLabel(c), Foreground = SubBrush, FontSize = 13, Margin = new Thickness(8, 1, 0, 0),
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            });
+            ControllersPanel.Children.Add(row);
         }
-        else if (c.BatteryPercent >= 0)
-        {
-            row.Children.Add(BatteryIcon(c.BatteryPercent, c.Charging));
-            row.Children.Add(new TextBlock { Text = $"{c.BatteryPercent} %", Foreground = TextBrush, FontSize = 26, FontWeight = FontWeights.SemiBold, Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = System.Windows.VerticalAlignment.Center });
-        }
-        ControllersPanel.Children.Add(row);
+        foreach (var (c, number, low) in _batteryAlerts.Check(list)) ShowBatteryAlert(c, number, low);
     }
+
+    private readonly BatteryAlertTracker _batteryAlerts = new();
+    private BatteryToast? _batteryToast;
+
+    /// <summary>En jeu : notification par-dessus le jeu (sans le déranger) ; dans le menu : simple bandeau.</summary>
+    private void ShowBatteryAlert(ControllerInfo c, int number, bool low)
+    {
+        Log.Info($"Mode console : batterie manette {number} ({ControllerLabel(c)}) à {c.BatteryPercent} %.");
+        if (_playing && _gameShown)
+        {
+            _batteryToast ??= new BatteryToast(_bounds);
+            _batteryToast.Notify(number, ControllerLabel(c), c.BatteryPercent, low);
+        }
+        else ShowToast(low ? $"Manette {number} : {c.BatteryPercent} %, à recharger" : $"Manette {number} : {c.BatteryPercent} %");
+    }
+
+    private static string ControllerLabel(ControllerInfo c) => c.Kind switch
+    {
+        ControllerKind.SwitchPro when c.Name.Contains("HORI") => "Switch HORI",
+        ControllerKind.SwitchPro => "Switch Pro",
+        ControllerKind.JoyConLeft => "Joy-Con G",
+        ControllerKind.JoyConRight => "Joy-Con D",
+        _ => "Xbox",
+    };
 
     /// <summary>Pile dessinée : remplissage proportionnel, rouge sous 20 %, éclair en charge.</summary>
     private FrameworkElement BatteryIcon(int percent, bool charging)
@@ -1536,6 +1587,14 @@ public partial class ConsoleWindow : Window
         }
     }
 
+    /// <summary>Option « Plein écran fenêtré » du jeu : fenêtre sans bordure sur toute la TV.</summary>
+    private void ApplyBorderless(IntPtr hwnd)
+    {
+        if (_runningGame is not { Borderless: true } game) return;
+        if (BorderlessWindow.Apply(hwnd, _bounds))
+            Log.Info($"Mode console : « {game.Title} » en plein écran fenêtré ({(int)_bounds.Width}x{(int)_bounds.Height}).");
+    }
+
     /// <summary>
     /// Suivi par le PREMIER PLAN (comme Playnite / Big Picture), sans deviner la fenêtre du jeu :
     /// - Pendant le chargement, la roue reste devant tout. Elle s'efface quand une application qui n'est ni un
@@ -1580,6 +1639,7 @@ public partial class ConsoleWindow : Window
                         _shownAt = Stopwatch.StartNew();
                         Log.Info($"Mode console : « {GameWindowTracker.Title(target)} » au premier plan après {since.Elapsed.TotalSeconds:0.0} s, le jeu s'affiche.");
                         EnterGame();
+                        ApplyBorderless(target);
                         GameWindowTracker.ForceForeground(target);
                     }
                     launcherFor = null;
@@ -1614,6 +1674,7 @@ public partial class ConsoleWindow : Window
                 var full = GameWindowTracker.FullscreenWindowOf(_gamePid);
                 if (full != IntPtr.Zero && fg != full)
                 {
+                    Log.Info($"Mode console : fenêtre plein écran du jeu remise devant (« {GameWindowTracker.Title(full)} » au lieu de « {GameWindowTracker.Title(fg)} »).");
                     _lastGameHwnd = full;
                     GameWindowTracker.ForceForeground(full);
                     return;
@@ -1627,6 +1688,8 @@ public partial class ConsoleWindow : Window
                 if (foreign) { _lastGameHwnd = fg; _gamePid = pid; _gameIsLauncher = false; }
             }
             else if (foreign && pid == _gamePid && fg != _lastGameHwnd) _lastGameHwnd = fg;   // le jeu a changé de fenêtre
+            // Plein écran fenêtré : le jeu peut remettre sa bordure (changement de résolution, nouvelle fenêtre).
+            if (foreign && pid == _gamePid && fg == _lastGameHwnd) ApplyBorderless(fg);
 
             if (_gamePid != 0 && !_gameIsLauncher && GameWindowTracker.ProcessExited(_gamePid))
             {

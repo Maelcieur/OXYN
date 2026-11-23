@@ -21,6 +21,47 @@ public sealed record ControllerInfo(string Id, string Name, ControllerKind Kind,
     public int Bars => BatteryPercent < 0 ? 0 : GamepadDecoder.BatteryBars(BatteryPercent);
 }
 
+/// <summary>
+/// Alertes de batterie des manettes : une à 50 %, une quand la batterie devient faible (10 % ; 25 % pour les manettes
+/// Switch, qui ne donnent leur niveau que par quarts). Une seule fois par seuil ; rien pendant la charge ; réarmé quand
+/// la manette est rechargée. Une manette déjà faible à sa connexion est signalée tout de suite.
+/// </summary>
+public sealed class BatteryAlertTracker
+{
+    private const int None = 101;
+    private readonly Dictionary<string, int> _notified = new();
+
+    public static int LowThreshold(ControllerKind kind) => kind == ControllerKind.Xbox ? 10 : 25;
+
+    /// <summary>Alertes à afficher pour cette liste de manettes (numéro = position dans la liste, à partir de 1).</summary>
+    public List<(ControllerInfo Controller, int Number, bool Low)> Check(IReadOnlyList<ControllerInfo> list)
+    {
+        var alerts = new List<(ControllerInfo, int, bool)>();
+        for (var i = 0; i < list.Count; i++)
+        {
+            var c = list[i];
+            if (c.Wired || c.BatteryPercent < 0) continue;
+            var low = LowThreshold(c.Kind);
+            var pct = c.BatteryPercent;
+            if (!_notified.TryGetValue(c.Id, out var done))
+            {
+                // Première fois vue : on part de son niveau actuel ; déjà faible = signalée tout de suite.
+                _notified[c.Id] = pct <= low ? low : pct <= 50 ? 50 : None;
+                if (pct <= low && !c.Charging) alerts.Add((c, i + 1, true));
+                continue;
+            }
+            if (c.Charging || pct > 55)
+            {
+                _notified[c.Id] = pct > 55 ? None : pct > low ? 50 : low;   // rechargée : seuils réarmés
+                continue;
+            }
+            if (pct <= low && done > low) { _notified[c.Id] = low; alerts.Add((c, i + 1, true)); }
+            else if (pct <= 50 && done > 50) { _notified[c.Id] = 50; alerts.Add((c, i + 1, false)); }
+        }
+        return alerts;
+    }
+}
+
 /// <summary>Décodage pur des rapports de manettes (testé sans matériel).</summary>
 public static class GamepadDecoder
 {
@@ -68,6 +109,42 @@ public static class GamepadDecoder
     // ---------- Nintendo Switch (Pro Controller, Joy-Con) ----------
 
     public sealed record SwitchInput(PadButtons Buttons, int BatteryPercent, bool Charging, bool Wired);
+
+    /// <summary>Boutons au format XInput (masque wButtons + gâchettes 0-255).</summary>
+    public sealed record XInputLike(ushort Buttons, byte LT, byte RT);
+
+    /// <summary>
+    /// Rapport complet 0x30 d'une manette Switch traduit en boutons XInput, pour les combinaisons pensées pour la
+    /// manette Xbox : − = View, + = Menu, L / R = LB / RB, ZL / ZR = gâchettes, croix et A B X Y à leur place logique.
+    /// </summary>
+    public static XInputLike? SwitchToXInput(byte[] r, int length, ControllerKind kind)
+    {
+        if (r == null || length < 6 || r[0] != 0x30) return null;
+        byte right = r[3], shared = r[4], left = r[5];
+        ushort b = 0;
+        byte lt = 0, rt = 0;
+        if (kind != ControllerKind.JoyConLeft)
+        {
+            if ((right & 0x08) != 0) b |= 0x1000;   // A
+            if ((right & 0x04) != 0) b |= 0x2000;   // B
+            if ((right & 0x02) != 0) b |= 0x4000;   // X
+            if ((right & 0x01) != 0) b |= 0x8000;   // Y
+            if ((right & 0x40) != 0) b |= 0x0200;   // R -> RB
+            if ((right & 0x80) != 0) rt = 255;      // ZR
+            if ((shared & 0x02) != 0) b |= 0x0010;  // + -> Menu (Start)
+        }
+        if (kind != ControllerKind.JoyConRight)
+        {
+            if ((left & 0x02) != 0) b |= 0x0001;    // haut
+            if ((left & 0x01) != 0) b |= 0x0002;    // bas
+            if ((left & 0x08) != 0) b |= 0x0004;    // gauche
+            if ((left & 0x04) != 0) b |= 0x0008;    // droite
+            if ((left & 0x40) != 0) b |= 0x0100;    // L -> LB
+            if ((left & 0x80) != 0) lt = 255;       // ZL
+            if ((shared & 0x01) != 0) b |= 0x0020;  // − -> View (Back)
+        }
+        return new XInputLike(b, lt, rt);
+    }
 
     /// <summary>
     /// Analyse un rapport d'entrée complet 0x30 (octet 0 = identifiant). Octet 2 : quartet haut = batterie
