@@ -11,7 +11,7 @@ Widgets de bureau pour Windows + Nintendo Switch transformée en écran tactile 
 
 OXYN (WPF, .NET 8) affiche des widgets rattachés au bureau (sous les fenêtres, comme les icônes) :
 surveillance du matériel, audio, lecture en cours, horloges, calendrier, météo, consommation électrique en euros,
-barre de raccourcis, barre de recherche, quota Claude et correction orthographique hors ligne. Tout est personnalisable depuis les Paramètres.
+barre de raccourcis, barre de recherche et quota Claude. Tout est personnalisable depuis les Paramètres.
 
 Avec le **payload SwitchDeck**, une Nintendo Switch branchée en USB-C devient un second écran tactile
 1280×720 : le PC dessine les modules et les tuiles, la Switch les affiche et renvoie le tactile.
@@ -42,6 +42,7 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 
 ## Sommaire
 
+- [Nouveautés de la version 2.3.0](#nouveautés-de-la-version-230)
 - [Nouveautés de la version 2.2.0](#nouveautés-de-la-version-220)
 - [Modules](#modules)
 - [Compatibilité](#compatibilité)
@@ -53,6 +54,21 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 - [Données](#données)
 - [Dépannage](#dépannage)
 - [Licences et crédits](#licences-et-crédits)
+
+## Nouveautés de la version 2.3.0
+
+**Ajouté**
+- **Tous les capteurs du PC** grâce au pilote PawnIO (signé, compatible avec l'Intégrité de la mémoire), installé par
+  l'installateur d'OXYN : température, puissance réelle et fréquence effective du processeur, températures, ventilateurs
+  et tensions de la carte mère, température des barrettes de mémoire DDR5, des disques et de la carte graphique. Un
+  petit programme (pont des capteurs) les lit en administrateur ; OXYN reste sans droits administrateur.
+- La fréquence affichée du processeur est la fréquence effective moyenne des cœurs.
+
+**Retiré**
+- Correction de texte par Ctrl+Espace et la page Outils des Paramètres. La correction orthographique hors ligne reste
+  disponible comme commande de la barre de recherche.
+- Pont de température par l'outil AMD Ryzen Master (script PowerShell) : remplacé par le pont des capteurs, sans
+  fenêtre ni conflit avec MSI Center. Le SDK AMD n'est plus nécessaire.
 
 ## Nouveautés de la version 2.2.0
 
@@ -96,7 +112,7 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 
 | Id | Module | Source des données |
 |---|---|---|
-| `cpu`, `gpu`, `ram` | Processeur, carte graphique, mémoire | LibreHardwareMonitor (+ `Tools/CpuTempBridge.ps1` pour la température AMD) |
+| `cpu`, `gpu`, `ram` | Processeur, carte graphique, mémoire | Pont des capteurs (LibreHardwareMonitor + PawnIO), sinon LibreHardwareMonitor dans OXYN |
 | `network` | Débit réseau | Compteurs des interfaces réseau |
 | `disk` | Disques | `DriveInfo` |
 | `media` | Lecture en cours : 4 dispositions, barre de temps, aléatoire/répétition | API Windows.Media.Control (Spotify, navigateurs, VLC…) |
@@ -118,8 +134,6 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 | `searchbar` | Barre de recherche (bureau seulement) : moteurs intégrés ou ajoutés, suggestions, favoris choisis, commandes `/xxx` pour l'IA de Google | Moteur choisi ; favoris pris dans Chrome, Edge, Brave, Opera ou saisis |
 | `shortcuts` | Barre de raccourcis | `shortcuts.json` |
 
-- **Correction orthographique** : sélectionner un texte dans n'importe quelle application puis **Ctrl+Espace** ; les fautes
-  sont corrigées par le correcteur orthographique de Windows, sans connexion (orthographe seulement, pas la grammaire).
 - **Barre de recherche** : module sans carte (fais glisser la barre pour la déplacer, clic pour taper). Entrée cherche
   avec le moteur choisi ou ouvre l'adresse tapée ; la pastille à gauche change de moteur (Google, Bing, DuckDuckGo, Brave,
   Ecosia, Qwant, YouTube, plus tes propres moteurs : un nom et une adresse avec `{texte}`, ou des sites prêts comme
@@ -150,14 +164,12 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 La plupart des informations fonctionnent sur n'importe quel PC Windows 10/11 sans réglage : charge du processeur,
 mémoire, réseau, disques et carte graphique (NVIDIA, AMD ou Intel). Quelques exceptions :
 
-- **Température du processeur, CPU AMD Ryzen** : installer le SDK AMD Ryzen Master, puis cocher l'option
-  « Température du processeur » dans l'installateur d'OXYN.
-- **Température du processeur, CPU Intel** : aucun pont n'est fourni ; la température risque de rester vide,
-  sauf peut-être en lançant OXYN en administrateur avec l'Intégrité de la mémoire désactivée (non testé).
+- **Température du processeur, carte mère, ventilateurs, mémoire** : cocher l'option « Tous les capteurs » de
+  l'installateur (une autorisation administrateur). Elle installe le pilote PawnIO et le pont des capteurs, une tâche
+  planifiée lancée à l'ouverture de session, sans fenêtre.
 - **Batterie de la souris** : seulement les souris Logitech compatibles HID++.
-- **Ventilateurs** : ceux de la carte graphique sont lus sans réglage. Ceux de la carte mère (CPU, boîtier) demandent le
-  pilote de bas niveau que l'Intégrité de la mémoire bloque ; ils n'apparaissent dans la liste des capteurs que si Windows
-  le permet.
+- **Ventilateurs** : ceux de la carte graphique sont lus sans réglage ; ceux de la carte mère (CPU, boîtier) avec le pont
+  des capteurs. Les ventilateurs branchés sur un hub ou un contrôleur RGB ne sont lus que s'il est reconnu.
 
 ## Module Switch (SwitchDeck)
 
@@ -342,6 +354,7 @@ dotnet test Oxyn.sln
 
 # Version publiée puis installateur (Oxyn\installer\output\OxynSetup.exe)
 dotnet publish Oxyn\Oxyn.csproj -c Release -o Oxyn\bin\publish
+dotnet build Oxyn.SensorBridge -c Release   # pont des capteurs, repris par l'installateur
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" Oxyn\installer\Oxyn.iss
 ```
 
@@ -388,8 +401,9 @@ Le protocole USB est défini deux fois et doit rester identique :
 │   ├── Infrastructure/      Transversal : chemins, journal, fichiers JSON sûrs, instance unique
 │   ├── Interop/             Appels Win32/COM (bureau, raccourci global, clavier simulé, sortie audio)
 │   ├── Converters/, Models/, Themes/, Assets/
-│   ├── Tools/               Pont de température CPU (tâche planifiée élevée), PresentMon (FPS)
+│   ├── Tools/               Installation du pont des capteurs (tâche planifiée élevée), PresentMon (FPS)
 │   └── installer/           Script Inno Setup
+├── Oxyn.SensorBridge/      Pont des capteurs (.NET Framework 4.7.2, LibreHardwareMonitor + PawnIO)
 ├── Oxyn.Tests/           Tests xUnit
 ├── payload/                 Payload Switch en C (GPL-2.0)
 ├── plugins/                 Plugin d'exemple et liste des plugins vérifiés du catalogue
@@ -430,15 +444,13 @@ portable) ; une instance par dossier de données.
 ## Dépannage
 
 - **Un module reste vide** : consulter `%AppData%\Oxyn\logs\oxyn.log`.
-- **Température CPU absente** : l'Intégrité de la mémoire bloque le pilote de LibreHardwareMonitor ;
-  activer l'option « Température du processeur » de l'installateur (SDK AMD Ryzen Master requis).
-- **La température CPU ne se met plus à jour (AMD)** : lire `C:\ProgramData\Oxyn\cputemp-bridge.log`, qui indique
-  l'erreur de l'outil AMD (par exemple « Platform init failed »). Après plusieurs échecs, le pont relance lui-même le
-  pilote AMD (une fois toutes les 10 minutes au plus) ; si ça ne suffit pas, redémarrer le PC.
+- **Température CPU ou capteurs de la carte mère absents** : réinstaller OXYN en cochant « Tous les capteurs ». Le
+  déroulement est noté dans `C:\ProgramData\Oxyn\install-sensors.log`, le fonctionnement du pont dans
+  `C:\ProgramData\Oxyn\sensor-bridge.log`. PawnIO doit apparaître dans les applications installées de Windows ;
+  si le pont n'écrit plus, OXYN relance lui-même sa tâche.
 - **Le bouton Xbox n'ouvre pas le menu Guide** : désactiver dans Windows « Ouvrir la Game Bar avec le bouton Xbox » ;
   Steam Input peut aussi prendre le bouton.
 - **Codes CheatSlips : « Quota exceeded for today »** : le compte gratuit a une limite par jour, réessayer le lendemain.
-- **Ctrl+Espace sans effet** : le raccourci est pris par une autre application (voir le journal).
 - **Switch non détectée** : vérifier que le payload affiche « En attente du PC » et utiliser un câble USB-C de données.
 - **Joy-Con sans effet** : copier le dernier `switchdeck.bin` (protocole v6) sur la carte SD ; l'onglet Manettes prévient
   si le payload est trop ancien.
@@ -460,6 +472,7 @@ portable) ; une instance par dossier de données.
   [NAudio](https://github.com/naudio/NAudio) (MIT), [HidSharp](https://www.zer7.com/software/hidsharp) (Apache-2.0).
 - [PresentMon](https://github.com/GameTechDev/PresentMon) (Intel, MIT) pour la mesure des FPS.
 - Police [Inter](https://github.com/rsms/inter) (SIL Open Font License 1.1) pour les écrans du payload Switch.
+- [PawnIO](https://pawnio.eu) (namazso, GPL-2.0), pilote d'accès au matériel, installé tel quel par l'installateur officiel.
 - Logos de marques : [Simple Icons](https://simpleicons.org) (CC0) — les marques appartiennent à leurs propriétaires.
 - [SharpVectors](https://github.com/ElinamLLC/SharpVectors) (BSD-3-Clause) pour les icônes SVG,
   [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (Microsoft) pour les pages de réglages des plugins,

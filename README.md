@@ -11,7 +11,7 @@ Desktop widgets for Windows + a Nintendo Switch turned into a USB touch screen /
 
 OXYN (WPF, .NET 8) shows widgets pinned to the desktop (below windows, like desktop icons):
 hardware monitoring, audio, now playing, clocks, calendar, weather, power cost in euros, a shortcut bar,
-a search bar, Claude usage quota and offline spell checking. Everything can be customized from the Settings window.
+a search bar and Claude usage quota. Everything can be customized from the Settings window.
 
 With the **SwitchDeck payload**, a Nintendo Switch plugged in over USB-C becomes a second 1280×720
 touch screen: the PC renders the modules and tiles, the Switch displays them and sends touch input back.
@@ -44,6 +44,7 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 
 ## Contents
 
+- [What's new in 2.3.0](#whats-new-in-230)
 - [What's new in 2.2.0](#whats-new-in-220)
 - [Modules](#modules)
 - [Compatibility](#compatibility)
@@ -55,6 +56,21 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 - [Data](#data)
 - [Troubleshooting](#troubleshooting)
 - [Licenses and credits](#licenses-and-credits)
+
+## What's new in 2.3.0
+
+**Added**
+- **Every PC sensor** through the PawnIO driver (signed, compatible with Memory Integrity), installed by the OXYN
+  installer: CPU temperature, real power and effective clock, motherboard temperatures, fans and voltages, DDR5 memory
+  module, drive and graphics card temperatures. A small program (sensor bridge) reads them as administrator; OXYN
+  itself still runs without administrator rights.
+- The CPU clock shown is the average effective clock of the cores.
+
+**Removed**
+- Text correction with Ctrl+Space and the Tools page of the Settings. Offline spell checking is still available as a
+  search bar command.
+- AMD Ryzen Master temperature bridge (PowerShell script): replaced by the sensor bridge, with no window and no conflict
+  with MSI Center. The AMD SDK is no longer needed.
 
 ## What's new in 2.2.0
 
@@ -97,7 +113,7 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 
 | Id | Module | Data source |
 |---|---|---|
-| `cpu`, `gpu`, `ram` | CPU, GPU, memory | LibreHardwareMonitor (+ `Tools/CpuTempBridge.ps1` for AMD CPU temperature) |
+| `cpu`, `gpu`, `ram` | CPU, GPU, memory | Sensor bridge (LibreHardwareMonitor + PawnIO), otherwise LibreHardwareMonitor inside OXYN |
 | `network` | Network throughput | Network interface counters |
 | `disk` | Drives | `DriveInfo` |
 | `media` | Now playing: 4 layouts, time bar, shuffle/repeat | Windows.Media.Control API (Spotify, browsers, VLC…) |
@@ -119,8 +135,6 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 | `searchbar` | Search bar (desktop only): built-in or added engines, suggestions, picked bookmarks, `/xxx` commands for Google's AI | Chosen engine; bookmarks from Chrome, Edge, Brave, Opera or typed |
 | `shortcuts` | Shortcut bar | `shortcuts.json` |
 
-- **Spell checking**: select text in any application and press **Ctrl+Space**; mistakes are fixed by the Windows
-  spell checker, offline (spelling only, not grammar).
 - **Search bar**: a module without a card (drag the bar to move it, click to type). Enter searches with the chosen
   engine or opens the typed address; the pill on the left switches engines (Google, Bing, DuckDuckGo, Brave, Ecosia,
   Qwant, YouTube, plus your own engines: a name and a URL with `{texte}`, or ready-made sites such as Wikipedia, Amazon,
@@ -150,13 +164,12 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 Most readings work on any Windows 10/11 PC with no setup: CPU load, memory, network, drives and graphics card
 (NVIDIA, AMD or Intel). A few exceptions:
 
-- **CPU temperature, AMD Ryzen**: install the AMD Ryzen Master SDK, then tick the "CPU temperature"
-  option in the OXYN installer.
-- **CPU temperature, Intel**: no bridge is provided; the temperature will likely stay empty, except perhaps
-  when running OXYN as administrator with Memory Integrity turned off (untested).
+- **CPU temperature, motherboard, fans, memory**: tick the "Tous les capteurs" (all sensors) option in the installer
+  (one administrator prompt). It installs the PawnIO driver and the sensor bridge, a scheduled task started at sign-in,
+  with no window.
 - **Mouse battery**: Logitech mice supporting HID++ only.
-- **Fans**: graphics card fans are read with no setup. Motherboard fans (CPU, case) need the low-level driver that
-  Memory Integrity blocks; they show up in the sensor list only when Windows allows it.
+- **Fans**: graphics card fans are read with no setup; motherboard fans (CPU, case) through the sensor bridge. Fans on
+  a hub or RGB controller are read only if that controller is supported.
 
 ## Switch module (SwitchDeck)
 
@@ -333,6 +346,7 @@ dotnet test Oxyn.sln
 
 # Release build then installer (Oxyn\installer\output\OxynSetup.exe)
 dotnet publish Oxyn\Oxyn.csproj -c Release -o Oxyn\bin\publish
+dotnet build Oxyn.SensorBridge -c Release   # sensor bridge, picked up by the installer
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" Oxyn\installer\Oxyn.iss
 ```
 
@@ -379,8 +393,9 @@ The USB protocol is defined twice and both copies must stay identical:
 │   ├── Infrastructure/      Cross-cutting: paths, logging, safe JSON files, single instance
 │   ├── Interop/             Win32/COM calls (desktop, global hotkey, simulated input, audio output)
 │   ├── Converters/, Models/, Themes/, Assets/
-│   ├── Tools/               CPU temperature bridge (elevated scheduled task), PresentMon (FPS)
+│   ├── Tools/               Sensor bridge setup (elevated scheduled task), PresentMon (FPS)
 │   └── installer/           Inno Setup script
+├── Oxyn.SensorBridge/      Sensor bridge (.NET Framework 4.7.2, LibreHardwareMonitor + PawnIO)
 ├── Oxyn.Tests/           xUnit tests
 ├── payload/                 Switch payload in C (GPL-2.0)
 ├── plugins/                 Sample plugin and the catalog's verified plugin list
@@ -421,15 +436,12 @@ one instance runs per data folder.
 ## Troubleshooting
 
 - **A module stays empty**: check `%AppData%\Oxyn\logs\oxyn.log`.
-- **No CPU temperature**: Memory Integrity blocks the LibreHardwareMonitor driver; enable the
-  "CPU temperature" option in the installer (requires the AMD Ryzen Master SDK).
-- **CPU temperature stopped updating (AMD)**: read `C:\ProgramData\Oxyn\cputemp-bridge.log`, which shows the
-  AMD tool's error (for example "Platform init failed"). After several failures the bridge restarts the AMD driver
-  itself (at most once every 10 minutes); if that is not enough, restart the PC.
+- **No CPU temperature or motherboard sensors**: reinstall OXYN with "Tous les capteurs" ticked. Setup is logged in
+  `C:\ProgramData\Oxyn\install-sensors.log`, the bridge itself in `C:\ProgramData\Oxyn\sensor-bridge.log`. PawnIO
+  must appear in Windows' installed apps; if the bridge stops writing, OXYN restarts its task.
 - **The Xbox button does not open the Guide menu**: in Windows, turn off "Open Xbox Game Bar using this button on a
   controller"; Steam Input can also take the button.
 - **CheatSlips codes: "Quota exceeded for today"**: the free account has a daily limit, try again the next day.
-- **Ctrl+Space does nothing**: another application owns the hotkey (see the log).
 - **Switch not detected**: make sure the payload shows "En attente du PC" and use a USB-C data cable.
 - **Joy-Con do nothing**: copy the latest `switchdeck.bin` (protocol v6) to the SD card; the Joy-Con tab warns when the
   payload is too old.
@@ -451,6 +463,7 @@ one instance runs per data folder.
   [NAudio](https://github.com/naudio/NAudio) (MIT), [HidSharp](https://www.zer7.com/software/hidsharp) (Apache-2.0).
 - [PresentMon](https://github.com/GameTechDev/PresentMon) (Intel, MIT) for FPS measurement.
 - [Inter](https://github.com/rsms/inter) font (SIL Open Font License 1.1) for the Switch payload screens.
+- [PawnIO](https://pawnio.eu) (namazso, GPL-2.0), hardware access driver, installed unchanged by its official installer.
 - Brand logos: [Simple Icons](https://simpleicons.org) (CC0) — trademarks belong to their owners.
 - [SharpVectors](https://github.com/ElinamLLC/SharpVectors) (BSD-3-Clause) for SVG icons,
   [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (Microsoft) for plugin settings pages,

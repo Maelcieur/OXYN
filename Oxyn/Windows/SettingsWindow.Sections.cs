@@ -25,7 +25,7 @@ public partial class SettingsWindow
         foreach (var (page, pageKey) in new (FrameworkElement, string)[]
         {
             (PageProfiles, "profils"), (PageAlerts, "alertes"), (SwitchSettingsPanel, "switch"), (PageConsole, "console"),
-            (PageIntegrations, "connexions"), (PageTools, "outils"), (PageGeneral, "general"), (PageDock, "dock"),
+            (PageIntegrations, "connexions"), (PageGeneral, "general"), (PageDock, "dock"),
         })
         {
             var first = true;

@@ -11,7 +11,7 @@ public sealed class TrayIconService : IDisposable
     private readonly ContextMenuStrip _menu;
     private readonly Icon? _ownedIcon; // null si on utilise une icône système partagée, qu'il ne faut pas libérer
 
-    // Les services (ex. correction de texte) n'ont pas de référence vers l'icône : accès statique pour les notifications.
+    // Les services (ex. barre de recherche) n'ont pas de référence vers l'icône : accès statique pour les notifications.
     private static TrayIconService? _current;
 
     /// <summary>Affiche une bulle discrète de la zone de notification (sans effet si l'icône n'existe pas encore).</summary>

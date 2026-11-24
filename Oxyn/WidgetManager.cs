@@ -92,8 +92,6 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
     /// aux boîtes de dialogue (une boîte possédée par un widget, rattaché au bureau, ne s'affiche jamais).
     /// </summary>
     private readonly Window _hiddenOwner;
-    private GlobalHotkey? _correctionHotkey;
-    private readonly TextCorrectionService _textCorrection;
     private readonly uint _taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
     private DispatcherTimer? _recreateTimer;
 
@@ -109,7 +107,6 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         foreach (var item in _shortcutStore.Load())
             _shortcuts.Add(item);
 
-        _textCorrection = new TextCorrectionService(ShowWarning);
 
         _registry = new()
         {
@@ -172,12 +169,6 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         _hiddenOwner.SourceInitialized += (_, _) =>
         {
             HwndSource.FromHwnd(new WindowInteropHelper(_hiddenOwner).Handle)?.AddHook(OwnerWndProc);
-            _correctionHotkey = new GlobalHotkey(_hiddenOwner, id: 1);
-            _correctionHotkey.Pressed += () => _ = _textCorrection.RunAsync();
-            if (!_correctionHotkey.Register(HotkeyGesture.CtrlSpace))
-                Log.Warn("Raccourci Ctrl+Espace déjà utilisé par une autre application : correction orthographique indisponible.");
-
-
             InitConsoleHotkey();
         };
         // force la création du handle natif sans jamais afficher la fenêtre
@@ -806,11 +797,9 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
     {
         if (suspended)
         {
-            _correctionHotkey?.Unregister();
             _consoleHotkey?.Unregister();
             return;
         }
-        _correctionHotkey?.Register(HotkeyGesture.CtrlSpace);
         if (HotkeyGesture.Parse(_config.Console.EmergencyHotkey) is { } consoleGesture) _consoleHotkey?.Register(consoleGesture);
     }
 
@@ -1297,7 +1286,6 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             _deck.Dispose(); // BYE : la Switch revient à son écran d'attente
             _fps.Dispose();
             _recreateTimer?.Stop();
-            _correctionHotkey?.Dispose();
             _consoleHotkey?.Dispose();
             _hardware.Dispose();
             _claude.Dispose();

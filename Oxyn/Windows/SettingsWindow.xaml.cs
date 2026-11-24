@@ -157,9 +157,6 @@ public partial class SettingsWindow : Window
         InitConsolePage();
 
         // Divers
-        SpellLanguageText.Text = SpellCorrector.Language is { } language
-            ? new System.Globalization.CultureInfo(language).DisplayName
-            : "Aucun (installe le français dans les langues de Windows)";
         AlertsPanel.DataContext = config.Alerts;
         config.Alerts.PropertyChanged += OnAlertSettingsChanged;
         LockWidgetsCheck.IsChecked = config.WidgetsLocked;
@@ -270,7 +267,6 @@ public partial class SettingsWindow : Window
             [NavSwitch] = PageSwitch,
             [NavConsole] = PageConsole,
             [NavIntegrations] = PageIntegrations,
-            [NavTools] = PageTools,
             [NavGeneral] = PageGeneral,
         };
         var target = pages[nav];

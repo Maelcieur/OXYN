@@ -98,9 +98,16 @@ public static class SensorCatalog
 
     /// <summary>Capteur LibreHardwareMonitor → mesure (null pour les types sans intérêt ici).</summary>
     public static SensorReading? FromSensor(IHardware hardware, ISensor sensor)
+        => sensor.Value is { } value ? FromValues(sensor.Identifier.ToString(), hardware.Name, sensor.SensorType, sensor.Name, value) : null;
+
+    /// <summary>Mesure du pont des capteurs → mesure (mêmes identifiants que LibreHardwareMonitor : les barres choisies restent valables).</summary>
+    public static SensorReading? FromBridge(BridgeSensor s)
+        => Enum.TryParse<SensorType>(s.Type, out var type) ? FromValues(s.Id, s.Hardware, type, s.Name, s.Value) : null;
+
+    private static SensorReading? FromValues(string id, string hardware, SensorType sensorType, string sensorName, float value)
     {
-        if (sensor.Value is not { } value || float.IsNaN(value)) return null;
-        var (kind, unit) = sensor.SensorType switch
+        if (float.IsNaN(value)) return null;
+        var (kind, unit) = sensorType switch
         {
             SensorType.Temperature => ("Température", "°C"),
             SensorType.Load => ("Charge", "%"),
@@ -115,10 +122,10 @@ public static class SensorCatalog
         };
         if (unit.Length == 0) return null;
         // D3D… : compteurs internes de Windows, peu parlants et très nombreux.
-        if (sensor.Name.StartsWith("D3D", StringComparison.OrdinalIgnoreCase)) return null;
-        var name = sensor.SensorType is SensorType.Fan or SensorType.Control ? sensor.Name.Replace("GPU Fan", "Ventilateur GPU") : $"{kind} · {sensor.Name}";
-        if (sensor.SensorType == SensorType.Control) name += " (%)";
-        return new SensorReading(sensor.Identifier.ToString(), hardware.Name, name, unit, value);
+        if (sensorName.StartsWith("D3D", StringComparison.OrdinalIgnoreCase)) return null;
+        var name = sensorType is SensorType.Fan or SensorType.Control ? sensorName.Replace("GPU Fan", "Ventilateur GPU") : $"{kind} · {sensorName}";
+        if (sensorType == SensorType.Control) name += " (%)";
+        return new SensorReading(id, hardware, name, unit, value);
     }
 
     /// <summary>Maximum par défaut d'une barre selon l'unité.</summary>

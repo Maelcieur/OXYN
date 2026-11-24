@@ -11,7 +11,6 @@ namespace Oxyn.Interop;
 /// </summary>
 public sealed record HotkeyGesture(ModifierKeys Modifiers, Key Key)
 {
-    public static readonly HotkeyGesture CtrlSpace = new(ModifierKeys.Control, Key.Space);
 
     /// <summary>Texte enregistré : modificateurs + nom de la touche WPF (« Ctrl+Maj+D5 »).</summary>
     public string Serialize() => string.Join("+", ModifierNames().Append(Key.ToString()));

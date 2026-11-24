@@ -345,7 +345,6 @@
                                 <TextBlock Text="CONNEXIONS" Style="{StaticResource NavSection}"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE71B;" Content="Applications et plugins" x:Name="NavIntegrations" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <TextBlock Text="SYSTÈME" Style="{StaticResource NavSection}"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE70F;" Content="Outils" x:Name="NavTools" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE713;" Content="Général" x:Name="NavGeneral" GroupName="SettingsNav" Checked="Nav_Checked"/>
                             </StackPanel>
                         </ScrollViewer>
@@ -3035,28 +3034,6 @@
                 </ScrollViewer>
 
 
-
-                <!-- ===== Page : Outils (correction orthographique) ===== -->
-                <ScrollViewer x:Name="PageTools" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">
-                    <StackPanel>
-                        <TextBlock Text="Outils" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Petits outils utilisables dans toutes les applications." Style="{StaticResource PageSubtitle}"/>
-
-                        <StackPanel>
-                            <ContentControl Style="{StaticResource SectionHeader}" Content="Correction orthographique"/>
-                            <TextBlock Text="Sélectionne du texte dans n'importe quelle fenêtre puis appuie sur CTRL+ESPACE : les fautes sont corrigées avec le correcteur orthographique de Windows, sans connexion Internet."
-                                       Style="{StaticResource PageSubtitle}" Margin="0,0,0,10"/>
-                            <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="correction correcteur orthographe faute texte ctrl espace dictionnaire">
-                                <StackPanel Style="{StaticResource RowsPanel}">
-                                    <controls:SettingRow Label="Dictionnaire utilisé" Description="Langue du correcteur de Windows (Paramètres Windows › Heure et langue › Langue).">
-                                        <TextBlock x:Name="SpellLanguageText" Style="{StaticResource FieldValue}"/>
-                                    </controls:SettingRow>
-                                    <controls:SettingRow Description="Aussi dans le module Barre de recherche : tape /correction suivi de ton texte."/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
 
                 <!-- ===== Page : Général ===== -->
                 <ScrollViewer x:Name="PageGeneral" Grid.Row="1" Style="{StaticResource PageScroller}" Visibility="Collapsed">

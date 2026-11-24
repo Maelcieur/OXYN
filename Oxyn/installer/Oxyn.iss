@@ -1,5 +1,5 @@
 ﻿#define MyAppName "OXYN"
-#define MyAppVersion "2.2.0"
+#define MyAppVersion "2.3.0"
 #define MyAppPublisher "Fenix"
 #define MyAppExeName "Oxyn.exe"
 
@@ -36,13 +36,15 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 [Tasks]
 Name: "desktopicon"; Description: "Créer un raccourci sur le Bureau"; GroupDescription: "Raccourcis :"
 Name: "startupicon"; Description: "Lancer OXYN au démarrage de Windows"; GroupDescription: "Options :"; Flags: unchecked
-Name: "cputemp"; Description: "Température du processeur via AMD Ryzen Master SDK (demande une autorisation administrateur)"; GroupDescription: "Options :"
+Name: "sensors"; Description: "Tous les capteurs : températures, ventilateurs, tensions (installe le pilote PawnIO, demande une autorisation administrateur)"; GroupDescription: "Options :"
 
 [Files]
 Source: "..\bin\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-; Pont de température CPU : copié dans ProgramData et lancé par une tâche planifiée (voir [Code]).
-Source: "..\Tools\CpuTempBridge.ps1"; DestDir: "{app}\Tools"; Flags: ignoreversion
-Source: "..\Tools\InstallCpuTempTask.ps1"; DestDir: "{app}\Tools"; Flags: ignoreversion
+; Pont des capteurs : copié dans ProgramData et lancé par une tâche planifiée élevée (voir [Code]).
+Source: "..\..\Oxyn.SensorBridge\bin\Release\net472\*"; DestDir: "{app}\SensorBridge"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\Tools\InstallSensorBridge.ps1"; DestDir: "{app}\Tools"; Flags: ignoreversion
+; Installateur officiel du pilote PawnIO (namazso, signé), lancé en silence par InstallSensorBridge.ps1.
+Source: "PawnIO\PawnIO_setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Tasks: sensors
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -69,44 +71,37 @@ Filename: "{app}\{#MyAppExeName}"; Flags: nowait runasoriginaluser; Check: Wizar
 Type: filesandordirs; Name: "{app}"
 
 [UninstallRun]
-; Supprime la tâche de température (création élevée, donc suppression élevée : une demande UAC).
-Filename: "schtasks.exe"; Parameters: "/Delete /TN OXYN-CpuTempBridge /F"; Flags: shellexec runhidden waituntilterminated; Verb: "runas"; RunOnceId: "DeleteCpuTempTask"
+; Supprime la tâche et le pont des capteurs, et l'ancienne tâche de température (création élevée, donc suppression élevée :
+; une seule demande UAC). Le pilote PawnIO reste installé : d'autres logiciels peuvent s'en servir (désinstallable à part).
+Filename: "{cmd}"; Parameters: "/c schtasks /End /TN OXYN-SensorBridge & taskkill /IM Oxyn.SensorBridge.exe /F & schtasks /Delete /TN OXYN-SensorBridge /F & schtasks /Delete /TN OXYN-CpuTempBridge /F & rmdir /s /q ""C:\ProgramData\Oxyn\SensorBridge"""; Flags: shellexec runhidden waituntilterminated; Verb: "runas"; RunOnceId: "DeleteSensorBridge"
 
 [Code]
-const
-  RyzenMasterCli = 'C:\Program Files\AMD\RyzenMasterSDK\AMDRyzenMasterCLI\bin-prebuilt\AMDRyzenMasterCLI.exe';
-
-procedure InstallCpuTempTask();
+procedure InstallSensorBridge();
 var
   Params: String;
   ResultCode: Integer;
 begin
-  if not FileExists(RyzenMasterCli) then
-    MsgBox('Le SDK AMD Ryzen Master n''est pas installé sur ce PC.' + #13#10 + #13#10 +
-      'La tâche de température va quand même être créée, mais la température du processeur ' +
-      'ne s''affichera qu''une fois le SDK installé (téléchargeable sur le site d''AMD).',
-      mbInformation, MB_OK);
-
   // Compte de la session (domaine\nom), lu avant l'élévation : élevé, le script pourrait tourner
   // sous un autre compte administrateur.
   Params := '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' +
-    ExpandConstant('{app}\Tools\InstallCpuTempTask.ps1') + '" -User "' +
+    ExpandConstant('{app}\Tools\InstallSensorBridge.ps1') + '" -User "' +
     ExpandConstant('{%USERDOMAIN}\{%USERNAME}') + '" -Source "' +
-    ExpandConstant('{app}\Tools\CpuTempBridge.ps1') + '"';
+    ExpandConstant('{app}\SensorBridge') + '" -PawnIO "' +
+    ExpandConstant('{tmp}\PawnIO_setup.exe') + '"';
 
   if not ShellExec('runas', 'powershell.exe', Params, '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
      or (ResultCode <> 0) then
-    MsgBox('La tâche de température du processeur n''a pas pu être créée ' +
-      '(autorisation refusée ou erreur).' + #13#10 +
-      'OXYN fonctionne quand même ; relancez l''installation pour réessayer.',
+    MsgBox('Le pont des capteurs n''a pas pu être installé (autorisation refusée ou erreur).' + #13#10 +
+      'OXYN fonctionne quand même, sans la température du processeur ni les capteurs de la carte mère ; ' +
+      'relancez l''installation pour réessayer (détails : C:\ProgramData\Oxyn\install-sensors.log).',
       mbError, MB_OK);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-  // Pas pendant une mise à jour silencieuse : la tâche existe déjà et elle demanderait une autorisation administrateur.
-  if (CurStep = ssPostInstall) and WizardIsTaskSelected('cputemp') and not WizardSilent then
-    InstallCpuTempTask();
+  // Pas pendant une mise à jour silencieuse : elle demanderait une autorisation administrateur sans prévenir.
+  if (CurStep = ssPostInstall) and WizardIsTaskSelected('sensors') and not WizardSilent then
+    InstallSensorBridge();
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;

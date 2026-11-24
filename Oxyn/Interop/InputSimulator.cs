@@ -9,8 +9,6 @@ internal static class InputSimulator
     private const uint KEYEVENTF_KEYUP = 0x0002;
     private const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
     private const ushort VK_CONTROL = 0x11;
-    private const ushort VK_C = 0x43;
-    private const ushort VK_V = 0x56;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct INPUT
@@ -147,28 +145,6 @@ internal static class InputSimulator
     /// </summary>
     public static void SendMaskKey()
         => SendInput(2, new[] { KeyDown(VK_MASK), KeyUp(VK_MASK) }, Marshal.SizeOf<INPUT>());
-
-    public static void SendCtrlC() => SendCtrlCombo(VK_C);
-
-    public static void SendCtrlV() => SendCtrlCombo(VK_V);
-
-    private static void SendCtrlCombo(ushort vk)
-    {
-        var inputs = new[]
-        {
-            KeyDown(VK_CONTROL),
-            KeyDown(vk),
-            KeyUp(vk),
-            KeyUp(VK_CONTROL),
-        };
-
-        var sent = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
-        if (sent != inputs.Length)
-        {
-            var error = Marshal.GetLastWin32Error();
-            throw new InvalidOperationException($"SendInput n'a envoyé que {sent}/{inputs.Length} évènements (erreur Win32 {error}).");
-        }
-    }
 
     private static INPUT KeyDown(ushort vk) => new()
     {

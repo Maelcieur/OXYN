@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Pont des capteurs : lancé en administrateur par la tâche planifiée « OXYN-SensorBridge ».
+    .NET Framework 4.7.2 (fourni avec Windows) : la version de LibreHardwareMonitor qui gère les processeurs
+    récents (Zen 5) via le pilote PawnIO n'existe que pour .NET 10 ou .NET Framework.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Oxyn.SensorBridge</AssemblyName>
+    <RootNamespace>Oxyn.SensorBridge</RootNamespace>
+    <Version>2.2.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\Oxyn\Assets\AppIcon.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>fr</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.7-pre785" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

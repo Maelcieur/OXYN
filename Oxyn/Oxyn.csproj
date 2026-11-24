@@ -15,7 +15,7 @@
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
 
     <!-- Version unique de l'application : reprise dans le journal ; à garder alignée avec installer\Oxyn.iss. -->
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <Product>OXYN</Product>
     <Company>Fenix</Company>
     <Description>Widgets de bureau : surveillance matérielle, audio, médias, consommation et raccourcis.</Description>
@@ -23,13 +23,12 @@
 
   <ItemGroup>
     <PackageReference Include="HidSharp" Version="2.6.4" />
-    <!-- 0.9.6 (stable), pas la préversion 0.9.7-pre717 : cette dernière plante (AccessViolationException,
-         non rattrapable) en lisant la consommation électrique des GPU NVIDIA. La 0.9.6 suffit puisque la
-         température CPU passe désormais par CpuTempBridge.ps1 (pilote AMD), pas par cette bibliothèque. -->
+    <!-- 0.9.6 (stable) : lecture de secours, sans droits administrateur (carte graphique, charge, mémoire), quand le
+         pont des capteurs (Oxyn.SensorBridge, LibreHardwareMonitor 0.9.7 + PawnIO, tâche élevée) n'est pas installé. -->
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2849.39" />
     <PackageReference Include="NAudio" Version="2.3.0" />
-    <!-- Émojis en couleur dans WPF (qui ne sait afficher que des glyphes monochromes) + liste complète par catégorie. -->
+    <!-- Icônes SVG (plugins, packs d'icônes). -->
     <PackageReference Include="SharpVectors.Wpf" Version="1.8.4" />
   </ItemGroup>
 

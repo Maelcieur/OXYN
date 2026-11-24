@@ -38,8 +38,8 @@ public sealed class HardwareSnapshot
 
 public sealed class HardwareMonitorService : IDisposable
 {
-    // Écrit par CpuTempBridge.ps1 (tâche planifiée élevée utilisant le SDK officiel AMD Ryzen
-    // Master) quand le pilote de LibreHardwareMonitor est bloqué par l'Intégrité de la mémoire.
+    // Ancien pont de température (CpuTempBridge.ps1 et le SDK AMD Ryzen Master, avant la 2.2.0), encore écrit par le
+    // pont des capteurs : repli si sensors.json manque (tâche pas encore recréée après une mise à jour silencieuse).
     // ProgramData (pas AppData) car la tâche tourne sous un compte différent de l'utilisateur
     // courant. On ignore le fichier s'il est trop vieux : la tâche pont n'est peut-être pas
     // configurée ou plus active, mieux vaut afficher "indisponible" qu'une valeur figée.
@@ -132,6 +132,12 @@ public sealed class HardwareMonitorService : IDisposable
     private HardwareSnapshot ReadLocked()
     {
         if (_disposed) return new HardwareSnapshot();
+
+        // Pont des capteurs actif (tâche élevée + PawnIO) : toutes les mesures en viennent, OXYN ne lit rien lui-même.
+        if (SensorBridgeReader.TryRead() is { Count: > 0 } bridge)
+            return FromBridge(bridge);
+        if (SensorBridgeReader.StaleSinceUtc is { } staleSince)
+            RestartBridgeIfStale(staleSince);
 
         float? cpuTemp = null, cpuLoad = null;
         float? ramUsed = null, ramAvailable = null, ramLoad = null;
@@ -228,6 +234,71 @@ public sealed class HardwareMonitorService : IDisposable
             CpuPower = cpuPower is > 0 ? cpuPower : null,
             GpuPower = gpuPower,
             Sensors = sensors
+        };
+    }
+
+    /// <summary>Instantané construit à partir des mesures du pont des capteurs.</summary>
+    private HardwareSnapshot FromBridge(IReadOnlyList<BridgeSensor> all)
+    {
+        static float? Find(IEnumerable<BridgeSensor> list, string type, Func<string, bool> name)
+            => list.FirstOrDefault(s => s.Type == type && name(s.Name))?.Value;
+
+        // Processeur : Tctl/Tdie (Ryzen) ou Package (Intel), puissance réelle, fréquence effective (ce que font vraiment
+        // les cœurs, et non la fréquence des cœurs actifs, toujours au maximum).
+        var cpu = all.Where(s => s.HardwareType == "Cpu").ToList();
+        var cpuTemp = Find(cpu, "Temperature", n => n.Contains("Tctl") || n.Contains("Package"))
+                      ?? cpu.FirstOrDefault(s => s.Type == "Temperature" && s.Value > 0)?.Value;
+        var cpuClock = Find(cpu, "Clock", n => n == "Cores (Average Effective)") ?? Find(cpu, "Clock", n => n == "Cores (Average)");
+        if (cpuClock is not > 0) cpuClock = _cpuFrequency.ReadMhz();
+        var cpuPower = Find(cpu, "Power", n => n.Contains("Package", StringComparison.OrdinalIgnoreCase));
+
+        // Cartes graphiques, regroupées par composant (« /gpu-nvidia/0 »…) ; la carte dédiée est préférée à l'iGPU.
+        var gpus = new List<(GpuReading Reading, float? Power)>();
+        foreach (var g in all.Where(s => s.HardwareType is "GpuNvidia" or "GpuAmd" or "GpuIntel")
+                     .GroupBy(s => string.Join('/', s.Id.Split('/').Take(3))))
+        {
+            var list = g.ToList();
+            var name = list[0].Hardware;
+            var power = list.Where(s => s.Type == "Power" && s.Value > 0).ToList();
+            var total = power.FirstOrDefault(s => s.Name.Contains("Package", StringComparison.OrdinalIgnoreCase)
+                || s.Name.Contains("Total", StringComparison.OrdinalIgnoreCase) || s.Name.Contains("PPT", StringComparison.OrdinalIgnoreCase)
+                || s.Name.Contains("Board", StringComparison.OrdinalIgnoreCase))?.Value ?? (power.Count > 0 ? power.Max(s => s.Value) : null);
+            gpus.Add((new GpuReading(name, IsIntegratedGpu(name),
+                list.FirstOrDefault(s => s.Type == "Temperature")?.Value,
+                Find(list, "Load", n => n.Contains("Core", StringComparison.OrdinalIgnoreCase)),
+                Find(list, "Clock", n => n.Equals("GPU Core", StringComparison.OrdinalIgnoreCase)),
+                Find(list, "Clock", n => n.Equals("GPU Memory", StringComparison.OrdinalIgnoreCase)),
+                Find(list, "SmallData", n => n.Equals("GPU Memory Used", StringComparison.OrdinalIgnoreCase)),
+                Find(list, "SmallData", n => n.Equals("GPU Memory Total", StringComparison.OrdinalIgnoreCase))), total));
+        }
+        var gpu = gpus.Where(g => !g.Reading.Integrated).Select(g => g.Reading).FirstOrDefault() ?? gpus.Select(g => g.Reading).FirstOrDefault();
+        var dedicatedPower = gpus.Where(g => !g.Reading.Integrated && g.Power is not null).Select(g => g.Power!.Value).ToList();
+        float? gpuPower = dedicatedPower.Count > 0 ? dedicatedPower.Sum() : null;
+
+        // Mémoire vive : composant « /ram » (la mémoire virtuelle « /vram » a des capteurs de mêmes noms).
+        var ram = all.Where(s => s.Id.StartsWith("/ram/", StringComparison.Ordinal)).ToList();
+        var ramUsed = Find(ram, "Data", n => n == "Memory Used");
+        var ramAvailable = Find(ram, "Data", n => n == "Memory Available");
+
+        return new HardwareSnapshot
+        {
+            CpuTemperature = cpuTemp is > 0 ? cpuTemp : null,
+            CpuLoad = Find(cpu, "Load", n => n.Contains("Total", StringComparison.OrdinalIgnoreCase)),
+            CpuName = cpu.FirstOrDefault()?.Hardware ?? "CPU",
+            CpuPower = cpuPower is > 0 ? cpuPower : null,
+            CpuClockMhz = cpuClock is > 0 ? cpuClock : null,
+            GpuTemperature = gpu?.Temperature is > 0 ? gpu.Temperature : null,
+            GpuLoad = gpu?.Load,
+            GpuName = gpu?.Name ?? "GPU",
+            GpuCoreClockMhz = gpu?.CoreClock is > 0 ? gpu.CoreClock : null,
+            GpuMemoryClockMhz = gpu?.MemoryClock is > 0 ? gpu.MemoryClock : null,
+            GpuMemoryUsedMb = gpu?.MemoryUsed,
+            GpuMemoryTotalMb = gpu?.MemoryTotal,
+            GpuPower = gpuPower,
+            RamUsedGb = ramUsed,
+            RamTotalGb = ramUsed is { } u && ramAvailable is { } a ? u + a : null,
+            RamLoad = Find(ram, "Load", n => n == "Memory"),
+            Sensors = _allSensors ? all.Select(SensorCatalog.FromBridge).OfType<SensorReading>().ToList() : null
         };
     }
 
@@ -351,8 +422,9 @@ public sealed class HardwareMonitorService : IDisposable
         {
             try
             {
-                // Nouvelle tâche (OXYN), sinon celle d'avant le renommage (SysDeck).
-                var code = RunTask("OXYN-CpuTempBridge");
+                // Pont des capteurs, sinon l'ancien pont de température (OXYN, puis SysDeck avant le renommage).
+                var code = RunTask("OXYN-SensorBridge");
+                if (code != 0) code = RunTask("OXYN-CpuTempBridge");
                 if (code != 0) code = RunTask("SysDeck-CpuTempBridge");
                 Log.Info($"Température CPU : le pont n'écrit plus depuis {(now - lastWriteUtc).TotalMinutes:0} min, tâche relancée (code {code}).");
             }
