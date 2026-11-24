@@ -44,6 +44,7 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 
 ## Contents
 
+- [What's new in 2.4.0](#whats-new-in-240)
 - [What's new in 2.3.0](#whats-new-in-230)
 - [What's new in 2.2.0](#whats-new-in-220)
 - [Modules](#modules)
@@ -56,6 +57,33 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 - [Data](#data)
 - [Troubleshooting](#troubleshooting)
 - [Licenses and credits](#licenses-and-credits)
+
+## What's new in 2.4.0
+
+**Added**
+- **Style page**, first in the menu: the style of **every widget at once** (theme, colors, font, background, border,
+  bubbles, opacity, corner radius, gauges, animations), then the built-in themes and the profiles.
+- **Five layouts** for the CPU, GPU, Memory, Drives and Network modules: Classic (the original), Spec sheet (ring and
+  "TEMPERATURE … 46 °C" rows), Dashboard (segmented gauge and bars), Compact (big numbers) and Graphs (animated history).
+- **Added elements** in any module: one piece of data in the form you choose (ring, bar, **animated graph**, value row,
+  big number, title, text). Every PC reading is available: CPU and GPU sensors (hot spot, memory, fans…), memory
+  modules, motherboard, network, drives, FPS.
+- **Several readings in one element**, with the calculation: average, maximum, minimum, sum (e.g. 2 × 16 GB modules =
+  32 GB) or each shown ("32 / 33 °C").
+- **Customization right in the preview**: grid (4 to 16 px) and snapping (edges and centers of the other elements and
+  of the card); drag an element to place it, mouse wheel to resize it, Alt to place it freely.
+- **Click an element = all its settings** in one place: reading(s), form, label, uppercase, size, color, and for a
+  gauge its **shape** (270° arc, full circle, half circle), **style** (smooth, segments, needle, neon…) and thickness;
+  for an original element, its texts and buttons too.
+
+**Changed**
+- **Nothing is edited on the desktop any more**: widgets can only be moved there. Right-click keeps "Personnaliser",
+  "Verrouiller" and "Masquer"; Ctrl+mouse wheel and the "move elements on the desktop" mode are removed.
+- Customize page reorganized: Layout and elements, Size, Module colors and fonts, lists, options.
+
+**Fixed**
+- VRAM shown as "--" and amounts in bytes (VRAM, memory module capacity, RAM used) with the sensor bridge.
+- Useless rows removed from the data list (thresholds and resolution of the memory module sensors).
 
 ## What's new in 2.3.0
 
@@ -142,12 +170,12 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
   arrow on the right to browse them. `/xxx` commands: none by default, add the ones you want (summarize, translate, explain… sent to
   Google's AI Mode, or offline spell checking) and rename them. Color, opacity (bar and input window), border, width
   and height can be set.
-- **On the desktop**: **right-click** a module to customize it, resize it or its text, edit the layout,
-  lock positions or hide it; **Ctrl+mouse wheel** to scale it.
-- **Profiles and themes**: save, export/import (`.oxynprofile`), 9 built-in themes (including "Edge noir":
+- **On the desktop**: drag modules with the mouse; **right-click** one to customize it, lock positions or hide it.
+  Everything else (layout, elements, sizes, colors) is set in **Customize**.
+- **Profiles and themes** (Style page): save, export/import (`.oxynprofile`), 9 built-in themes (including "Edge noir":
   matte black cards, thin gauges, orange accent).
 - **Module settings**: the clocks, weather, air quality, temperature, sensor bar, search bar and media options are in the
-  module's own customization page (Style tab). New modules are hidden until you turn them on.
+  module's own customization page (module appearance and options). New modules are hidden until you turn them on.
 - **Now playing**: Compact, Banner (large cover), Vinyl (spinning record with the cover as its label) or Sleeve
   (cover with the record sliding out) layouts; thin, thick or segmented time bar (click to seek); buttons with or
   without background; shuffle and repeat. Cover, track, time bar and buttons can be moved.

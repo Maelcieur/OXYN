@@ -5,7 +5,19 @@ using Oxyn.Infrastructure;
 namespace Oxyn.Services;
 
 /// <summary>Une mesure écrite par le pont des capteurs (Oxyn.SensorBridge).</summary>
-public sealed record BridgeSensor(string Id, string Hardware, string HardwareType, string Name, string Type, float Value);
+public sealed record BridgeSensor(string Id, string Hardware, string HardwareType, string Name, string Type, float Value)
+{
+    /// <summary>
+    /// Mesure dans l'unité attendue par OXYN : certaines versions du pont donnent les quantités en octets
+    /// (« Data » attendu en Go, « SmallData » en Mo) ; une valeur de plus de 100 000 ne peut être que des octets.
+    /// </summary>
+    public BridgeSensor Normalized() => Type switch
+    {
+        "Data" when Value > 100_000 => this with { Value = Value / (1024f * 1024f * 1024f) },
+        "SmallData" when Value > 10_000_000 => this with { Value = Value / (1024f * 1024f) },
+        _ => this
+    };
+}
 
 /// <summary>
 /// Lit C:\ProgramData\Oxyn\sensors.json, écrit toutes les 2 s par le pont des capteurs (tâche planifiée élevée,

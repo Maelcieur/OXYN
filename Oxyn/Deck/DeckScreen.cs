@@ -304,6 +304,9 @@ public sealed partial class DeckScreen : Grid
     }
 
     /// <summary>Carte du module affiché sur la Switch, ou null.</summary>
+    /// <summary>Cartes des modules affichés sur l'écran.</summary>
+    public IEnumerable<ModuleCard> Cards => _elements.Values.Select(e => e.Frame).OfType<ModuleCard>();
+
     public ModuleCard? CardOf(string id) => _elements.TryGetValue(id, out var e) ? e.Frame as ModuleCard : null;
 
     /// <summary>Pochette du morceau en cours, pour le fond du module Lecture en cours.</summary>

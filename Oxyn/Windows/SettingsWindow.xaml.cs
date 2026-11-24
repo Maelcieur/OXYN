@@ -94,6 +94,7 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         _widgetManager = widgetManager;
         InitializeCustomizeGroups();
+        InitPreviewPlace();
         ShowVersion();
         InitUpdates();
         InitCollapsibleSections();

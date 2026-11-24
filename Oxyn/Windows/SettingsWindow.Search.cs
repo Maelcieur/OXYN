@@ -79,7 +79,7 @@ public partial class SettingsWindow
         var navLabels = new Dictionary<RadioButton, (string Group, string Label, string Keywords)>
         {
             [NavModules] = ("Bureau", "Modules", "liste afficher masquer personnaliser catégories"),
-            [NavProfiles] = ("Bureau", "Profils", "profils thèmes thème prêts préréglages style couleurs polices carte jauges animations"),
+            [NavProfiles] = ("Apparence", "Style", "profils thèmes thème prêts préréglages style couleurs polices carte jauges animations"),
             [NavAlerts] = ("Bureau", "Alertes", "notifications seuils température batterie quota"),
             [NavSwitch] = ("Appareils", "Switch", "écran câble usb"),
             [NavConsole] = ("Appareils", "Mode console", "mode console tv télévision manette jeux émulateurs jaquettes steamgriddb raccourci de secours"),
@@ -194,7 +194,7 @@ public partial class SettingsWindow
                 Walk(child, ctx);
         }
 
-        Walk(PageProfiles, new SearchContext(NavProfiles, "Profils"));
+        Walk(PageProfiles, new SearchContext(NavProfiles, "Style"));
         Walk(PageModules, new SearchContext(NavModules, "Modules"));
         Walk(PageDock, new SearchContext(NavModules, "Modules › Barre de raccourcis", After: () => ShowModule("shortcuts")));
         Walk(SwitchSettingsPanel, new SearchContext(NavSwitch, "Switch › Réglages", GlobalTab: SwitchTabSettings));
@@ -212,7 +212,7 @@ public partial class SettingsWindow
             (GlobalTabGaugesButton, GlobalGaugesEditor, "Jauges"),
             (GlobalTabAnimationsButton, GlobalAnimationsEditor, "Animations"),
         })
-            AddEditorCards(editor, new SearchContext(NavProfiles, $"Profils › Réglage fin du style › {label}", GlobalTab: button));
+            AddEditorCards(editor, new SearchContext(NavProfiles, $"Style › Tous les widgets › {label}", GlobalTab: button));
 
         // Personnaliser : un contexte par onglet (Style : une section à la fois) ; les parties sans objet pour
         // le module courant imposent un filtre.

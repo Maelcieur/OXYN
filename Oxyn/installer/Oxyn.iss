@@ -1,5 +1,5 @@
 ﻿#define MyAppName "OXYN"
-#define MyAppVersion "2.3.0"
+#define MyAppVersion "2.4.0"
 #define MyAppPublisher "Fenix"
 #define MyAppExeName "Oxyn.exe"
 

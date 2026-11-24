@@ -42,6 +42,7 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 
 ## Sommaire
 
+- [Nouveautés de la version 2.4.0](#nouveautés-de-la-version-240)
 - [Nouveautés de la version 2.3.0](#nouveautés-de-la-version-230)
 - [Nouveautés de la version 2.2.0](#nouveautés-de-la-version-220)
 - [Modules](#modules)
@@ -54,6 +55,35 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 - [Données](#données)
 - [Dépannage](#dépannage)
 - [Licences et crédits](#licences-et-crédits)
+
+## Nouveautés de la version 2.4.0
+
+**Ajouté**
+- **Page Style**, en tête du menu : le style de **tous les widgets d'un coup** (thème, couleurs, police, fond, contour,
+  bulles, opacités, arrondi, jauges, animations), puis les thèmes prêts à l'emploi et les profils.
+- **Cinq dispositions** pour les modules Processeur, Carte graphique, Mémoire, Disques et Réseau : Classique (celle
+  d'origine), Fiche technique (anneau et lignes « TEMPÉRATURE … 46 °C »), Tableau de bord (jauge en segments et barres),
+  Compacte (grands chiffres) et Courbes (historique animé).
+- **Éléments ajoutés** dans n'importe quel module : une donnée sous la forme de ton choix (anneau, barre, **courbe
+  animée**, ligne de valeur, grand chiffre, titre, texte). Toutes les mesures du PC sont proposées : capteurs du
+  processeur, de la carte graphique (point chaud, mémoire, ventilateurs…), barrettes de mémoire, carte mère, réseau,
+  disques, FPS.
+- **Plusieurs données dans un élément**, avec le calcul à faire : moyenne, maximum, minimum, somme (ex. 2 barrettes de
+  16 Go = 32 Go) ou chacune affichée (« 32 / 33 °C »).
+- **Personnalisation directement dans l'aperçu** : grille (4 à 16 px) et accroches (bords et centres des autres
+  éléments et de la carte) ; on glisse un élément pour le placer, la molette change sa taille, Alt le place librement.
+- **Clic sur un élément = tous ses réglages** au même endroit : donnée(s), forme, libellé, majuscules, taille, couleur,
+  et pour une jauge sa **forme** (arc 270°, cercle complet, demi-cercle), son **style** (lisse, segments, compteur,
+  néon…), son épaisseur ; pour un élément d'origine, aussi ses textes et ses boutons.
+
+**Modifié**
+- **Rien ne se modifie plus sur le bureau** : on y déplace seulement les widgets. Le clic droit garde « Personnaliser »,
+  « Verrouiller » et « Masquer » ; Ctrl+molette et le mode « Déplacer les éléments sur le bureau » sont retirés.
+- Personnaliser réorganisé : Disposition et éléments, Taille, Couleurs et polices du module, listes, options.
+
+**Corrigé**
+- VRAM affichée « -- » et quantités en octets (VRAM, capacité des barrettes, RAM utilisée) avec le pont des capteurs.
+- Lignes inutiles retirées de la liste des données (seuils et résolution des capteurs des barrettes).
 
 ## Nouveautés de la version 2.3.0
 
@@ -141,12 +171,12 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
   Opera, ou à la main) et renommes ; flèche à droite pour les parcourir. Commandes `/xxx` : aucune par défaut, tu ajoutes celles que tu veux
   (résumer, traduire, expliquer… envoyées au mode IA de Google, ou correction orthographique hors ligne) et tu les
   renommes. Couleur, opacité (barre et fenêtre de saisie), contour, largeur et hauteur réglables.
-- **Sur le bureau** : **clic droit** sur un module pour le personnaliser, changer sa taille ou celle des textes,
-  modifier la disposition, verrouiller les positions ou le masquer ; **Ctrl+molette** pour l'agrandir ou le réduire.
-- **Profils et thèmes** : enregistrement, export/import (`.oxynprofile`), 9 thèmes prêts à l'emploi (dont « Edge noir » :
+- **Sur le bureau** : on déplace les modules à la souris ; **clic droit** pour le personnaliser, verrouiller les
+  positions ou le masquer. Tout le reste (disposition, éléments, tailles, couleurs) se règle dans **Personnaliser**.
+- **Profils et thèmes** (page Style) : enregistrement, export/import (`.oxynprofile`), 9 thèmes prêts à l'emploi (dont « Edge noir » :
   cartes noires mates, jauges fines, accent orange).
 - **Réglages des modules** : les options des horloges, de la météo, de la qualité de l'air, des températures, des barres de
-  capteurs, de la barre de recherche et du lecteur sont dans la personnalisation du module (onglet Style). Les nouveaux modules sont
+  capteurs, de la barre de recherche et du lecteur sont dans la personnalisation du module (Apparence et options du module). Les nouveaux modules sont
   masqués tant qu'on ne les active pas.
 - **Lecture en cours** : dispositions Compact, Bannière (grande pochette), Vinyle (disque qui tourne avec la pochette en
   étiquette) ou Pochette et disque ; barre de temps fine, épaisse ou en segments (un clic avance ou recule) ; boutons

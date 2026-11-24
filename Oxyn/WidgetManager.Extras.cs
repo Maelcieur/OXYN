@@ -96,6 +96,43 @@ public sealed partial class WidgetManager
         foreach (var r in snapshot.Sensors ?? Array.Empty<SensorReading>()) all.TryAdd(r.Id, r);
         _lastSensors = all;
         foreach (var bars in Live<SensorBarsWidgetContent>()) bars.Update(all);
+        PushDesigns();
+    }
+
+    // ---------- Éléments des modules (dispositions) ----------
+
+    /// <summary>Réseau, disques et FPS, ajoutés au catalogue des capteurs pour les éléments des modules.</summary>
+    private readonly Dictionary<string, SensorReading> _designExtras = new();
+
+    private void PushDesignExtras(IEnumerable<SensorReading> readings)
+    {
+        foreach (var r in readings) _designExtras[r.Id] = r;
+        PushDesigns();
+    }
+
+    /// <summary>Toutes les données utilisables par un élément : capteurs, réseau, disques, FPS.</summary>
+    public IReadOnlyDictionary<string, SensorReading> DesignValues()
+    {
+        var all = new Dictionary<string, SensorReading>(_lastSensors ?? new Dictionary<string, SensorReading>());
+        foreach (var (id, r) in _designExtras) all[id] = r;
+        return all;
+    }
+
+    /// <summary>Cartes (bureau et Switch) qui affichent des éléments.</summary>
+    private IEnumerable<Controls.ModuleCard> DesignCards()
+        => _windows.Values.Select(w => w.PreviewCard)
+            .Concat(_deck?.Screen.Cards ?? Enumerable.Empty<Controls.ModuleCard>()) // Switch pas encore créée au démarrage
+            .Where(c => c.HasDesign);
+
+    /// <summary>Vrai si au moins un module affiche des éléments : les mesures complètes doivent alors être lues.</summary>
+    private bool AnyDesign() => DesignCards().Any();
+
+    private void PushDesigns()
+    {
+        var cards = DesignCards().ToList();
+        if (cards.Count == 0) return;
+        var values = DesignValues();
+        foreach (var card in cards) card.UpdateDesign(values);
     }
 
     /// <summary>Nouvelle lecture des capteurs : un point de plus sur les courbes de températures.</summary>

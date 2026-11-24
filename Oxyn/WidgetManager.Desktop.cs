@@ -55,16 +55,9 @@ public sealed partial class WidgetManager
         var hasCard = id != "shortcuts"; // la barre de raccourcis a sa propre page de réglages et sa propre taille
         if (hasCard)
         {
+            // Le module se modifie dans l'application (Personnaliser) ; sur le bureau, on le déplace seulement.
             menu.Items.Add(Item("Personnaliser ce module…", () => CustomizeRequested?.Invoke(id)));
             menu.Items.Add(new Separator());
-            menu.Items.Add(Item("Agrandir (Ctrl + molette)", () => ResizeWidget(id, 1.1)));
-            menu.Items.Add(Item("Réduire", () => ResizeWidget(id, 1 / 1.1)));
-            menu.Items.Add(Item("Taille automatique", () => ResetWidgetSize(id), GetAppearance(id).AutoSize));
-            menu.Items.Add(new Separator());
-            menu.Items.Add(Item("Textes plus grands", () => ScaleWidgetText(id, 1.1)));
-            menu.Items.Add(Item("Textes plus petits", () => ScaleWidgetText(id, 1 / 1.1)));
-            menu.Items.Add(new Separator());
-            menu.Items.Add(Item("Modifier la disposition des éléments", () => SetLayoutEditMode(!LayoutEditMode), LayoutEditMode));
         }
         menu.Items.Add(Item("Verrouiller la position des modules", () =>
         {

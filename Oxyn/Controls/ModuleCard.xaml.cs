@@ -35,7 +35,12 @@ public partial class ModuleCard : UserControl
         _save = save;
         _useDefaultChrome = useDefaultChrome;
         _fillFrame = fillFrame;
-        ContentHost.Content = content;
+        _content = content;
+        // Contenu d'origine + calque d'éléments (disposition du module) par-dessus, dans la même grille.
+        var stack = new Grid();
+        stack.Children.Add(content);
+        stack.Children.Add(_designLayer);
+        ContentHost.Content = stack;
         ContentHost.SizeChanged += (_, _) => NaturalSizeChanged?.Invoke();
 
         _bare = id == "searchbar";
@@ -76,7 +81,60 @@ public partial class ModuleCard : UserControl
     public string ModuleId => _id;
 
     /// <summary>Contenu du module (alimenté par WidgetManager).</summary>
-    public UIElement ModuleContent => (UIElement)ContentHost.Content;
+    private readonly UIElement _content;
+    private readonly Oxyn.Widgets.BuiltWidgetContent _designLayer = new() { Visibility = Visibility.Collapsed };
+    private ModuleDesign? _design;
+
+    public UIElement ModuleContent => _content;
+
+    /// <summary>
+    /// Disposition du module : « Classique » = contenu d'origine (+ éléments ajoutés par-dessus) ; sinon le contenu
+    /// est masqué et seuls les éléments sont affichés.
+    /// </summary>
+    private string? _designSignature;
+
+    private void ApplyDesign(ModuleDesign? design)
+    {
+        _design = design;
+        // Les éléments ne sont reconstruits que si la disposition a vraiment changé : un simple déplacement (ElementLayout)
+        // ou un autre réglage de l'apparence garde les mêmes éléments (et l'historique des courbes).
+        var signature = design is null || design.IsEmpty ? null : System.Text.Json.JsonSerializer.Serialize(design);
+        if (signature == _designSignature) return;
+        _designSignature = signature;
+
+        if (signature is null)
+        {
+            _designLayer.Visibility = Visibility.Collapsed;
+            _designLayer.Content = null;
+            _content.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            _designLayer.Apply(design!);
+            _designLayer.Visibility = Visibility.Visible;
+            _content.Visibility = design!.IsClassic ? Visibility.Visible : Visibility.Collapsed;
+        }
+        // Les nouveaux éléments n'existent dans l'arbre visuel qu'après la mise en page : on les recherche ensuite,
+        // puis on leur applique leur position enregistrée.
+        _movables = null;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            RefreshMovables();
+            DesignRebuilt?.Invoke(); // l'aperçu de Personnaliser redessine ses cadres
+        });
+    }
+
+    /// <summary>Les éléments de la disposition viennent d'être reconstruits et placés.</summary>
+    public event Action? DesignRebuilt;
+
+    /// <summary>Vrai si le module affiche des éléments (il faut alors lui envoyer les mesures).</summary>
+    public bool HasDesign => _design is { IsEmpty: false };
+
+    /// <summary>Dernières mesures pour les éléments du module (capteurs, réseau, disques, FPS).</summary>
+    public void UpdateDesign(IReadOnlyDictionary<string, SensorReading> values)
+    {
+        if (HasDesign) _designLayer.Update(values);
+    }
 
     /// <summary>Apparence appliquée en dernier (null avant la première).</summary>
     public ModuleAppearance? Appearance => _appearance;
@@ -112,6 +170,7 @@ public partial class ModuleCard : UserControl
         }
 
         _appearance = appearance;
+        ApplyDesign(appearance.Design);
         ApplyCardEffects(appearance.EffectiveTheme(_config.Theme!));
         ApplyElementLayouts();
         ApplyBackground();

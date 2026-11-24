@@ -238,8 +238,9 @@ public sealed class HardwareMonitorService : IDisposable
     }
 
     /// <summary>Instantané construit à partir des mesures du pont des capteurs.</summary>
-    private HardwareSnapshot FromBridge(IReadOnlyList<BridgeSensor> all)
+    private HardwareSnapshot FromBridge(IReadOnlyList<BridgeSensor> raw)
     {
+        var all = raw.Select(s => s.Normalized()).ToList(); // octets -> Go / Mo selon la version du pont
         static float? Find(IEnumerable<BridgeSensor> list, string type, Func<string, bool> name)
             => list.FirstOrDefault(s => s.Type == type && name(s.Name))?.Value;
 
@@ -268,8 +269,11 @@ public sealed class HardwareMonitorService : IDisposable
                 Find(list, "Load", n => n.Contains("Core", StringComparison.OrdinalIgnoreCase)),
                 Find(list, "Clock", n => n.Equals("GPU Core", StringComparison.OrdinalIgnoreCase)),
                 Find(list, "Clock", n => n.Equals("GPU Memory", StringComparison.OrdinalIgnoreCase)),
-                Find(list, "SmallData", n => n.Equals("GPU Memory Used", StringComparison.OrdinalIgnoreCase)),
-                Find(list, "SmallData", n => n.Equals("GPU Memory Total", StringComparison.OrdinalIgnoreCase))), total));
+                // VRAM en Mo : « SmallData » (Mo) ou, selon la version du pont, « Data » (Go).
+                Find(list, "SmallData", n => n.Equals("GPU Memory Used", StringComparison.OrdinalIgnoreCase))
+                    ?? Find(list, "Data", n => n.Equals("GPU Memory Used", StringComparison.OrdinalIgnoreCase)) * 1024,
+                Find(list, "SmallData", n => n.Equals("GPU Memory Total", StringComparison.OrdinalIgnoreCase))
+                    ?? Find(list, "Data", n => n.Equals("GPU Memory Total", StringComparison.OrdinalIgnoreCase)) * 1024), total));
         }
         var gpu = gpus.Where(g => !g.Reading.Integrated).Select(g => g.Reading).FirstOrDefault() ?? gpus.Select(g => g.Reading).FirstOrDefault();
         var dedicatedPower = gpus.Where(g => !g.Reading.Integrated && g.Power is not null).Select(g => g.Power!.Value).ToList();

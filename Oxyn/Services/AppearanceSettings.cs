@@ -377,6 +377,13 @@ public sealed class ModuleAppearance : ObservableSettings
     public ModuleAppearance Clone()
         => System.Text.Json.JsonSerializer.Deserialize<ModuleAppearance>(System.Text.Json.JsonSerializer.Serialize(this))!;
 
+    private ModuleDesign? _design;
+    /// <summary>Disposition et éléments ajoutés (anneaux, barres, courbes…) ; null = disposition d'origine.</summary>
+    public ModuleDesign? Design { get => _design; set => Set(ref _design, value); }
+
+    /// <summary>Signale un changement fait directement dans <see cref="Design"/> (Paramètres).</summary>
+    public void NotifyDesignChanged() => Raise(nameof(Design));
+
     /// <summary>Position, taille et visibilité personnalisées des éléments du module, par clé (Movable.Key).</summary>
     public Dictionary<string, ElementLayout> Elements { get; set; } = new();
 
@@ -504,6 +511,9 @@ public sealed class ElementLayout
     /// <summary>Dégradé propre à l'élément (jauges, graphes, boutons qu'il contient) ; null = celui du thème.</summary>
     public string? AccentStart { get; set; }
     public string? AccentEnd { get; set; }
+
+    /// <summary>Forme des jauges circulaires de l'élément : 270, 360 ou 180 degrés ; null = forme d'origine.</summary>
+    public double? GaugeSweep { get; set; }
 
     [JsonIgnore]
     public bool IsDefault => X == 0 && Y == 0 && Math.Abs(Scale - 1) < 0.001;

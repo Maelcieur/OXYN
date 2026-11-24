@@ -334,6 +334,11 @@ public sealed class AppConfig
     /// <summary>Empêche le déplacement des widgets (et de la barre de raccourcis) à la souris.</summary>
     public bool WidgetsLocked { get; set; }
 
+    /// <summary>Pas de la grille de l'aperçu de Personnaliser (pixels de la carte ; 0 = sans grille).</summary>
+    public int ElementGridSize { get; set; } = 8;
+    /// <summary>Les éléments d'un module se collent aux bords et centres des autres éléments et de la carte.</summary>
+    public bool ElementGuides { get; set; } = true;
+
     /// <summary>Menu de gauche des Paramètres masqué (bouton ☰ ou Ctrl+B).</summary>
     public bool SettingsNavCollapsed { get; set; }
 

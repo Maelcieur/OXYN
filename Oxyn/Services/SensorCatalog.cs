@@ -70,6 +70,7 @@ public static class SensorCatalog
 {
     public const string CpuTemp = "oxyn/cpu/temp", CpuLoad = "oxyn/cpu/load", CpuClock = "oxyn/cpu/clock", CpuPower = "oxyn/cpu/power",
         GpuTemp = "oxyn/gpu/temp", GpuLoad = "oxyn/gpu/load", GpuPower = "oxyn/gpu/power",
+        GpuClock = "oxyn/gpu/clock", GpuMemClock = "oxyn/gpu/memclock",
         VramLoad = "oxyn/vram/load", VramUsed = "oxyn/vram/used", RamLoad = "oxyn/ram/load", RamUsed = "oxyn/ram/used";
 
     /// <summary>Mesures calculées par OXYN à partir de la dernière lecture.</summary>
@@ -88,6 +89,8 @@ public static class SensorCatalog
             R(GpuTemp, "Carte graphique", "Température", "°C", s.GpuTemperature),
             R(GpuLoad, "Carte graphique", "Charge", "%", s.GpuLoad),
             R(GpuPower, "Carte graphique", "Puissance", "W", s.GpuPower),
+            R(GpuClock, "Carte graphique", "Fréquence GPU", "MHz", s.GpuCoreClockMhz),
+            R(GpuMemClock, "Carte graphique", "Fréquence mémoire", "MHz", s.GpuMemoryClockMhz),
             R(VramLoad, "Carte graphique", "VRAM utilisée", "%", vramPercent),
             R(VramUsed, "Carte graphique", "VRAM utilisée", "Go", s.GpuMemoryUsedMb / 1024f),
             R(RamLoad, "Mémoire", "RAM utilisée", "%", s.RamLoad),
@@ -123,6 +126,9 @@ public static class SensorCatalog
         if (unit.Length == 0) return null;
         // D3D… : compteurs internes de Windows, peu parlants et très nombreux.
         if (sensorName.StartsWith("D3D", StringComparison.OrdinalIgnoreCase)) return null;
+        // Seuils et résolution des capteurs (barrettes de mémoire…) : des constantes, pas des mesures.
+        if (sensorName.Contains("Limit", StringComparison.OrdinalIgnoreCase)
+            || sensorName.Contains("Resolution", StringComparison.OrdinalIgnoreCase)) return null;
         var name = sensorType is SensorType.Fan or SensorType.Control ? sensorName.Replace("GPU Fan", "Ventilateur GPU") : $"{kind} · {sensorName}";
         if (sensorType == SensorType.Control) name += " (%)";
         return new SensorReading(id, hardware, name, unit, value);

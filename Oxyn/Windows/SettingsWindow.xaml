@@ -335,9 +335,9 @@
                     <Grid>
                         <ScrollViewer x:Name="NavScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel>
-                                <TextBlock Text="BUREAU" Style="{StaticResource NavSection}" Margin="14,2,0,6"/>
+                                <TextBlock Text="APPARENCE" Style="{StaticResource NavSection}" Margin="14,2,0,6"/>
+                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE790;" Content="Style" x:Name="NavProfiles" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE71D;" Content="Modules" x:Name="NavModules" GroupName="SettingsNav" Checked="Nav_Checked" Click="NavModules_Click" IsChecked="True"/>
-                                <RadioButton Style="{StaticResource NavButton}" Tag="&#xE77B;" Content="Profils" x:Name="NavProfiles" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xEA8F;" Content="Alertes" x:Name="NavAlerts" GroupName="SettingsNav" Checked="Nav_Checked"/>
                                 <TextBlock Text="APPAREILS" Style="{StaticResource NavSection}"/>
                                 <RadioButton Style="{StaticResource NavButton}" Tag="&#xE7FC;" Content="Switch" x:Name="NavSwitch" GroupName="SettingsNav" Checked="Nav_Checked"/>
@@ -493,12 +493,35 @@
                             </Style>
                         </StackPanel.Resources>
 
-                        <TextBlock Text="Profils" Style="{StaticResource PageTitle}"/>
-                        <TextBlock Text="Change d'ambiance en un clic avec un profil prêt à l'emploi, enregistre ta configuration pour la retrouver plus tard, ou règle finement le style de tous les modules."
+                        <TextBlock Text="Style" Style="{StaticResource PageTitle}"/>
+                        <TextBlock Text="Le style de tous les widgets d'un coup : thème, couleurs, police, fond, contour, bulles, opacités, arrondi. Choisis aussi un thème prêt à l'emploi ou enregistre ton style dans un profil."
                                    Style="{StaticResource PageSubtitle}"/>
 
+                        <!-- Réglages de tous les widgets (style global) : couleurs, police, fond, contour, bulles, opacités, arrondi -->
+                        <ContentControl Style="{StaticResource SectionHeader}" Content="Tous les widgets"/>
+                        <StackPanel x:Name="PageTheme">
+                            <TextBlock Text="Couleurs, police, fond, contour, bulles, opacités et arrondi de TOUS les widgets, d'un coup. Un élément réglé à part dans Personnaliser garde son réglage. Les changements s'affichent en direct."
+                                       Style="{StaticResource PageSubtitle}" Margin="0,0,0,12"/>
+                    <WrapPanel>
+                        <RadioButton x:Name="GlobalTabColorsButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Couleurs et polices"
+                                     IsChecked="True" Checked="GlobalThemeTab_Checked"/>
+                        <RadioButton x:Name="GlobalTabCardButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Carte"
+                                     Checked="GlobalThemeTab_Checked"/>
+                        <RadioButton x:Name="GlobalTabGaugesButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Jauges"
+                                     Checked="GlobalThemeTab_Checked"/>
+                        <RadioButton x:Name="GlobalTabAnimationsButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Animations"
+                                     Checked="GlobalThemeTab_Checked"/>
+                    </WrapPanel>
+                    <Border Height="1" Background="{StaticResource CardBorder}" Margin="0,0,0,16"/>
+                    <controls:ThemeEditor x:Name="GlobalThemeEditor" Section="ColorsFonts"/>
+                    <controls:ThemeEditor x:Name="GlobalCardEditor" Section="Card" Visibility="Collapsed"/>
+                    <controls:ThemeEditor x:Name="GlobalGaugesEditor" Section="Gauges" Visibility="Collapsed"/>
+                    <controls:ThemeEditor x:Name="GlobalAnimationsEditor" Section="Animations" Visibility="Collapsed"/>
+                        </StackPanel>
+
+
                         <!-- Profils prêts à l'emploi (anciens thèmes) -->
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Profils prêts à l'emploi"/>
+                        <ContentControl Style="{StaticResource SectionHeader}" Content="Thèmes prêts à l'emploi"/>
                         <Border Style="{StaticResource RowCard}" local:SettingsSearch.Keywords="thème préréglage palette ambiance couleurs style prêt galerie néon clair sombre">
                             <StackPanel Style="{StaticResource RowsPanel}">
                                 <controls:SettingRow Description="Un clic remplace le style de tous les modules (couleurs, polices, carte, jauges, animations). La disposition des modules ne change pas."/>
@@ -587,27 +610,6 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Réglage fin du style (ancienne page Thème) : appliqué aux modules qui n'ont pas leur propre style -->
-                        <ContentControl Style="{StaticResource SectionHeader}" Content="Réglage fin du style"/>
-                        <StackPanel x:Name="PageTheme">
-                            <TextBlock Text="Style commun à tous les modules qui n'ont pas leur propre style. Les changements s'affichent en direct sur le bureau ; enregistre-les dans un profil pour les garder."
-                                       Style="{StaticResource PageSubtitle}" Margin="0,0,0,12"/>
-                    <WrapPanel>
-                        <RadioButton x:Name="GlobalTabColorsButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Couleurs et polices"
-                                     IsChecked="True" Checked="GlobalThemeTab_Checked"/>
-                        <RadioButton x:Name="GlobalTabCardButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Carte"
-                                     Checked="GlobalThemeTab_Checked"/>
-                        <RadioButton x:Name="GlobalTabGaugesButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Jauges"
-                                     Checked="GlobalThemeTab_Checked"/>
-                        <RadioButton x:Name="GlobalTabAnimationsButton" Style="{StaticResource TabButton}" GroupName="GlobalThemeTabs" Content="Animations"
-                                     Checked="GlobalThemeTab_Checked"/>
-                    </WrapPanel>
-                    <Border Height="1" Background="{StaticResource CardBorder}" Margin="0,0,0,16"/>
-                    <controls:ThemeEditor x:Name="GlobalThemeEditor" Section="ColorsFonts"/>
-                    <controls:ThemeEditor x:Name="GlobalCardEditor" Section="Card" Visibility="Collapsed"/>
-                    <controls:ThemeEditor x:Name="GlobalGaugesEditor" Section="Gauges" Visibility="Collapsed"/>
-                    <controls:ThemeEditor x:Name="GlobalAnimationsEditor" Section="Animations" Visibility="Collapsed"/>
-                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -676,13 +678,32 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Button x:Name="PreviewWidgetOptionsButton" Grid.Row="0" Content="Options du widget"
-                                    Style="{StaticResource LinkButton}" HorizontalAlignment="Right"
-                                    Click="PreviewWidgetOptions_Click"/>
+                            <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,6" local:SettingsSearch.Ignore="True">
+                                <Button x:Name="PreviewWidgetOptionsButton" DockPanel.Dock="Right" Content="Options du widget"
+                                        Style="{StaticResource LinkButton}" Click="PreviewWidgetOptions_Click"/>
+                                <StackPanel x:Name="PreviewPlaceOptions" DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Grille" FontSize="12" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <ComboBox x:Name="PreviewGridCombo" Width="80" SelectionChanged="PreviewGrid_Changed">
+                                        <ComboBoxItem Content="Aucune" Tag="0"/>
+                                        <ComboBoxItem Content="4 px" Tag="4"/>
+                                        <ComboBoxItem Content="8 px" Tag="8"/>
+                                        <ComboBoxItem Content="12 px" Tag="12"/>
+                                        <ComboBoxItem Content="16 px" Tag="16"/>
+                                    </ComboBox>
+                                    <CheckBox x:Name="PreviewGuidesCheck" Content="Accroches" FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
+                                              Checked="PreviewGrid_Changed" Unchecked="PreviewGrid_Changed"
+                                              ToolTip="L'élément se colle aux bords et aux centres des autres éléments et de la carte"/>
+                                </StackPanel>
+                                <TextBlock Text="Glisse un élément pour le placer · molette : taille · clic : ses réglages · Alt : sans accroche"
+                                           FontSize="11.5" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="16,0,12,0"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
                             <Viewbox x:Name="PreviewWidgetViewbox" Grid.Row="1" Stretch="Uniform" Visibility="Collapsed">
                                 <Grid x:Name="PreviewWidgetSurface">
                                     <Border x:Name="PreviewWidgetSnapshot"/>
+                                    <Canvas x:Name="PreviewWidgetGrid" IsHitTestVisible="False"/>
                                     <Canvas x:Name="PreviewWidgetParts"/>
+                                    <Canvas x:Name="PreviewWidgetGuides" IsHitTestVisible="False"/>
                                 </Grid>
                             </Viewbox>
                             <TextBlock x:Name="PreviewWidgetEmptyText" Grid.Row="1"
@@ -829,23 +850,28 @@
                                     </Border>
                                         </StackPanel>
                                     </Expander>
+                                    <!-- Disposition (5 au choix) et ajout d'éléments : contenu construit dans SettingsWindow.Design.cs -->
+                                    <Expander x:Name="DesignExpander" Style="{StaticResource SectionExpander}" Header="Disposition et éléments"
+                                              Margin="0,0,0,8" IsExpanded="True">
+                                        <StackPanel x:Name="DesignHost" Margin="0,4,0,8"/>
+                                    </Expander>
                                     <Expander x:Name="SizeExpander" Style="{StaticResource SectionExpander}" Header="Taille" Margin="0,0,0,8">
                                         <ContentControl x:Name="SizeExpanderHost"/>
                                     </Expander>
                                     <Expander x:Name="FitExpander" Style="{StaticResource SectionExpander}" Header="Adaptation du contenu" Margin="0,0,0,8">
                                         <ContentControl x:Name="FitExpanderHost"/>
                                     </Expander>
-                                    <Expander x:Name="ElementsExpander" Style="{StaticResource SectionExpander}" Header="Éléments du module" Margin="0,0,0,8">
+                                    <Expander Style="{StaticResource SectionExpander}" Header="Couleurs et polices du module" Margin="0,0,0,8">
+                                        <ContentControl x:Name="ColorsExpanderHost"/>
+                                    </Expander>
+                                    <Expander x:Name="ElementsExpander" Style="{StaticResource SectionExpander}" Header="Liste des éléments (afficher, masquer)" Margin="0,0,0,8">
                                         <ContentControl x:Name="ElementsExpanderHost"/>
                                     </Expander>
-                                    <Expander x:Name="TextsExpander" Style="{StaticResource SectionExpander}" Header="Textes du module" Margin="0,0,0,8">
+                                    <Expander x:Name="TextsExpander" Style="{StaticResource SectionExpander}" Header="Tous les textes du module" Margin="0,0,0,8">
                                         <ContentControl x:Name="TextsExpanderHost"/>
                                     </Expander>
-                                    <Expander x:Name="ButtonsExpander" Style="{StaticResource SectionExpander}" Header="Boutons du module" Margin="0,0,0,8">
+                                    <Expander x:Name="ButtonsExpander" Style="{StaticResource SectionExpander}" Header="Tous les boutons du module" Margin="0,0,0,8">
                                         <ContentControl x:Name="ButtonsExpanderHost"/>
-                                    </Expander>
-                                    <Expander Style="{StaticResource SectionExpander}" Header="Couleurs et polices" Margin="0,0,0,8">
-                                        <ContentControl x:Name="ColorsExpanderHost"/>
                                     </Expander>
                                     <Expander x:Name="OptionsExpander" Style="{StaticResource SectionExpander}" Header="Apparence et options du module" Margin="0,0,0,8">
                                         <ContentControl x:Name="OptionsExpanderHost"/>
@@ -865,6 +891,10 @@
                                     <ContentControl x:Name="SelectedTextListHost" Visibility="Collapsed"/>
                                     <ContentControl x:Name="SelectedButtonListHost" Visibility="Collapsed"/>
                                     <StackPanel x:Name="SelectedElementAdvancedHost"/>
+                                    <!-- Élément ajouté (anneau, barre, courbe…) : tous ses réglages -->
+                                    <StackPanel x:Name="SelectedBlockHost" Visibility="Collapsed"/>
+                                    <!-- Textes et boutons situés dans l'élément choisi -->
+                                    <StackPanel x:Name="SelectedInnerHost" Visibility="Collapsed"/>
                                 </StackPanel>
                             </ScrollViewer>
 
@@ -1130,7 +1160,7 @@
                                             <Button Content="Ouvrir l'aperçu de la Switch" Style="{StaticResource PrimaryButton}"
                                                     Click="EditOnSwitch_Click"/>
                                         </controls:SettingRow>
-                                        <controls:SettingRow x:Name="LayoutEditRow" Label="Déplacer les éléments sur le bureau"
+                                        <controls:SettingRow x:Name="LayoutEditRow" Visibility="Collapsed" local:SettingsSearch.Ignore="True" Label="Déplacer les éléments sur le bureau"
                                                              Description="Glisser pour déplacer · molette pour la taille · clic droit pour masquer (tous les modules).">
                                             <CheckBox x:Name="LayoutEditCheck" Style="{StaticResource ToggleSwitch}" Margin="0"
                                                       Checked="LayoutEdit_Changed" Unchecked="LayoutEdit_Changed"/>

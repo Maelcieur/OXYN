@@ -63,7 +63,6 @@ public sealed class TrayIconService : IDisposable
         };
         menu.Items.Add("Paramètres", null, (_, _) => SettingsRequested?.Invoke());
         _layoutEditItem = new ToolStripMenuItem("Modifier la disposition des modules", null, (_, _) => LayoutEditToggleRequested?.Invoke());
-        menu.Items.Add(_layoutEditItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quitter", null, (_, _) => ExitRequested?.Invoke());
 

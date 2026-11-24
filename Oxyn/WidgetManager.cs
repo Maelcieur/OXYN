@@ -234,7 +234,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
     /// <summary>Les lectures coûteuses ne tournent que si un module (bureau ou Switch) les affiche.</summary>
     private void UpdateSensorDemand()
     {
-        _hardware.AllSensorsEnabled = Live<SensorBarsWidgetContent>().Any();
+        _hardware.AllSensorsEnabled = Live<SensorBarsWidgetContent>().Any() || AnyDesign();
         _hardware.MemoryEnabled = Live<RamWidgetContent>().Any() || _hardware.AllSensorsEnabled;
         if (!Live<GpuWidgetContent>().Any()) _fps.Stop();
         // Une alerte activée garde la lecture en route même si le module n'est pas affiché.
@@ -306,7 +306,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             window.ApplyAppearance(GetAppearance(id));
             window.SetEditMode(LayoutEditMode);
             window.ContextMenu = BuildWidgetMenu(id);
-            window.ResizeRequested += factor => ResizeWidget(id, factor);
+            // Ctrl+molette ne redimensionne plus le module sur le bureau : la taille se règle dans Personnaliser.
             if (id == "media") window.SetMediaArtwork(_lastArtwork);
             var created = window;
             window.Closed += (_, _) => OnWidgetClosed(id, created);
@@ -887,7 +887,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
 
     private async void RefreshNetwork()
     {
-        if (_networkBusy || _disposed || !Live<NetworkWidgetContent>().Any()) return;
+        if (_networkBusy || _disposed || (!Live<NetworkWidgetContent>().Any() && !AnyDesign())) return;
         _networkBusy = true;
         try
         {
@@ -896,6 +896,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             // Liste relue après l'attente : un module a pu être masqué ou affiché entre-temps.
             foreach (var network in Live<NetworkWidgetContent>().ToList())
                 network.Update(net.DownloadBytesPerSecond, net.UploadBytesPerSecond);
+            PushDesignExtras(BuilderSources.Network(net.DownloadBytesPerSecond, net.UploadBytesPerSecond));
         }
         catch (Exception ex)
         {
@@ -909,7 +910,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
 
     private async void RefreshDisks()
     {
-        if (_diskBusy || _disposed || !Live<DiskWidgetContent>().Any()) return;
+        if (_diskBusy || _disposed || (!Live<DiskWidgetContent>().Any() && !AnyDesign())) return;
         _diskBusy = true;
         try
         {
@@ -917,6 +918,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             if (_disposed) return;
             foreach (var disk in Live<DiskWidgetContent>().ToList())
                 disk.Update(drives);
+            PushDesignExtras(BuilderSources.Disks(drives));
         }
         catch (Exception ex)
         {
@@ -938,6 +940,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             _fps.EnsureRunning();
             var fps = _fps.ReadForegroundFps();
             foreach (var gpu in gpus) gpu.SetFps(fps, _fps.State);
+            if (fps is { } f) PushDesignExtras(new[] { BuilderSources.Fps((float)f) });
         }
         catch (Exception ex)
         {
@@ -1217,10 +1220,22 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
 
         if (_windows.TryGetValue(id, out var desktop))
             ApplyModuleSettings(desktop.ModuleContent, GetAppearance(id));
+        OnDesignsChanged();
     }
 
     /// <summary>Applique l'apparence propre à la Switch d'un module (page Personnaliser, cible Switch).</summary>
-    public void ApplyDeckAppearance(string id) => _deck.ApplyAppearance(id);
+    public void ApplyDeckAppearance(string id)
+    {
+        _deck.ApplyAppearance(id);
+        OnDesignsChanged();
+    }
+
+    /// <summary>Éléments ajoutés ou retirés : lecture complète des capteurs si besoin, valeurs envoyées tout de suite.</summary>
+    private void OnDesignsChanged()
+    {
+        UpdateSensorDemand();
+        PushDesigns();
+    }
 
     /// <summary>Réglages propres à certains modules, pris dans l'apparence donnée (bureau ou Switch).</summary>
     private void ApplyModuleSettings(UIElement content, ModuleAppearance a)

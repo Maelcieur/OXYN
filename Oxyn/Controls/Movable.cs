@@ -49,7 +49,9 @@ public static class Movable
     };
 
     public static string LabelFor(string key)
-        => key.StartsWith("drive:") ? $"Disque {key[6..]}" : Labels.GetValueOrDefault(key, key);
+        => key.StartsWith("drive:") ? $"Disque {key[6..]}"
+            : key.StartsWith("block:") ? "Élément ajouté"
+            : Labels.GetValueOrDefault(key, key);
 
     /// <summary>
     /// Levé par un module quand ses éléments déplaçables changent (ex : un disque branché ou retiré),
@@ -205,5 +207,25 @@ public static class Movable
         element.Opacity = layout.Hidden ? 0 : 1;
         element.IsHitTestVisible = !layout.Hidden;
         ThemeService.ApplyAccent(element.Resources, layout.AccentStart, layout.AccentEnd);
+        ApplyGaugeSweep(element, layout.GaugeSweep);
+    }
+
+    /// <summary>Valeur d'origine de SweepAngle d'une jauge (locale ou absente), gardée pour revenir à la forme d'origine.</summary>
+    private static readonly DependencyProperty OriginalSweepProperty = DependencyProperty.RegisterAttached(
+        "OriginalSweep", typeof(object), typeof(Movable), new PropertyMetadata(null));
+
+    /// <summary>Forme choisie pour les jauges circulaires de l'élément ; null = forme d'origine (XAML ou style).</summary>
+    private static void ApplyGaugeSweep(DependencyObject node, double? sweep)
+    {
+        if (node is RadialGauge gauge)
+        {
+            if (gauge.GetValue(OriginalSweepProperty) is null)
+                gauge.SetValue(OriginalSweepProperty, gauge.ReadLocalValue(RadialGauge.SweepAngleProperty));
+            if (sweep is { } s) gauge.SweepAngle = s;
+            else if (gauge.GetValue(OriginalSweepProperty) is double original) gauge.SweepAngle = original;
+            else gauge.ClearValue(RadialGauge.SweepAngleProperty);
+        }
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+            ApplyGaugeSweep(VisualTreeHelper.GetChild(node, i), sweep);
     }
 }

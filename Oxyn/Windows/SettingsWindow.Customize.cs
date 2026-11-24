@@ -153,6 +153,7 @@ public partial class SettingsWindow
     /// </summary>
     private void UpdateCustomizeOptions()
     {
+        BuildDesignEditor();
         var id = SelectedModule?.Id;
         var diskStyle = CurrentAppearance?.DiskStyle;
         foreach (var editor in new[] { ColorsEditor, CardEditor, GaugesEditor, AnimationsEditor })
@@ -209,9 +210,16 @@ public partial class SettingsWindow
         target.BringIntoView();
     }
 
+    private ModuleCard? _previewWatchedCard;
+
+    private void OnPreviewDesignRebuilt()
+        => Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, RefreshPreviewElements);
+
     private void RefreshPreviewElements()
     {
         PreviewWidgetParts.Children.Clear();
+        PreviewWidgetGrid.Children.Clear();
+        PreviewWidgetGuides.Children.Clear();
         if (SelectedModule is not { } module)
         {
             PreviewWidgetViewbox.Visibility = Visibility.Collapsed;
@@ -228,6 +236,14 @@ public partial class SettingsWindow
             PreviewWidgetEmptyText.Visibility = Visibility.Visible;
             PreviewWidgetOptionsButton.Visibility = Visibility.Collapsed;
             return;
+        }
+
+        // Éléments reconstruits après un changement de disposition : l'aperçu se redessine à ce moment-là.
+        if (!ReferenceEquals(_previewWatchedCard, card))
+        {
+            if (_previewWatchedCard is not null) _previewWatchedCard.DesignRebuilt -= OnPreviewDesignRebuilt;
+            _previewWatchedCard = card;
+            card.DesignRebuilt += OnPreviewDesignRebuilt;
         }
 
         PreviewWidgetEmptyText.Visibility = Visibility.Collapsed;
@@ -259,6 +275,13 @@ public partial class SettingsWindow
         Canvas.SetTop(background, 0);
         background.Width = card.ActualWidth;
         background.Height = card.ActualHeight;
+
+        // Placement direct : grille, éléments glissables (un clic simple les sélectionne).
+        if (PlacingElements)
+        {
+            BuildPlaceHotspots(card, card.GetPreviewParts());
+            return;
+        }
 
         foreach (var part in card.GetPreviewParts())
         {
@@ -314,10 +337,18 @@ public partial class SettingsWindow
                 ButtonPartsList.ItemsSource = buttonRow is null ? Array.Empty<ButtonRow>() : new[] { buttonRow };
                 break;
             default:
+                // Élément ajouté (anneau, barre, courbe…) : tous ses réglages.
+                if (BlockOf(part.Key) is { } block)
+                {
+                    ShowSelectedPart(null, null);
+                    ShowBlockInspector(block);
+                    break;
+                }
                 ShowSelectedPart(part.Label, SelectedElementListHost);
                 var elementRow = _elementRows.FirstOrDefault(row => row.Key == part.Key);
                 ElementsList.ItemsSource = elementRow is null ? Array.Empty<ElementRow>() : new[] { elementRow };
                 ShowElementAdvancedOptions(part.Key);
+                ShowInnerParts(part);
                 break;
         }
     }
@@ -348,6 +379,8 @@ public partial class SettingsWindow
         SelectedTextListHost.Visibility = selectedSettings == SelectedTextListHost ? Visibility.Visible : Visibility.Collapsed;
         SelectedButtonListHost.Visibility = selectedSettings == SelectedButtonListHost ? Visibility.Visible : Visibility.Collapsed;
         SelectedElementAdvancedHost.Visibility = selectedSettings == SelectedElementAdvancedHost ? Visibility.Visible : Visibility.Collapsed;
+        SelectedBlockHost.Visibility = Visibility.Collapsed;
+        SelectedInnerHost.Visibility = Visibility.Collapsed;
         SelectedPartPanel.BringIntoView();
     }
 
