@@ -49,7 +49,7 @@ public sealed partial class DeckController : IDisposable
         _launch = launch;
         if (_settings.IsNew) AddDefaultElements();
 
-        Screen = new DeckScreen(config, save, buildModule, GetAppearance, applyModuleSettings);
+        Screen = new DeckScreen(config, buildModule, GetAppearance, applyModuleSettings);
 
         // Fenêtre visible mais loin de tout écran, absente de la barre des tâches et d'Alt+Tab.
         _host = new Window

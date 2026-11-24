@@ -304,9 +304,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             // Position enregistrée sur un écran débranché (ou avant un changement de résolution) : module inatteignable.
             if (!IsOnScreen(window.Left, window.Top)) { window.Left = position.X; window.Top = position.Y; }
             window.ApplyAppearance(GetAppearance(id));
-            window.SetEditMode(LayoutEditMode);
             window.ContextMenu = BuildWidgetMenu(id);
-            // Ctrl+molette ne redimensionne plus le module sur le bureau : la taille se règle dans Personnaliser.
             if (id == "media") window.SetMediaArtwork(_lastArtwork);
             var created = window;
             window.Closed += (_, _) => OnWidgetClosed(id, created);
@@ -1258,20 +1256,6 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
 
     public void SaveConfig() => _configStore.Save(_config);
 
-    /// <summary>Mode édition de la disposition : les éléments des modules se déplacent à la souris.</summary>
-    public bool LayoutEditMode { get; private set; }
-
-    public event Action<bool>? LayoutEditModeChanged;
-
-    public void SetLayoutEditMode(bool enabled)
-    {
-        if (LayoutEditMode == enabled) return;
-        LayoutEditMode = enabled;
-        foreach (var window in _windows.Values)
-            window.SetEditMode(enabled);
-        LayoutEditModeChanged?.Invoke(enabled);
-    }
-
     public void SetDockOpacity(double panelOpacity, double borderOpacity)
     {
         UpdateConfig(c =>
@@ -1288,7 +1272,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
     {
         _disposed = true; // les lectures de fond encore en cours n'écrivent plus dans l'interface
         StopConsoleMode(); // quitte le Mode console (écrans, icônes, audio) avant de fermer
-        if (_desktopSaveTimer is { IsEnabled: true }) SaveConfig(); // taille changée à la molette juste avant de quitter
+        if (_desktopSaveTimer is { IsEnabled: true }) SaveConfig(); // nom changé juste avant de quitter
         CloseToasts();
         _hardwareTimer.Stop();
         _mouseTimer.Stop();

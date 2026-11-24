@@ -396,8 +396,7 @@ La clé de la Control API de Voicemod n'est pas dans le dépôt : elle est inté
 Voicemod indique « clé absente ». Les clés sont délivrées par Voicemod. L'identifiant de l'application
 Twitch est public et figure dans le code.
 
-Arguments de lancement : `--settings` ouvre les Paramètres, `--edit-layout` démarre en mode édition
-de la disposition. Lancer OXYN alors qu'il tourne déjà ouvre ses Paramètres.
+Argument de lancement : `--settings` ouvre les Paramètres. Lancer OXYN alors qu'il tourne déjà ouvre ses Paramètres.
 
 ### Payload Switch
 

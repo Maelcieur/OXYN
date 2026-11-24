@@ -14,12 +14,6 @@ public partial class ModuleCard
     private bool _fitActive;
     private Rect _fitBounds = Rect.Empty;
 
-    /// <summary>
-    /// Le contenu s'est décalé dans la carte (élément déplacé au-delà du bord gauche ou haut) : la fenêtre
-    /// se décale d'autant en sens inverse pour que rien ne bouge à l'écran.
-    /// </summary>
-    public event Action<double, double>? ContentShifted;
-
     /// <summary>Le contenu recadré a changé de taille (Switch : le cadre en taille automatique se recalcule).</summary>
     public event Action? NaturalSizeChanged;
 
@@ -75,10 +69,10 @@ public partial class ModuleCard
         var bounds = ElementsBounds();
         if (bounds.IsEmpty) return;
 
-        // Grandir tout de suite, se resserrer seulement au-delà de la tolérance (immédiat pendant l'édition).
+        // Grandir tout de suite, se resserrer seulement au-delà de la tolérance.
         if (!_fitBounds.IsEmpty)
         {
-            var tolerance = _editMode ? 0.5 : ShrinkTolerance;
+            var tolerance = ShrinkTolerance;
             double Pick(double next, double current, bool grows)
                 => grows || Math.Abs(next - current) > tolerance ? next : current;
             var left = Pick(bounds.Left, _fitBounds.Left, bounds.Left < _fitBounds.Left);
@@ -98,8 +92,6 @@ public partial class ModuleCard
     /// <summary>Marges (négatives ou positives) qui recadrent le contenu sur <paramref name="bounds"/> ; vide = mise en page d'origine.</summary>
     private void ApplyFit(Rect bounds)
     {
-        var oldLeft = _fitBounds.IsEmpty ? 0 : _fitBounds.Left;
-        var oldTop = _fitBounds.IsEmpty ? 0 : _fitBounds.Top;
         _fitBounds = bounds;
         if (bounds.IsEmpty)
         {
@@ -114,13 +106,6 @@ public partial class ModuleCard
                 Math.Round(bounds.Right - width), Math.Round(bounds.Bottom - height));
         }
 
-        // Taille automatique, pendant l'édition : la carte garde sa place, seul le bord concerné bouge.
-        // (Pas au chargement : la position enregistrée correspond déjà à la carte ajustée.)
-        var newLeft = bounds.IsEmpty ? 0 : bounds.Left;
-        var newTop = bounds.IsEmpty ? 0 : bounds.Top;
-        var dx = Math.Round(newLeft) - Math.Round(oldLeft);
-        var dy = Math.Round(newTop) - Math.Round(oldTop);
-        if (_editMode && (dx != 0 || dy != 0)) ContentShifted?.Invoke(dx, dy);
         NaturalSizeChanged?.Invoke();
     }
 

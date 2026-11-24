@@ -361,14 +361,14 @@ public partial class SettingsWindow
                     ("Needle", "Compteur"), ("Pie", "Secteur"), ("Neon", "Néon"), ("Rays", "Rayons"), ("Double", "Double"), ("Capsule", "Capsule")
                 },
                 block.Design, v => { block.Design = (string?)v; block.Segmented = (string?)v == "Segments"; Changed(); }), stacked: true);
-            AddBlockRow("Épaisseur de l'anneau", null, DesignBlockSlider(0.3, 3, block.Thickness, v => block.Thickness = v, "×0.0", 0.1));
+            AddBlockRow("Épaisseur de l'anneau", null, DesignSlider(0.3, 3, block.Thickness, v => block.Thickness = v, "×0.0", 0.1));
         }
         if (block.Type == "Bar")
             AddBlockRow("En segments", null, DesignToggle(block.Segmented, v => { block.Segmented = v; Changed(); }));
         if (block.Type == "Graph")
         {
             AddBlockRow("Surface sous la courbe", null, DesignToggle(block.Fill, v => { block.Fill = v; Changed(); }));
-            AddBlockRow("Durée affichée", null, DesignBlockSlider(10, 600, block.HistorySeconds, v => block.HistorySeconds = (int)v, "0 s", 10));
+            AddBlockRow("Durée affichée", null, DesignSlider(10, 600, block.HistorySeconds, v => block.HistorySeconds = (int)v, "0 s", 10));
         }
         if (block.Type is "Ring" or "Bar" or "Graph")
         {
@@ -381,9 +381,9 @@ public partial class SettingsWindow
             AddBlockRow("Maximum de l'échelle", "Vide : selon l'unité (100 %, 100 °C, 6 000 MHz…) ; courbe : automatique.", max);
         }
 
-        AddBlockRow("Taille du texte", null, DesignBlockSlider(8, 40, block.FontSize, v => block.FontSize = v, "0"));
-        AddBlockRow("Largeur", null, DesignBlockSlider(10, 900, block.Width, v => block.Width = v, "0 px"));
-        AddBlockRow("Hauteur", null, DesignBlockSlider(10, 700, block.Height, v => block.Height = v, "0 px"));
+        AddBlockRow("Taille du texte", null, DesignSlider(8, 40, block.FontSize, v => block.FontSize = v, "0"));
+        AddBlockRow("Largeur", null, DesignSlider(10, 900, block.Width, v => block.Width = v, "0 px"));
+        AddBlockRow("Hauteur", null, DesignSlider(10, 700, block.Height, v => block.Height = v, "0 px"));
 
         var swatch = new ColorSwatch { Hex = block.Color ?? "#FF5B8DEF", Content = block.Color is null ? "Couleur du style" : "Couleur propre" };
         DependencyPropertyDescriptor.FromProperty(ColorSwatch.HexProperty, typeof(ColorSwatch)).AddValueChanged(swatch, (_, _) =>
@@ -494,9 +494,6 @@ public partial class SettingsWindow
         }
         return panel;
     }
-
-    private FrameworkElement DesignBlockSlider(double min, double max, double value, Action<double> set, string format, double tick = 1)
-        => DesignSlider(min, max, value, set, format, tick);
 
     /// <summary>Rangée de puces (une seule choisie), comme dans les réglages du style.</summary>
     private static WrapPanel Chips(string group, (object? Value, string Text)[] items, object? current, Action<object?> set)

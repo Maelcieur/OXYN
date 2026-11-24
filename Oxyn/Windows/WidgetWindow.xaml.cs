@@ -28,7 +28,7 @@ public partial class WidgetWindow : Window
         _id = id;
         _configStore = configStore;
         _config = config;
-        _card = new ModuleCard(id, content, config, () => configStore.Save(config), useDefaultChrome);
+        _card = new ModuleCard(id, content, config, useDefaultChrome);
         Content = _card;
         // La carte réserve une marge (ombre, survol) en agrandissant la fenêtre : on se décale d'autant vers le
         // haut et la gauche pour que la carte reste à sa position enregistrée, sans « saut » visible.
@@ -40,18 +40,6 @@ public partial class WidgetWindow : Window
             Top -= delta;
         };
 
-        // Élément déplacé au-delà du bord gauche/haut : la carte s'étend de ce côté sans que le reste bouge.
-        _card.ContentShifted += (dx, dy) =>
-        {
-            Left += dx;
-            Top += dy;
-            if (_config.Layout.FirstOrDefault(w => w.Id == _id) is { } position)
-            {
-                position.X = Left + _margin; // enregistré avec la disposition de l'élément
-                position.Y = Top + _margin;
-            }
-        };
-
         var saved = config.Layout.FirstOrDefault(w => w.Id == id);
         Left = saved?.X ?? defaultX;
         Top = saved?.Y ?? defaultY;
@@ -59,8 +47,6 @@ public partial class WidgetWindow : Window
         Loaded += (_, _) => _card.PlayAppearAnimation();
     }
 
-    /// <summary>Ctrl + molette sur le module : facteur d'agrandissement (&gt; 1) ou de réduction (&lt; 1) demandé.</summary>
-    public event Action<double>? ResizeRequested;
 
     /// <summary>Contenu du module (alimenté par WidgetManager).</summary>
     public UIElement ModuleContent => _card.ModuleContent;
@@ -79,9 +65,6 @@ public partial class WidgetWindow : Window
 
     /// <summary>Taille actuelle de la carte, pour initialiser la taille manuelle à partir de l'automatique.</summary>
     public Size CurrentCardSize => _card.CurrentCardSize;
-
-    /// <summary>Mode édition : chaque élément déplaçable reçoit un cadre pour le déplacer, le redimensionner ou le masquer.</summary>
-    public void SetEditMode(bool enabled) => _card.SetEditMode(enabled);
 
     public static BitmapImage? LoadImage(string? path) => ModuleCard.LoadImage(path);
 
@@ -118,17 +101,6 @@ public partial class WidgetWindow : Window
             SavePosition();
     }
 
-    protected override void OnPreviewMouseWheel(MouseWheelEventArgs e)
-    {
-        // Sans Ctrl, la molette garde son rôle (volume, listes…).
-        if (Keyboard.Modifiers == ModifierKeys.Control && ResizeRequested is not null)
-        {
-            ResizeRequested(e.Delta > 0 ? 1.05 : 1 / 1.05);
-            e.Handled = true;
-            return;
-        }
-        base.OnPreviewMouseWheel(e);
-    }
 
     private void SavePosition()
     {

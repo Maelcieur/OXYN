@@ -3,13 +3,10 @@ using System.Windows.Threading;
 
 namespace Oxyn;
 
-// Édition directe sur le bureau : menu clic droit de chaque module et redimensionnement à la molette.
+// Bureau : menu clic droit de chaque module (le reste se règle dans Personnaliser) et sauvegarde différée.
 public sealed partial class WidgetManager
 {
-    // Mêmes bornes que les curseurs Largeur / Hauteur de la page Personnaliser.
-    private const double MinCardWidth = 80, MaxCardWidth = 900, MinCardHeight = 50, MaxCardHeight = 900;
-
-    // Ctrl + molette envoie une rafale de changements : une seule écriture de config.json à la fin.
+    // Rafale de changements (nom tapé lettre par lettre…) : une seule écriture de config.json à la fin.
     private DispatcherTimer? _desktopSaveTimer;
 
     private void SaveConfigSoon()
@@ -72,48 +69,4 @@ public sealed partial class WidgetManager
         }));
     }
 
-    /// <summary>
-    /// Agrandit ou réduit la carte d'un facteur ; en taille automatique, on part de la taille affichée
-    /// (passage en taille manuelle, contenu mis à l'échelle).
-    /// </summary>
-    public void ResizeWidget(string id, double factor)
-    {
-        if (id == "shortcuts" || !_windows.TryGetValue(id, out var window)) return;
-        var appearance = GetAppearance(id);
-        if (appearance.AutoSize)
-        {
-            var size = window.CurrentCardSize;
-            if (size.Width <= 0 || size.Height <= 0) return;
-            appearance.Width = size.Width;
-            appearance.Height = size.Height;
-            appearance.AutoSize = false;
-        }
-
-        // Les deux côtés suivent le même facteur, dans la limite des bornes : les proportions restent proches.
-        // Carte très allongée : la borne basse peut dépasser la haute (Math.Clamp lèverait).
-        var maxFactor = Math.Min(MaxCardWidth / appearance.Width, MaxCardHeight / appearance.Height);
-        var minFactor = Math.Min(maxFactor, Math.Max(MinCardWidth / appearance.Width, MinCardHeight / appearance.Height));
-        var f = Math.Clamp(factor, minFactor, maxFactor);
-        appearance.Width = Math.Round(Math.Clamp(appearance.Width * f, MinCardWidth, MaxCardWidth));
-        appearance.Height = Math.Round(Math.Clamp(appearance.Height * f, MinCardHeight, MaxCardHeight));
-        ApplyModuleAppearance(id);
-        SaveConfigSoon();
-    }
-
-    public void ResetWidgetSize(string id)
-    {
-        var appearance = GetAppearance(id);
-        if (appearance.AutoSize) return;
-        appearance.AutoSize = true;
-        ApplyModuleAppearance(id);
-        SaveConfig();
-    }
-
-    private void ScaleWidgetText(string id, double factor)
-    {
-        var appearance = GetAppearance(id);
-        appearance.FontScale = Math.Round(Math.Clamp(appearance.FontScale * factor, 0.4, 3), 2);
-        ApplyModuleAppearance(id);
-        SaveConfig();
-    }
 }

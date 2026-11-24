@@ -18,21 +18,19 @@ public partial class ModuleCard : UserControl
 {
     private readonly string _id;
     private readonly AppConfig _config;
-    private readonly Action _save;
     private readonly bool _useDefaultChrome;
     // Module sans carte (Barre de recherche) : ni fond, ni contour, ni ombre ; il dessine lui-même son apparence.
     private readonly bool _bare;
     private readonly bool _fillFrame;
 
     /// <param name="fillFrame">Vrai sur la Switch : la carte remplit le cadre imposé, la taille du module est ignorée.</param>
-    public ModuleCard(string id, UIElement content, AppConfig config, Action save, bool useDefaultChrome = true, bool fillFrame = false)
+    public ModuleCard(string id, UIElement content, AppConfig config, bool useDefaultChrome = true, bool fillFrame = false)
     {
         InitializeComponent();
         InitEffects();
 
         _id = id;
         _config = config;
-        _save = save;
         _useDefaultChrome = useDefaultChrome;
         _fillFrame = fillFrame;
         _content = content;
@@ -63,11 +61,6 @@ public partial class ModuleCard : UserControl
             ApplyTexts();
             ApplyButtons();
             WatchListsForTexts();
-            if (_editMode)
-            {
-                _editMode = false;
-                SetEditMode(true);
-            }
         };
         // Sans désabonnement, chaque Loaded ajouterait un gestionnaire de plus sur les listes du module.
         Unloaded += (_, _) =>

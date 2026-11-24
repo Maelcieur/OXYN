@@ -113,8 +113,6 @@ public partial class App : Application
         _trayIcon.SettingsRequested += OpenSettings;
         _trayIcon.ExitRequested += Quit;
         SessionEnding += (_, _) => IsExiting = true;
-        _trayIcon.LayoutEditToggleRequested += () => _widgetManager.SetLayoutEditMode(!_widgetManager.LayoutEditMode);
-        _widgetManager.LayoutEditModeChanged += enabled => _trayIcon.SetLayoutEditChecked(enabled);
         _widgetManager.CustomizeRequested += id =>
         {
             OpenSettings();
@@ -124,9 +122,6 @@ public partial class App : Application
         // « Oxyn.exe --settings » ouvre directement les Paramètres (raccourci, tests).
         if (_openSettingsWhenReady || e.Args.Contains("--settings", StringComparer.OrdinalIgnoreCase))
             OpenSettings();
-        // « --edit-layout » démarre en mode édition de la disposition des modules.
-        if (e.Args.Contains("--edit-layout", StringComparer.OrdinalIgnoreCase))
-            _widgetManager.SetLayoutEditMode(true);
 
         _widgetManager.EnsureTvDisabledIfConfigured();
         CheckForUpdateLater();

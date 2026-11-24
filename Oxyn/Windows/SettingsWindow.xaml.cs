@@ -162,14 +162,11 @@ public partial class SettingsWindow : Window
         config.Alerts.PropertyChanged += OnAlertSettingsChanged;
         LockWidgetsCheck.IsChecked = config.WidgetsLocked;
         SetNavCollapsed(config.SettingsNavCollapsed, save: false);
-        LayoutEditCheck.IsChecked = widgetManager.LayoutEditMode;
-        widgetManager.LayoutEditModeChanged += OnLayoutEditModeChanged;
         widgetManager.DesktopStateChanged += OnDesktopStateChanged;
 
         Closed += (_, _) =>
         {
             FlushApply(); // dernier changement encore en attente d'application
-            _widgetManager.LayoutEditModeChanged -= OnLayoutEditModeChanged;
             _widgetManager.DesktopStateChanged -= OnDesktopStateChanged;
             _widgetManager.Deck.StatusChanged -= ShowDeckStatus;
             _widgetManager.Theme.PropertyChanged -= OnGlobalThemeChanged;

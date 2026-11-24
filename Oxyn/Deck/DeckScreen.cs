@@ -27,7 +27,6 @@ public sealed partial class DeckScreen : Grid
 
     private readonly DeckSettings _settings;
     private readonly AppConfig _config;
-    private readonly Action _save;
     private readonly Func<string, UIElement?> _buildModule;
     private readonly Func<string, ModuleAppearance> _appearance;
     private readonly Action<UIElement, ModuleAppearance> _applyModuleSettings;
@@ -51,12 +50,11 @@ public sealed partial class DeckScreen : Grid
 
     /// <param name="appearance">Apparence du module propre à la Switch.</param>
     /// <param name="applyModuleSettings">Réglages propres à certains modules (icônes, style des jauges…) appliqués au contenu.</param>
-    public DeckScreen(AppConfig config, Action save, Func<string, UIElement?> buildModule, Func<string, ModuleAppearance> appearance,
+    public DeckScreen(AppConfig config, Func<string, UIElement?> buildModule, Func<string, ModuleAppearance> appearance,
         Action<UIElement, ModuleAppearance> applyModuleSettings)
     {
         _settings = config.Deck;
         _config = config;
-        _save = save;
         _buildModule = buildModule;
         _appearance = appearance;
         _applyModuleSettings = applyModuleSettings;
@@ -259,7 +257,7 @@ public sealed partial class DeckScreen : Grid
         var module = _buildModule(id);
         if (module is null) return null;
         // Fond de carte comme sur le bureau ; le contenu se recadre sur ses éléments pour rester dans le cadre.
-        var card = new ModuleCard(id, module, _config, _save, fillFrame: true);
+        var card = new ModuleCard(id, module, _config, fillFrame: true);
         card.NaturalSizeChanged += () => Place(id);
         if (id == "media") card.SetMediaArtwork(_mediaArtwork);
         var appearance = _appearance(id);

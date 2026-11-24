@@ -386,8 +386,7 @@ The Voicemod Control API key is not in the repository: it is embedded at build t
 reports a missing key. Keys are issued by Voicemod. The Twitch application client ID is public and lives
 in the code.
 
-Command-line arguments: `--settings` opens Settings, `--edit-layout` starts in layout edit mode.
-Launching OXYN while it is already running opens its Settings.
+Command-line argument: `--settings` opens Settings. Launching OXYN while it is already running opens its Settings.
 
 ### Switch payload
 

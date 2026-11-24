@@ -1160,11 +1160,6 @@
                                             <Button Content="Ouvrir l'aperçu de la Switch" Style="{StaticResource PrimaryButton}"
                                                     Click="EditOnSwitch_Click"/>
                                         </controls:SettingRow>
-                                        <controls:SettingRow x:Name="LayoutEditRow" Visibility="Collapsed" local:SettingsSearch.Ignore="True" Label="Déplacer les éléments sur le bureau"
-                                                             Description="Glisser pour déplacer · molette pour la taille · clic droit pour masquer (tous les modules).">
-                                            <CheckBox x:Name="LayoutEditCheck" Style="{StaticResource ToggleSwitch}" Margin="0"
-                                                      Checked="LayoutEdit_Changed" Unchecked="LayoutEdit_Changed"/>
-                                        </controls:SettingRow>
 
                                         <Border x:Name="ElementRowsBorder" Style="{StaticResource RowBorder}">
                                             <StackPanel x:Name="ElementRowsPanel">

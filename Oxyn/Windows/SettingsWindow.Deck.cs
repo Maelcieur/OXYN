@@ -680,7 +680,6 @@ public partial class SettingsWindow
         SwitchSizeNote.Visibility = _customizeSwitch ? Visibility.Visible : Visibility.Collapsed;
         CopyFromDesktopButton.Visibility = _customizeSwitch ? Visibility.Visible : Visibility.Collapsed;
         EditOnSwitchRow.Visibility = _customizeSwitch ? Visibility.Visible : Visibility.Collapsed;
-        LayoutEditRow.Visibility = Visibility.Collapsed; // rien ne se modifie sur le bureau : tout se règle dans l'aperçu
         ModuleSelector_SelectionChanged(ModuleSelector, null);
     }
 

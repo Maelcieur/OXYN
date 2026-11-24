@@ -651,14 +651,6 @@ public partial class SettingsWindow
         SaveThenDelete(previous);
     }
 
-    private void LayoutEdit_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!IsLoaded) return;
-        _widgetManager.SetLayoutEditMode(LayoutEditCheck.IsChecked == true);
-    }
-
-    private void OnLayoutEditModeChanged(bool enabled) => LayoutEditCheck.IsChecked = enabled;
-
     private void ShowHiddenElements_Click(object sender, RoutedEventArgs e)
     {
         CurrentAppearance?.ShowAllElements();

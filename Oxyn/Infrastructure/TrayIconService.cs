@@ -7,7 +7,6 @@ namespace Oxyn;
 public sealed class TrayIconService : IDisposable
 {
     private readonly NotifyIcon _notifyIcon;
-    private readonly ToolStripMenuItem _layoutEditItem;
     private readonly ContextMenuStrip _menu;
     private readonly Icon? _ownedIcon; // null si on utilise une icône système partagée, qu'il ne faut pas libérer
 
@@ -27,11 +26,7 @@ public sealed class TrayIconService : IDisposable
         }
     }
 
-    /// <summary>Coche l'entrée de menu du mode édition de la disposition.</summary>
-    public void SetLayoutEditChecked(bool enabled) => _layoutEditItem.Checked = enabled;
-
     public event Action? SettingsRequested;
-    public event Action? LayoutEditToggleRequested;
     public event Action? ExitRequested;
 
     public TrayIconService()
@@ -62,7 +57,6 @@ public sealed class TrayIconService : IDisposable
             Font = new Font("Segoe UI", 9.5f)
         };
         menu.Items.Add("Paramètres", null, (_, _) => SettingsRequested?.Invoke());
-        _layoutEditItem = new ToolStripMenuItem("Modifier la disposition des modules", null, (_, _) => LayoutEditToggleRequested?.Invoke());
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quitter", null, (_, _) => ExitRequested?.Invoke());
 
