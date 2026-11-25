@@ -238,6 +238,61 @@ public partial class SettingsWindow
         AppIconsEmptyText.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    /// <summary>Ligne cliquée dans l'aperçu (sortie audio ou application du mixeur) : ses réglages, sous ceux de la liste.</summary>
+    private void ShowItemSettings(object item)
+    {
+        var host = SelectedInnerHost;
+        var title = new System.Windows.Controls.TextBlock { FontWeight = FontWeights.SemiBold, FontSize = 14, Margin = new Thickness(0, 16, 0, 6) };
+        host.Children.Insert(0, title);
+        var panel = new System.Windows.Controls.StackPanel();
+        host.Children.Insert(1, panel);
+        host.Visibility = Visibility.Visible;
+
+        Button Link(string text, Action click)
+        {
+            var b = new Button { Content = text, Margin = new Thickness(0, 0, 8, 8) };
+            b.Click += (_, _) => click();
+            return b;
+        }
+
+        switch (item)
+        {
+            case AudioDeviceInfo device:
+            {
+                title.Text = $"Sortie : {device.Name}";
+                var saved = _widgetManager.Config.AudioDevices.GetValueOrDefault(device.Id);
+                var row = new AudioDeviceRow(device.Id, saved?.OriginalName ?? device.Name, true, saved,
+                    r => _widgetManager.SetAudioDeviceCustom(r.Id, r.OriginalName, r.Name, r.Icon, r.IconColor));
+                var name = new System.Windows.Controls.TextBox { Text = row.Name ?? "", Width = 260 };
+                name.TextChanged += (_, _) => row.Name = string.IsNullOrWhiteSpace(name.Text) ? null : name.Text;
+                panel.Children.Add(new SettingRow { Label = "Nom affiché", Description = $"Vide : « {row.OriginalName} ».", Content = name });
+                var actions = new System.Windows.Controls.WrapPanel();
+                actions.Children.Add(Link("Changer l'icône…", () =>
+                {
+                    var pick = IconPicker.Choose(this, row.OriginalName, row.Icon, row.IconColor);
+                    if (pick is not null) row.SetIcon(pick.Value, pick.Color);
+                }));
+                actions.Children.Add(Link("Nom et icône d'origine", () => { row.Reset(); name.Text = ""; }));
+                panel.Children.Add(actions);
+                break;
+            }
+            case AudioSessionInfo session:
+            {
+                title.Text = $"Application : {session.DisplayName}";
+                var actions = new System.Windows.Controls.WrapPanel();
+                actions.Children.Add(Link("Changer l'icône…", () =>
+                {
+                    var current = _widgetManager.Config.AppIcons.GetValueOrDefault(session.AppKey);
+                    var pick = IconPicker.Choose(this, session.DisplayName, current?.Icon, current?.IconColor);
+                    if (pick is not null) _widgetManager.SetAppIcon(session.AppKey, session.DisplayName, pick.Value, pick.Color);
+                }));
+                actions.Children.Add(Link("Logo automatique", () => _widgetManager.SetAppIcon(session.AppKey, session.DisplayName, null, null)));
+                panel.Children.Add(actions);
+                break;
+            }
+        }
+    }
+
     private void AppIcon_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { DataContext: AppIconRow row }) return;

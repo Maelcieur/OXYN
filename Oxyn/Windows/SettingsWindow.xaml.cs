@@ -163,11 +163,15 @@ public partial class SettingsWindow : Window
         LockWidgetsCheck.IsChecked = config.WidgetsLocked;
         SetNavCollapsed(config.SettingsNavCollapsed, save: false);
         widgetManager.DesktopStateChanged += OnDesktopStateChanged;
+        widgetManager.WidgetClicked += OnWidgetClicked;
+        widgetManager.SetSensorCatalogWanted(true);
 
         Closed += (_, _) =>
         {
             FlushApply(); // dernier changement encore en attente d'application
             _widgetManager.DesktopStateChanged -= OnDesktopStateChanged;
+            _widgetManager.WidgetClicked -= OnWidgetClicked;
+            _widgetManager.SetSensorCatalogWanted(false);
             _widgetManager.Deck.StatusChanged -= ShowDeckStatus;
             _widgetManager.Theme.PropertyChanged -= OnGlobalThemeChanged;
             _widgetManager.Config.Power.PropertyChanged -= OnPowerSettingsChanged;

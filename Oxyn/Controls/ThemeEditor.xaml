@@ -67,7 +67,7 @@
                 <DockPanel Margin="0,0,0,12" IsEnabled="{Binding ShowTiles}">
                     <controls:ColorSwatch DockPanel.Dock="Left" Content="Couleur des bulles" Hex="{Binding TileColor}" Margin="0,0,16,0"/>
                     <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldValue}" Text="{Binding TileOpacity, Converter={StaticResource Percent}}"/>
-                    <Slider Minimum="0.02" Maximum="0.6" Value="{Binding TileOpacity}" VerticalAlignment="Center" ToolTip="Intensité des bulles"/>
+                    <Slider Minimum="0" Maximum="0.6" Value="{Binding TileOpacity}" VerticalAlignment="Center" ToolTip="Intensité des bulles"/>
                 </DockPanel>
                 </StackPanel>
 

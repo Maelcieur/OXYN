@@ -68,6 +68,9 @@ public partial class WidgetWindow : Window
 
     public static BitmapImage? LoadImage(string? path) => ModuleCard.LoadImage(path);
 
+    /// <summary>Clic sur le module sans le déplacer.</summary>
+    public event Action? Clicked;
+
     private void Window_SourceInitialized(object sender, EventArgs e)
     {
         // Rattache la fenêtre au bureau (derrière toute fenêtre normale, comme une icône de bureau)
@@ -99,6 +102,8 @@ public partial class WidgetWindow : Window
         // Un simple clic (sans déplacement) ne doit pas réécrire le fichier de configuration.
         if (Left != startLeft || Top != startTop)
             SavePosition();
+        else
+            Clicked?.Invoke();
     }
 
 

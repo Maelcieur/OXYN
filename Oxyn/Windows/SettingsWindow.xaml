@@ -1653,14 +1653,9 @@
                                 <!-- Températures CPU / GPU uniquement -->
                                 <StackPanel x:Name="TemperatureCard" Visibility="Collapsed">
                                     <ContentControl Style="{StaticResource SectionHeader}" Content="Courbes"/>
-                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Module="temperatures" local:SettingsSearch.Keywords="courbe couleur température processeur carte graphique cpu gpu">
+                                    <Border Style="{StaticResource RowCard}" local:SettingsSearch.Module="temperatures" local:SettingsSearch.Keywords="courbe couleur température processeur carte graphique cpu gpu barrettes ssd carte mère point chaud épaisseur échelle">
                                         <StackPanel Style="{StaticResource RowsPanel}">
-                                            <controls:SettingRow Label="Courbe du processeur" Description="Commune au PC et à la Switch.">
-                                                <controls:ColorSwatch Style="{StaticResource ColorDot}" Hex="{Binding CpuCurveColor}" Margin="0"/>
-                                            </controls:SettingRow>
-                                            <controls:SettingRow Label="Courbe de la carte graphique" Description="Commune au PC et à la Switch.">
-                                                <controls:ColorSwatch Style="{StaticResource ColorDot}" Hex="{Binding GpuCurveColor}" Margin="0"/>
-                                            </controls:SettingRow>
+                                            <StackPanel x:Name="TemperatureSeriesHost"/>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>

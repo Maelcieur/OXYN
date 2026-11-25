@@ -17,7 +17,9 @@ namespace Oxyn.Controls;
 /// </summary>
 public sealed partial class DeckLayoutEditor : Border
 {
-    private const double Snap = 10;
+    // Pas de la grille et distance d'attraction des alignements, en pixels de l'écran de la Switch (1280 × 720) :
+    // assez faibles pour placer précisément (Alt : aucune aimantation, flèches du clavier : 1 px).
+    private const double Snap = 5;
     private const double MinSize = DeckScreen.MinElementSize;
     private const double HandleSize = 34;
 
@@ -54,6 +56,10 @@ public sealed partial class DeckLayoutEditor : Border
         BorderBrush = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF));
         Background = Brushes.Black;
         ClipToBounds = true;
+        // Flèches du clavier : déplacement précis de la sélection (1 px, Maj : 10 px).
+        Focusable = true;
+        FocusVisualStyle = null;
+        PreviewKeyDown += OnEditorKeyDown;
         _overlay.MouseMove += Overlay_MouseMove;
         _overlay.MouseLeftButtonUp += (_, _) => EndDrag();
         _overlay.LostMouseCapture += (_, _) => EndDrag();
@@ -210,6 +216,38 @@ public sealed partial class DeckLayoutEditor : Border
     private const double KeepVisible = 60; // part minimale d'un élément restant à l'écran (px de la Switch)
     private const double GripHeight = 42;
 
+    private void OnEditorKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (_deck is null || _selectedElements.Count == 0) return;
+        // État réel de la touche Maj (lu directement : fiable même si Maj a été enfoncée avant le focus).
+        var step = (GetKeyState(0x10) & 0x8000) != 0 ? 10 : 1;
+        var (dx, dy) = e.Key switch
+        {
+            Key.Left => (-step, 0),
+            Key.Right => (step, 0),
+            Key.Up => (0, -step),
+            Key.Down => (0, step),
+            _ => (0, 0)
+        };
+        if (dx == 0 && dy == 0) return;
+
+        const double W = DeckScreen.ScreenWidth, H = DeckScreen.ScreenHeight;
+        foreach (var id in _selectedElements)
+        {
+            if (_deck.Settings.Find(id) is not { } element) continue;
+            element.X = Math.Clamp(element.X + dx, Math.Min(0, W - element.Width), Math.Max(0, W - element.Width));
+            element.Y = Math.Clamp(element.Y + dy, Math.Min(0, H - element.Height), Math.Max(0, H - element.Height));
+            _deck.Place(element.Id);
+            if (_overlay.Children.OfType<Border>().FirstOrDefault(candidate => candidate.Tag == element) is { } frame)
+                Place(frame, element);
+        }
+        SyncGridLines();
+        LayoutChanged?.Invoke(); // enregistrement
+        e.Handled = true; // la page ne défile pas
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern short GetKeyState(int key);
+
     private static void Place(FrameworkElement frame, DeckElement element)
     {
         // Poignée d'un module au-dessus de la carte, ou dedans si la carte touche le haut ou dépasse à gauche.
@@ -252,6 +290,7 @@ public sealed partial class DeckLayoutEditor : Border
     private void Frame_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: DeckElement element } frame) return;
+        Focus(); // les flèches du clavier déplacent ensuite la sélection
 
         var controlClick = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
         if (controlClick)
@@ -356,12 +395,14 @@ public sealed partial class DeckLayoutEditor : Border
         {
             var x = _startRect.X + delta.X;
             var y = _startRect.Y + delta.Y;
-            if (_deck.Settings.SnapToGrid)
+            var free = (Keyboard.Modifiers & ModifierKeys.Alt) != 0; // Alt : placement libre, sans grille ni alignement
+            if (_deck.Settings.SnapToGrid && !free)
             {
                 x = Round(x);
                 y = Round(y);
             }
-            var (snapX, snapY) = SnapToAlignment(x, y);
+            var (snapX, snapY) = free ? (x, y) : SnapToAlignment(x, y);
+            if (free) ClearAlignmentGuides();
             var (moveX, moveY) = ClampGroupDelta(snapX - _startRect.X, snapY - _startRect.Y, W, H);
             foreach (var (element, start) in _startRects)
             {
@@ -379,7 +420,7 @@ public sealed partial class DeckLayoutEditor : Border
     {
         ClearAlignmentGuides();
         if (_deck?.Settings.SnapToGrid != true || _dragElement is null) return (x, y);
-        const double tolerance = 10;
+        const double tolerance = 4;
         var moving = new Rect(x, y, _dragElement.Width, _dragElement.Height);
         double? bestX = null, bestY = null, guideX = null, guideY = null;
         foreach (var target in _deck.Settings.Elements.Where(e => e.Visible && !_selectedElements.Contains(e.Id)))
@@ -452,7 +493,8 @@ public sealed partial class DeckLayoutEditor : Border
         _alignmentGuides.Clear();
     }
 
-    private double SnapValue(double value) => _deck?.Settings.SnapToGrid == true ? Round(value) : value;
+    private double SnapValue(double value)
+        => _deck?.Settings.SnapToGrid == true && (Keyboard.Modifiers & ModifierKeys.Alt) == 0 ? Round(value) : value;
 
     private static double Round(double value) => Math.Round(value / Snap) * Snap;
 

@@ -345,50 +345,62 @@ public sealed class WeatherWidgetContent : UserControl
 
 // ---------------------------------------------------------------------------------------------------------
 
-/// <summary>Températures du processeur et de la carte graphique : valeurs actuelles et courbes réunies sur un même graphe.</summary>
+/// <summary>
+/// Températures : une courbe par donnée choisie (processeur, carte graphique, point chaud, barrettes, carte mère, SSD…)
+/// sur un même graphe, avec la valeur actuelle de chacune dans la légende.
+/// </summary>
 public sealed class TemperatureWidgetContent : UserControl
 {
     private readonly TemperatureChart _chart = new() { Height = 110, Margin = new Thickness(0, 8, 0, 0) };
-    private readonly TextBlock _cpu, _gpu;
-    private readonly Ellipse _cpuDot = new() { Width = 9, Height = 9, Margin = new Thickness(0, 0, 5, 0), VerticalAlignment = VerticalAlignment.Center };
-    private readonly Ellipse _gpuDot = new() { Width = 9, Height = 9, Margin = new Thickness(14, 0, 5, 0), VerticalAlignment = VerticalAlignment.Center };
+    private readonly WrapPanel _legend = new() { Margin = new Thickness(0, 6, 0, 0) };
+    private readonly List<TextBlock> _values = new();
+    private IReadOnlyList<TemperatureSeries> _series = Array.Empty<TemperatureSeries>();
 
     public TemperatureWidgetContent()
     {
         Width = 300;
-        _cpu = WidgetUi.Text("cpu", 13, number: true, weight: FontWeights.SemiBold);
-        _gpu = WidgetUi.Text("gpu", 13, number: true, weight: FontWeights.SemiBold);
-        var legend = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { _cpuDot, _cpu, _gpuDot, _gpu } };
-        var header = new DockPanel();
-        DockPanel.SetDock(legend, Dock.Right);
-        header.Children.Add(legend);
-        header.Children.Add(WidgetUi.Caption("TEMPÉRATURES", "title"));
-        Content = new StackPanel { Children = { header, _chart } };
+        // Titre, puis la légende (une pastille et une valeur par courbe, sur plusieurs lignes s'il en faut), puis le graphe.
+        Content = new StackPanel { Children = { WidgetUi.Caption("TEMPÉRATURES", "title"), _legend, _chart } };
         Apply(new ExtraWidgetSettings());
-        Show(null, null);
     }
 
     public bool HasHistory => _chart.Count > 0;
 
+    /// <summary>Courbes à afficher (légende reconstruite ; l'historique est vidé si leur nombre change).</summary>
     public void Apply(ExtraWidgetSettings settings)
     {
-        _chart.CpuColor = ThemeService.Parse(settings.CpuCurveColor, Color.FromRgb(0x00, 0xE0, 0xFF));
-        _chart.GpuColor = ThemeService.Parse(settings.GpuCurveColor, Color.FromRgb(0xFF, 0x5A, 0x36));
-        _cpuDot.Fill = new SolidColorBrush(_chart.CpuColor);
-        _gpuDot.Fill = new SolidColorBrush(_chart.GpuColor);
+        _series = settings.EffectiveTemperatureSeries();
+        _chart.Colors = _series.Select(s => ThemeService.Parse(s.Color, Colors.White)).ToList();
+        _chart.SetLook(settings.TempLineThickness, settings.TempFill, settings.TempMin, settings.TempMax);
+        _legend.Children.Clear();
+        _values.Clear();
+        for (var i = 0; i < _series.Count; i++)
+        {
+            var dot = new Ellipse
+            {
+                Width = 9, Height = 9, Margin = new Thickness(0, 0, 5, 0), VerticalAlignment = VerticalAlignment.Center,
+                Fill = new SolidColorBrush(_chart.Colors[i])
+            };
+            var value = WidgetUi.Text($"temp{i}", 13, number: true, weight: FontWeights.SemiBold);
+            value.Text = $"{_series[i].Label} --";
+            _values.Add(value);
+            _legend.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 14, 2), Children = { dot, value } });
+        }
     }
 
-    public void Load(IEnumerable<(double? Cpu, double? Gpu)> history) => _chart.Load(history);
+    /// <summary>Historique gardé par OXYN (toutes les températures à chaque mesure), pour un module recréé.</summary>
+    public void Load(IEnumerable<IReadOnlyDictionary<string, double?>> history)
+        => _chart.Load(history.Select(Values));
 
-    public void Push(double? cpu, double? gpu)
+    /// <summary>Nouvelle mesure de toutes les températures (identifiant -> °C).</summary>
+    public void Push(IReadOnlyDictionary<string, double?> temperatures)
     {
-        _chart.Push(cpu, gpu);
-        Show(cpu, gpu);
+        var values = Values(temperatures);
+        _chart.Push(values);
+        for (var i = 0; i < _values.Count; i++)
+            _values[i].Text = $"{_series[i].Label} {(values[i] is { } t ? $"{t:0}°" : "--")}";
     }
 
-    private void Show(double? cpu, double? gpu)
-    {
-        _cpu.Text = $"CPU {(cpu is { } c ? $"{c:0}°" : "--")}";
-        _gpu.Text = $"GPU {(gpu is { } g ? $"{g:0}°" : "--")}";
-    }
+    private double?[] Values(IReadOnlyDictionary<string, double?> temperatures)
+        => _series.Select(s => temperatures.TryGetValue(s.Source, out var v) ? v : null).ToArray();
 }

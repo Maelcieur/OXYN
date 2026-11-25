@@ -20,6 +20,9 @@ public partial class SettingsWindow
         public required FrameworkElement Hotspot { get; init; }
         public required FrameworkElement Element { get; init; }
         public required Point Start { get; init; }
+        /// <summary>Réglage déplacé : l'élément, ou une ligne de sa liste (« clé#identifiant »).</summary>
+        public required string Key { get; init; }
+        public required Rect StartBounds { get; init; }
         public required double StartX { get; init; }
         public required double StartY { get; init; }
         public bool Moved { get; set; }
@@ -58,6 +61,7 @@ public partial class SettingsWindow
     {
         _placeCard = card;
         _placeParts.Clear();
+        _itemFrames.Clear();
         PreviewWidgetGuides.Children.Clear();
         DrawPreviewGrid(card.ActualWidth, card.ActualHeight);
 
@@ -87,6 +91,74 @@ public partial class SettingsWindow
             PreviewWidgetParts.Children.Add(hotspot);
             Canvas.SetLeft(hotspot, bounds.X);
             Canvas.SetTop(hotspot, bounds.Y);
+
+            if (ElementOf(part.Key) is { } element)
+                AddItemFrames(card, part, element);
+        }
+    }
+
+    /// <summary>Ligne choisie dans une liste (sortie audio, application du mixeur) : ses réglages propres.</summary>
+    private object? _placeItem;
+    /// <summary>Cadre d'une ligne -> ligne de la liste et clé de son réglage.</summary>
+    private readonly Dictionary<Border, (FrameworkElement Row, string Key)> _itemFrames = new();
+    private object? _selectedItem;
+
+    /// <summary>
+    /// Listes (sorties audio, applications) : un cadre par ligne, par-dessus celui de l'élément. Glisser une ligne
+    /// déplace toute la liste ; un clic ouvre les réglages de CETTE ligne (nom, icône).
+    /// </summary>
+    private void AddItemFrames(ModuleCard card, ModulePreviewPart part, FrameworkElement element)
+    {
+        // L'élément peut être la liste elle-même (sorties audio) ou la contenir.
+        var lists = element is ItemsControl self ? new[] { self }.Concat(FindVisuals<ItemsControl>(element)) : FindVisuals<ItemsControl>(element);
+        foreach (var list in lists)
+        {
+            for (var i = 0; i < list.Items.Count; i++)
+            {
+                if (list.ItemContainerGenerator.ContainerFromIndex(i) is not FrameworkElement row || !Movable.IsDisplayed(row)) continue;
+                // Sorties audio : toute la ligne (zone de clic et de survol), bulles visibles ou non ; ailleurs, ce qui est dessiné.
+                var bounds = row.TransformToAncestor(card).TransformBounds(
+                    Movable.IsAudioOutputRow(row) ? new Rect(row.RenderSize) : Movable.ContentBounds(row));
+                bounds.Intersect(new Rect(0, 0, card.ActualWidth, card.ActualHeight));
+                if (bounds.IsEmpty) continue;
+                var item = list.Items[i];
+                var selected = SameItem(item, _selectedItem);
+                var frame = new Border
+                {
+                    Width = bounds.Width, Height = bounds.Height, Tag = part, DataContext = item,
+                    Background = new SolidColorBrush(Color.FromArgb(selected ? (byte)40 : (byte)1, 0x5B, 0x8D, 0xEF)),
+                    BorderBrush = new SolidColorBrush(Color.FromArgb(selected ? (byte)255 : (byte)170, 0x5B, 0x8D, 0xEF)),
+                    BorderThickness = new Thickness(selected ? 1.5 : 1),
+                    CornerRadius = new CornerRadius(4),
+                    Cursor = System.Windows.Input.Cursors.SizeAll,
+                    ToolTip = "Clic : réglages de cette ligne · glisser : déplacer toute la liste"
+                };
+                _itemFrames[frame] = (row, Movable.ItemKey(part.Key, item));
+                frame.MouseLeftButtonDown += PlaceHotspot_MouseDown;
+                frame.MouseMove += PlaceHotspot_MouseMove;
+                frame.MouseLeftButtonUp += PlaceHotspot_MouseUp;
+                frame.MouseWheel += PlaceHotspot_MouseWheel;
+                PreviewWidgetParts.Children.Add(frame);
+                Canvas.SetLeft(frame, bounds.X);
+                Canvas.SetTop(frame, bounds.Y);
+            }
+        }
+    }
+
+    private static bool SameItem(object? a, object? b) => (a, b) switch
+    {
+        (AudioDeviceInfo x, AudioDeviceInfo y) => x.Id == y.Id,
+        (AudioSessionInfo x, AudioSessionInfo y) => x.AppKey == y.AppKey,
+        _ => false
+    };
+
+    private static IEnumerable<T> FindVisuals<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T found) yield return found;
+            foreach (var deeper in FindVisuals<T>(child)) yield return deeper;
         }
     }
 
@@ -120,10 +192,14 @@ public partial class SettingsWindow
     {
         if (sender is not Border { Tag: ModulePreviewPart part } hotspot || CurrentAppearance is not { } appearance) return;
         if (ElementOf(part.Key) is not { } element) return;
-        var layout = appearance.GetElement(part.Key);
+        _placeItem = hotspot.DataContext is AudioDeviceInfo or AudioSessionInfo ? hotspot.DataContext : null;
+        // Une ligne de liste se déplace seule ; sinon tout l'élément.
+        var (moved, key) = _itemFrames.TryGetValue(hotspot, out var row) ? (row.Row, row.Key) : (element, part.Key);
+        var layout = appearance.GetElement(key);
+        var bounds = new Rect(Canvas.GetLeft(hotspot), Canvas.GetTop(hotspot), hotspot.Width, hotspot.Height);
         _placeDrag = new PlaceDrag
         {
-            Part = part, Hotspot = hotspot, Element = element,
+            Part = part, Hotspot = hotspot, Element = moved, Key = key, StartBounds = bounds,
             Start = e.GetPosition(PreviewWidgetParts), StartX = layout.X, StartY = layout.Y
         };
         hotspot.CaptureMouse();
@@ -137,7 +213,7 @@ public partial class SettingsWindow
         if (!drag.Moved && Math.Abs(delta.X) < 2 && Math.Abs(delta.Y) < 2) return;
         drag.Moved = true;
 
-        var start = _placeParts.First(p => p.Key == drag.Part.Key).Bounds;
+        var start = drag.StartBounds;
         var moving = new Rect(start.X + delta.X, start.Y + delta.Y, start.Width, start.Height);
         var free = (GetAsyncKeyState(0x12) & 0x8000) != 0; // Alt
         var grid = _widgetManager.Config.ElementGridSize;
@@ -149,7 +225,7 @@ public partial class SettingsWindow
         if (VisualTreeHelper.GetParent(drag.Element) is not Visual parent || card.TransformToDescendant(parent) is not { } toParent) return;
         var snapped = new Vector(result.Rect.X - start.X, result.Rect.Y - start.Y);
         var local = toParent.Transform(new Point(snapped.X, snapped.Y)) - toParent.Transform(new Point(0, 0));
-        var layout = appearance.GetElement(drag.Part.Key);
+        var layout = appearance.GetElement(drag.Key);
         layout.X = Math.Round(drag.StartX + local.X);
         layout.Y = Math.Round(drag.StartY + local.Y);
         card.ApplyElementLayouts();
@@ -177,14 +253,20 @@ public partial class SettingsWindow
         PreviewWidgetGuides.Children.Clear();
         if (drag.Moved) CurrentAppearance?.NotifyElementsChanged(); // enregistrement et bureau / Switch
         // Cadres recalculés une fois la carte remise en page (taille automatique, contenu décalé).
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => SelectPreviewPart(drag.Part));
+        var item = drag.Moved ? null : _placeItem;
+        _selectedItem = item;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            SelectPreviewPart(drag.Part);
+            if (item is not null) ShowItemSettings(item);
+        });
         e.Handled = true;
     }
 
     private void PlaceHotspot_MouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (sender is not Border { Tag: ModulePreviewPart part } || CurrentAppearance is not { } appearance) return;
-        var layout = appearance.GetElement(part.Key);
+        if (sender is not Border { Tag: ModulePreviewPart part } frame || CurrentAppearance is not { } appearance) return;
+        var layout = appearance.GetElement(_itemFrames.TryGetValue(frame, out var row) ? row.Key : part.Key);
         layout.Scale = Math.Round(Math.Clamp(layout.Scale * (e.Delta > 0 ? 1.06 : 1 / 1.06), 0.3, 4), 3);
         _placeCard?.ApplyElementLayouts();
         appearance.NotifyElementsChanged();

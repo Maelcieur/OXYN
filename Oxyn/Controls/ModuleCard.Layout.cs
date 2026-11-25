@@ -53,7 +53,8 @@ public partial class ModuleCard
     private void AddPreviewPart(List<ModulePreviewPart> parts, string key, string label, string section, FrameworkElement element)
     {
         if (!element.IsVisible || element.ActualWidth <= 0 || element.ActualHeight <= 0) return;
-        var bounds = element.TransformToAncestor(this).TransformBounds(new Rect(element.RenderSize));
+        // Cadre = ce qui est réellement dessiné (texte, anneau…), pas toute la place réservée à l'élément.
+        var bounds = element.TransformToAncestor(this).TransformBounds(Movable.ContentBounds(element));
         if (bounds.IsEmpty || bounds.Width <= 0 || bounds.Height <= 0) return;
 
         var existing = parts.FindIndex(part => part.Key == key && part.Section == section);
@@ -70,6 +71,7 @@ public partial class ModuleCard
 
     private ModuleAppearance? _appearance;
     private List<FrameworkElement>? _movables;
+    private readonly HashSet<System.Windows.Controls.ItemsControl> _watchedLists = new();
 
     // Mis en cache une fois la carte chargée (l'arbre visuel existe) ; vidé par ElementsChanged et à chaque
     // chargement/déchargement. Avant le chargement, ou si rien n'est encore trouvé (modèles pas générés),
@@ -105,6 +107,15 @@ public partial class ModuleCard
         var key = Movable.GetKey(element)!;
         _appearance!.Elements.TryGetValue(key, out var layout);
         Movable.Apply(element, layout);
+        // Lignes de liste (sorties audio, applications) déplacées une à une : réappliquées à chaque régénération.
+        foreach (var list in Movable.ApplyItems(element, key, _appearance.Elements))
+            if (_watchedLists.Add(list))
+                list.ItemContainerGenerator.StatusChanged += (_, _) =>
+                {
+                    if (list.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated
+                        && _appearance is not null && Movable.GetKey(element) is { } k)
+                        Movable.ApplyItems(element, k, _appearance.Elements);
+                };
         UpdateFit(); // un déplacement (transformation) ne relance pas la mise en page : on recadre ici
     }
 

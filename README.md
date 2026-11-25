@@ -44,9 +44,8 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 
 ## Contents
 
+- [What's new in 2.5.0](#whats-new-in-250)
 - [What's new in 2.4.0](#whats-new-in-240)
-- [What's new in 2.3.0](#whats-new-in-230)
-- [What's new in 2.2.0](#whats-new-in-220)
 - [Modules](#modules)
 - [Compatibility](#compatibility)
 - [Switch module (SwitchDeck)](#switch-module-switchdeck)
@@ -57,6 +56,32 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 - [Data](#data)
 - [Troubleshooting](#troubleshooting)
 - [Licenses and credits](#licenses-and-credits)
+
+## What's new in 2.5.0
+
+**Added**
+- **Temperatures module** (formerly "CPU / GPU temperatures"): as many curves as you like on one chart — CPU, CCD,
+  GPU, hot spot, memory modules, motherboard, SSD… Each curve has its reading, label and color; chart settings: line
+  thickness, gradient fill, scale bottom and top.
+- **Audio outputs and mixer apps**: each row has its own frame in the preview; a click opens its settings (displayed name
+  and icon of the output, icon of the app) and each row can be moved or resized on its own, the list and the module
+  growing accordingly.
+- **Hidden elements**: "Hidden elements" list in Customize to show them again one by one or all at once.
+- **Added rings**: graduations of your choice (lines, dots, with values…).
+- **Click a desktop widget**: when a Customize page is open, it switches to that widget.
+- **Switch screen**: finer placement (5 px grid, softer snapping, Alt to place freely) and **arrow keys** to move the
+  selection (1 px, Shift: 10 px).
+
+**Changed**
+- Preview frames follow what is drawn; a hidden element no longer has a frame, no longer snaps others and no longer
+  counts in the module size. Disabled or 0% bubbles no longer count in frames (except the audio output rows, which react
+  to hover across their full width).
+- "Add an element" lists every sensor reading as soon as Settings is open.
+- Bubble opacity slider goes down to 0%.
+
+**Fixed**
+- The Sound module no longer moves when hovering audio outputs.
+- "Readings" field aligned and wider.
 
 ## What's new in 2.4.0
 
@@ -85,58 +110,6 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 - VRAM shown as "--" and amounts in bytes (VRAM, memory module capacity, RAM used) with the sensor bridge.
 - Useless rows removed from the data list (thresholds and resolution of the memory module sensors).
 
-## What's new in 2.3.0
-
-**Added**
-- **Every PC sensor** through the PawnIO driver (signed, compatible with Memory Integrity), installed by the OXYN
-  installer: CPU temperature, real power and effective clock, motherboard temperatures, fans and voltages, DDR5 memory
-  module, drive and graphics card temperatures. A small program (sensor bridge) reads them as administrator; OXYN
-  itself still runs without administrator rights.
-- The CPU clock shown is the average effective clock of the cores.
-
-**Removed**
-- Text correction with Ctrl+Space and the Tools page of the Settings. Offline spell checking is still available as a
-  search bar command.
-- AMD Ryzen Master temperature bridge (PowerShell script): replaced by the sensor bridge, with no window and no conflict
-  with MSI Center. The AMD SDK is no longer needed.
-
-## What's new in 2.2.0
-
-**Added**
-- **Search bar** (desktop module, not on the Switch):
-  - no card around it: only the bar shows; drag it to move it, click it to type;
-  - background and border color and opacity, input window opacity, width and height; text turns dark automatically on
-    a light bar;
-  - engine choice right in the bar (pill on the left): Google, Bing, DuckDuckGo, Brave, Ecosia, Qwant, YouTube, plus
-    your own engines (name and URL with `{texte}`) or ready-made sites (Wikipedia, Amazon, GitHub, Reddit, Twitch,
-    Steam…);
-  - engine suggestions while typing (can be turned off); a typed address (`example.com`) opens directly;
-  - bookmarks picked one by one (from Chrome, Edge, Brave or Opera, or typed by hand), renamable and reorderable;
-    none by default;
-  - `/xxx` commands picked from a list, renamable and editable, none by default. They send a ready-made prompt to
-    Google's AI Mode (summarize, translate, explain, definition, synonyms, rephrase, compare, recipe, code or a custom
-    command), except spell checking, which works offline.
-- **Switch payload** (`switchdeck.bin`, copy it to the SD card again): new waiting and connected screens with the OXYN
-  logo, a battery icon, and a touch menu (Power off, Restart, Back to hekate, Close): tap a button, or use VOL+ / VOL−
-  to move and POWER to confirm (no more accidental power-off).
-- **Offline spell checking** (Ctrl+Space on selected text, or the bar command) with the Windows spell checker: nothing is
-  sent online, no key to enter.
-
-**Removed**
-- Gemini AI text correction (and its API key): replaced by offline spell checking.
-- Emojis: emoji picker and its hotkey, recent emojis, emojis as tile icons (old emoji icons are replaced by a symbol),
-  Emojis tab of the Switch keyboard, Emoji.Wpf library.
-- SimHub module (sim racing) and its port setting.
-
-**Fixed**
-- Play time lost after going back to the menu through the Guide.
-- Unreadable JSON files (game library, cheats) set aside instead of being overwritten; safer disk writes.
-- Resource leaks (HID controllers, audio, TV network connections) and editor windows kept in memory.
-- Off-screen modules moved back; invalid sizes rejected in gauges, bars and volume controls.
-- Plugins: a malformed message no longer drops the connection; stricter file names on profile import.
-- Payload: the Joy-Con were read twice for every reply to the PC.
-- Various Settings fixes (confirmations, subscriptions, unhandled errors) and unused code removed.
-
 ## Modules
 
 | Id | Module | Data source |
@@ -158,8 +131,8 @@ The Joy-Con attached to the Switch can trigger OXYN actions too.
 | `moon` | Moon phase: real Moon picture shaded to the current phase, phase name, illumination, next phases | Computed offline (Meeus terms, within a few hours) |
 | `sun` | Sunrise and sunset: sun path, times, day length, next event | Open-Meteo, same city as the weather |
 | `airquality` | Air quality (European AQI, PM2.5, PM10, NO₂, O₃) | Open-Meteo, same city as the weather |
-| `temperatures` | CPU and GPU temperature curves on one chart | LibreHardwareMonitor |
-| `sensorbars` | Bars for any sensor (temperatures, loads, RAM, VRAM, fans…) | LibreHardwareMonitor |
+| `temperatures` | Curves of every chosen temperature (CPU, GPU, memory modules, motherboard, SSD…) on one chart | Sensor bridge (LibreHardwareMonitor + PawnIO) |
+| `sensorbars` | Bars for any sensor (temperatures, loads, RAM, VRAM, fans…) | Sensor bridge (LibreHardwareMonitor + PawnIO) |
 | `searchbar` | Search bar (desktop only): built-in or added engines, suggestions, picked bookmarks, `/xxx` commands for Google's AI | Chosen engine; bookmarks from Chrome, Edge, Brave, Opera or typed |
 | `shortcuts` | Shortcut bar | `shortcuts.json` |
 
@@ -217,7 +190,8 @@ The [`payload/`](payload) folder contains a bare-metal payload launched from
   right-hand panel for the action library and settings for the selected tile or Joy-Con control. Click or drag an
   action onto a tile; the left menu can be hidden (☰ or Ctrl+B).
 - **Page layout editor**: drag and resize modules and their elements directly in the live preview, use the
-  alignment grid and guides, or Ctrl-click to select and move/resize several elements together. Apply a balanced,
+  alignment grid and guides, or Ctrl-click to select and move/resize several elements together. Fine placement:
+  5 px grid, Alt to place freely, arrow keys (1 px, Shift: 10 px). Apply a balanced,
   gaming, monitoring or compact layout as a starting point, then adjust it freely. The tile grid can use automatic
   sizing or a chosen number of columns.
 - **Page transitions**: choose none, slide, fade, slide-and-fade or zoom, then adjust duration and easing.
@@ -257,7 +231,7 @@ hekate (*Payloads*). Windows installs the WinUSB driver automatically (Microsoft
 
 ## Connected apps (stream deck)
 
-In **Settings → Applications connectées** (connected apps), **+ Ajouter une application** enables OBS Studio,
+In **Settings → Applications et plugins → Applications connectées** (connected apps), **+ Ajouter une application** enables OBS Studio,
 Twitch or Voicemod. You then create tiles of that type from the Switch page's action library. Tiles show the
 live state (active scene, streaming or recording, mode on, mic muted…) and are dimmed while the app is not
 connected.
@@ -470,14 +444,14 @@ one instance runs per data folder.
   controller"; Steam Input can also take the button.
 - **CheatSlips codes: "Quota exceeded for today"**: the free account has a daily limit, try again the next day.
 - **Switch not detected**: make sure the payload shows "En attente du PC" and use a USB-C data cable.
-- **Joy-Con do nothing**: copy the latest `switchdeck.bin` (protocol v6) to the SD card; the Joy-Con tab warns when the
+- **Joy-Con do nothing**: copy the latest `switchdeck.bin` to the SD card; the Joy-Con tab warns when the
   payload is too old.
 - **Search bar shows no bookmarks**: none are added by default; add them in the module's customization page.
   "Ajouter depuis le navigateur" only reads Chromium browsers (Chrome, Edge, Brave, Opera), and only the one set as the
   default browser in Windows; otherwise use "Ajouter à la main".
 - **Search bar: "/" shows nothing**: there are no commands by default; pick them in the module's customization page.
-- **Weather, air quality or sun empty**: set the city in the module's customization page (Style tab), then "Rechercher".
-- **Connected app in error**: the app's card (Settings → Applications connectées) shows the reason. Make sure
+- **Weather, air quality or sun empty**: set the city in the module's customization page (module appearance and options), then "Rechercher".
+- **Connected app in error**: the app's card (Settings → Applications et plugins) shows the reason. Make sure
   OBS or Voicemod is running. For Twitch, sign out and back in after an update that asks for new permissions
   (emotes).
 

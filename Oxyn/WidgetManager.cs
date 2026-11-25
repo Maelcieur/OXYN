@@ -41,7 +41,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
         new("digitalclock", "Horloge · numérique"),
         new("calendar", "Calendrier"),
         new("weather", "Météo et ciel · prévisions"),
-        new("temperatures", "Températures CPU / GPU"),
+        new("temperatures", "Températures"),
         new("airquality", "Météo et ciel · qualité de l'air"),
         new("sensorbars", "Barres de capteurs"),
         new("moon", "Météo et ciel · Lune"),
@@ -234,7 +234,8 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
     /// <summary>Les lectures coûteuses ne tournent que si un module (bureau ou Switch) les affiche.</summary>
     private void UpdateSensorDemand()
     {
-        _hardware.AllSensorsEnabled = Live<SensorBarsWidgetContent>().Any() || AnyDesign();
+        _hardware.AllSensorsEnabled = Live<SensorBarsWidgetContent>().Any() || Live<TemperatureWidgetContent>().Any()
+            || AnyDesign() || _sensorCatalogWanted;
         _hardware.MemoryEnabled = Live<RamWidgetContent>().Any() || _hardware.AllSensorsEnabled;
         if (!Live<GpuWidgetContent>().Any()) _fps.Stop();
         // Une alerte activée garde la lecture en route même si le module n'est pas affiché.
@@ -305,6 +306,7 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
             if (!IsOnScreen(window.Left, window.Top)) { window.Left = position.X; window.Top = position.Y; }
             window.ApplyAppearance(GetAppearance(id));
             window.ContextMenu = BuildWidgetMenu(id);
+            window.Clicked += () => WidgetClicked?.Invoke(id);
             if (id == "media") window.SetMediaArtwork(_lastArtwork);
             var created = window;
             window.Closed += (_, _) => OnWidgetClosed(id, created);
@@ -849,7 +851,6 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
                     snapshot.GpuCoreClockMhz, snapshot.GpuMemoryClockMhz, snapshot.GpuMemoryUsedMb / 1024f);
             foreach (var ram in Live<RamWidgetContent>())
                 ram.Update(snapshot.RamLoad, snapshot.RamUsedGb, snapshot.RamTotalGb);
-            PushTemperatures(snapshot.CpuTemperature, snapshot.GpuTemperature);
             PushSensorBars(snapshot);
             ShowAlerts(Alerts.CheckTemperatures(snapshot.CpuTemperature, snapshot.GpuTemperature));
         }
@@ -1226,6 +1227,15 @@ public sealed partial class WidgetManager : IDisposable, IProfileHost
     {
         _deck.ApplyAppearance(id);
         OnDesignsChanged();
+    }
+
+    private bool _sensorCatalogWanted;
+
+    /// <summary>Paramètres ouverts : tous les capteurs sont lus, pour proposer toutes les données à « Ajouter un élément ».</summary>
+    public void SetSensorCatalogWanted(bool wanted)
+    {
+        _sensorCatalogWanted = wanted;
+        UpdateSensorDemand();
     }
 
     /// <summary>Éléments ajoutés ou retirés : lecture complète des capteurs si besoin, valeurs envoyées tout de suite.</summary>

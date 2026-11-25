@@ -18,6 +18,17 @@ public partial class SettingsWindow
     private DispatcherTimer? _designTimer;
     private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
 
+    /// <summary>
+    /// Clic sur un widget du bureau : si une page de personnalisation est déjà affichée, elle passe à ce widget
+    /// (sinon rien : on ne veut pas ouvrir les Paramètres à chaque clic).
+    /// </summary>
+    private void OnWidgetClicked(string id)
+    {
+        if (!PageCustomize.IsVisible && !PageDock.IsVisible) return;
+        if (SelectedModule?.Id == id || FamilyOf(id)?.Id == SelectedModule?.Id && SelectedModule is not null && FamilyTarget(FamilyOf(id)!) == id) return;
+        ShowModule(id);
+    }
+
     /// <summary>Applique la disposition modifiée (regroupe les rafales de curseurs) puis remet l'aperçu à jour.</summary>
     private void QueueDesignApply()
     {
@@ -100,6 +111,8 @@ public partial class SettingsWindow
             Content = row, Stacked = true
         });
 
+        AddHiddenList(module.Id, appearance);
+
         // Taille de la carte (dispositions à éléments)
         if (design is { IsClassic: false })
         {
@@ -108,10 +121,70 @@ public partial class SettingsWindow
         }
     }
 
+    /// <summary>
+    /// Éléments, textes et boutons masqués du module : masqués, ils n'ont plus de cadre dans l'aperçu ; cette liste est
+    /// le moyen de les réafficher (un par un ou tous).
+    /// </summary>
+    private void AddHiddenList(string moduleId, ModuleAppearance appearance)
+    {
+        var hidden = new List<(string Label, Action Show)>();
+        foreach (var (key, layout) in appearance.Elements.Where(e => e.Value.Hidden).ToList())
+        {
+            var label = BlockOf(key) is { } block ? BlockTitle(block) : Movable.LabelFor(key);
+            hidden.Add(($"Élément · {label}", () => layout.Hidden = false));
+        }
+        TextPart.ByModule.TryGetValue(moduleId, out var textInfos);
+        foreach (var (key, style) in appearance.Texts.Where(t => t.Value.Hidden).ToList())
+        {
+            var label = textInfos?.FirstOrDefault(i => i.Key == key)?.Label ?? key;
+            hidden.Add(($"Texte · {label}", () => style.Hidden = false));
+        }
+        ButtonPart.ByModule.TryGetValue(moduleId, out var buttonInfos);
+        foreach (var (key, style) in (appearance.Buttons ?? new()).Where(b => b.Value.Hidden).ToList())
+        {
+            var label = buttonInfos?.FirstOrDefault(i => i.Key == key)?.Label ?? key;
+            hidden.Add(($"Bouton · {label}", () => style.Hidden = false));
+        }
+        if (hidden.Count == 0) return;
+
+        void Refresh()
+        {
+            appearance.NotifyElementsChanged();
+            OnModuleChanged(moduleId, appearance, nameof(ModuleAppearance.Texts));
+            OnModuleChanged(moduleId, appearance, nameof(ModuleAppearance.Buttons));
+            BuildDesignEditor();
+            BuildTextRows();
+            BuildButtonRows();
+            Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, RefreshPreviewElements);
+        }
+
+        var list = new StackPanel();
+        foreach (var (label, show) in hidden)
+        {
+            var again = new Button { Content = "Réafficher", Style = (Style)FindResource("LinkButton"), Margin = new Thickness(12, 0, 0, 0) };
+            again.Click += (_, _) => { show(); Refresh(); };
+            var row = new DockPanel { Margin = new Thickness(0, 2, 0, 2) };
+            DockPanel.SetDock(again, Dock.Right);
+            row.Children.Add(again);
+            row.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
+            list.Children.Add(row);
+        }
+        var all = new Button { Content = "Tout réafficher", HorizontalAlignment = System.Windows.HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0) };
+        all.Click += (_, _) => { foreach (var (_, show) in hidden) show(); Refresh(); };
+        list.Children.Add(all);
+
+        DesignHost.Children.Add(new SettingRow
+        {
+            Label = $"Éléments masqués ({hidden.Count})",
+            Description = "Masqués, ils n'apparaissent plus dans l'aperçu : réaffiche-les ici.",
+            Content = list, Stacked = true
+        });
+    }
+
     /// <summary>Liste des données : celles du module en premier, puis toutes les autres.</summary>
     private ComboBox SourceCombo(string? selected, string moduleId)
     {
-        var combo = new ComboBox { Width = 300, IsTextSearchEnabled = true };
+        var combo = new ComboBox { Width = 400, IsTextSearchEnabled = true };
         var group = BuilderSources.GroupOf(moduleId);
         var readings = _widgetManager.DesignValues().Values
             .OrderBy(r => r.Group == group ? 0 : 1)
@@ -361,6 +434,13 @@ public partial class SettingsWindow
                     ("Needle", "Compteur"), ("Pie", "Secteur"), ("Neon", "Néon"), ("Rays", "Rayons"), ("Double", "Double"), ("Capsule", "Capsule")
                 },
                 block.Design, v => { block.Design = (string?)v; block.Segmented = (string?)v == "Segments"; Changed(); }), stacked: true);
+            AddBlockRow("Graduations", null, Chips("BlockTicks",
+                new (object?, string)[]
+                {
+                    (null, "Aucune"), ("Lines", "Traits"), ("Dense", "Fines et serrées"), ("Majors", "Principales seules"),
+                    ("Dots", "Points"), ("Inner", "Intérieures"), ("Numbers", "Avec valeurs")
+                },
+                block.Ticks, v => { block.Ticks = (string?)v; Changed(); }), stacked: true);
             AddBlockRow("Épaisseur de l'anneau", null, DesignSlider(0.3, 3, block.Thickness, v => block.Thickness = v, "×0.0", 0.1));
         }
         if (block.Type == "Bar")
@@ -438,11 +518,13 @@ public partial class SettingsWindow
     /// </summary>
     private FrameworkElement SourcesEditor(BuilderBlock block)
     {
-        var panel = new StackPanel();
+        // Tout aligné à gauche : la première liste et les suivantes (avec « Retirer ») l'une sous l'autre.
+        var panel = new StackPanel { HorizontalAlignment = System.Windows.HorizontalAlignment.Left };
         var moduleId = SelectedModule?.Id ?? "";
         void Changed() => QueueDesignApply();
 
         var first = SourceCombo(block.Source, moduleId);
+        first.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
         first.SelectionChanged += (_, _) =>
         {
             if (first.SelectedItem is ComboBoxItem { Tag: string id }) { block.Source = id; Changed(); }

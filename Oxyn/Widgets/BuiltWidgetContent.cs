@@ -155,6 +155,12 @@ public sealed class BuiltWidgetContent : UserControl
             _b = b;
             _gauge.SweepAngle = b.Sweep is 180 or 360 ? b.Sweep : 270;
             _gauge.Thickness = Math.Max(2, Math.Min(b.Width, b.Height) / 14 * Math.Clamp(b.Thickness, 0.3, 4));
+            if (!string.IsNullOrEmpty(b.Ticks))
+            {
+                _gauge.ShowTicks = true;
+                _gauge.TicksEnabled = true;
+                _gauge.TickDesign = b.Ticks;
+            }
             if (!string.IsNullOrEmpty(b.Design)) _gauge.Design = b.Design;
             else if (b.Segmented) _gauge.Design = "Segments";
             if (OwnBrush(b) is SolidColorBrush own) { _gauge.StartColor = own.Color; _gauge.EndColor = own.Color; }

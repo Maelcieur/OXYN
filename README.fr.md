@@ -42,9 +42,8 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 
 ## Sommaire
 
+- [Nouveautés de la version 2.5.0](#nouveautés-de-la-version-250)
 - [Nouveautés de la version 2.4.0](#nouveautés-de-la-version-240)
-- [Nouveautés de la version 2.3.0](#nouveautés-de-la-version-230)
-- [Nouveautés de la version 2.2.0](#nouveautés-de-la-version-220)
 - [Modules](#modules)
 - [Compatibilité](#compatibilité)
 - [Module Switch (SwitchDeck)](#module-switch-switchdeck)
@@ -55,6 +54,32 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 - [Données](#données)
 - [Dépannage](#dépannage)
 - [Licences et crédits](#licences-et-crédits)
+
+## Nouveautés de la version 2.5.0
+
+**Ajouté**
+- **Module Températures** (anciennement « Températures CPU / GPU ») : autant de courbes que tu veux sur le même graphe —
+  processeur, CCD, carte graphique, point chaud, barrettes de mémoire, carte mère, SSD… Pour chaque courbe : donnée,
+  libellé et couleur ; réglages du graphe : épaisseur des courbes, dégradé dessous, bas et haut de l'échelle.
+- **Sorties audio et applications du mixeur** : chaque ligne a son propre cadre dans l'aperçu ; un clic ouvre ses
+  réglages (nom affiché et icône de la sortie, icône de l'application) et chaque ligne se déplace ou se redimensionne
+  seule, la liste et le module s'agrandissant en conséquence.
+- **Éléments masqués** : liste « Éléments masqués » dans Personnaliser pour les réafficher un par un ou tous.
+- **Anneaux ajoutés** : graduations au choix (traits, points, avec valeurs…).
+- **Clic sur un widget du bureau** : si une page Personnaliser est ouverte, elle passe à ce widget.
+- **Écran de la Switch** : placement plus précis (grille de 5 px, accroches plus douces, Alt pour placer librement) et
+  **flèches du clavier** pour déplacer la sélection (1 px, Maj : 10 px).
+
+**Modifié**
+- Les cadres de l'aperçu suivent ce qui est dessiné ; un élément masqué n'a plus de cadre, ne sert plus d'accroche et ne
+  compte plus dans la taille du module. Les bulles désactivées ou à 0 % ne comptent plus dans les cadres (sauf les
+  lignes des sorties audio, qui réagissent au survol sur toute leur largeur).
+- « Ajouter un élément » propose toutes les données des capteurs dès que les Paramètres sont ouverts.
+- Curseur des bulles réglable jusqu'à 0 %.
+
+**Corrigé**
+- Le module Son ne bouge plus au survol des sorties audio.
+- Champ « Données » aligné et plus large.
 
 ## Nouveautés de la version 2.4.0
 
@@ -85,59 +110,6 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 - VRAM affichée « -- » et quantités en octets (VRAM, capacité des barrettes, RAM utilisée) avec le pont des capteurs.
 - Lignes inutiles retirées de la liste des données (seuils et résolution des capteurs des barrettes).
 
-## Nouveautés de la version 2.3.0
-
-**Ajouté**
-- **Tous les capteurs du PC** grâce au pilote PawnIO (signé, compatible avec l'Intégrité de la mémoire), installé par
-  l'installateur d'OXYN : température, puissance réelle et fréquence effective du processeur, températures, ventilateurs
-  et tensions de la carte mère, température des barrettes de mémoire DDR5, des disques et de la carte graphique. Un
-  petit programme (pont des capteurs) les lit en administrateur ; OXYN reste sans droits administrateur.
-- La fréquence affichée du processeur est la fréquence effective moyenne des cœurs.
-
-**Retiré**
-- Correction de texte par Ctrl+Espace et la page Outils des Paramètres. La correction orthographique hors ligne reste
-  disponible comme commande de la barre de recherche.
-- Pont de température par l'outil AMD Ryzen Master (script PowerShell) : remplacé par le pont des capteurs, sans
-  fenêtre ni conflit avec MSI Center. Le SDK AMD n'est plus nécessaire.
-
-## Nouveautés de la version 2.2.0
-
-**Ajouté**
-- **Barre de recherche** (module du bureau, absent de la Switch) :
-  - pas de carte autour : on ne voit que la barre ; on la fait glisser pour la déplacer et on clique pour taper ;
-  - couleur et opacité du fond et du contour, opacité de la fenêtre de saisie, largeur et hauteur ; le texte passe en
-    sombre tout seul sur une barre claire ;
-  - choix du moteur directement dans la barre (pastille à gauche) : Google, Bing, DuckDuckGo, Brave, Ecosia, Qwant,
-    YouTube, plus des moteurs ajoutés soi-même (nom et adresse avec `{texte}`), ou pris dans une liste de sites
-    (Wikipédia, Amazon, GitHub, Reddit, Twitch, Steam…) ;
-  - suggestions du moteur pendant la frappe (désactivables) ; une adresse tapée (`exemple.fr`) s'ouvre directement ;
-  - favoris choisis un par un (depuis Chrome, Edge, Brave ou Opera, ou à la main), renommables et ordonnables ;
-    aucun par défaut ;
-  - commandes `/xxx` choisies dans une liste, renommables et modifiables, aucune par défaut. Elles envoient un prompt
-    tout prêt au mode IA de Google (résumer, traduire, expliquer, définition, synonymes, reformuler, comparer,
-    recette, code ou commande personnalisée), sauf la correction orthographique, qui fonctionne hors ligne.
-- **Payload Switch** (`switchdeck.bin`, à recopier sur la carte SD) : nouveaux écrans d'attente et de connexion avec le
-  logo OXYN, batterie en icône, et menu tactile (Éteindre, Redémarrer, Retour à hekate, Fermer) : toucher un bouton, ou
-  VOL+ / VOL− pour se déplacer et POWER pour valider (plus d'extinction par erreur).
-- **Correction orthographique hors ligne** (Ctrl+Espace sur un texte sélectionné, ou commande de la barre) avec le
-  correcteur de Windows : rien n'est envoyé sur Internet, aucune clé à saisir.
-
-**Retiré**
-- Correction de texte par IA Gemini (et sa clé API) : remplacée par la correction orthographique hors ligne.
-- Émojis : sélecteur d'émojis et son raccourci, émojis récents, émojis comme icônes de tuiles (les anciennes icônes
-  émoji sont remplacées par un symbole), onglet Émojis du clavier de la Switch, bibliothèque Emoji.Wpf.
-- Module SimHub (course automobile) et son réglage de port.
-
-**Corrigé**
-- Temps de jeu perdu après un retour au menu par le Guide.
-- Fichiers JSON illisibles (bibliothèque de jeux, triches) mis de côté au lieu d'être écrasés ; écriture sur disque
-  plus sûre.
-- Fuites de ressources (manettes HID, audio, connexions réseau de la TV) et fenêtres d'édition gardées en mémoire.
-- Modules hors de l'écran replacés ; tailles invalides refusées dans les jauges, barres et volumes.
-- Plugins : un message mal formé ne coupe plus la connexion ; import de profil plus strict sur les noms de fichiers.
-- Payload : les Joy-Con étaient lus deux fois à chaque réponse au PC.
-- Divers correctifs dans les Paramètres (confirmations, abonnements, erreurs non gérées) et code inutilisé retiré.
-
 ## Modules
 
 | Id | Module | Source des données |
@@ -159,8 +131,8 @@ Les Joy-Con fixés sur la Switch peuvent aussi lancer des actions d'OXYN.
 | `moon` | Phases de la Lune : vraie photo de la Lune ombrée selon la phase, nom de la phase, éclairement, prochaines phases | Calcul sans connexion (termes de Meeus, à quelques heures près) |
 | `sun` | Lever et coucher du soleil : course du soleil, heures, durée du jour, prochain événement | Open-Meteo, même ville que la météo |
 | `airquality` | Qualité de l'air (indice européen, PM2.5, PM10, NO₂, O₃) | Open-Meteo, même ville que la météo |
-| `temperatures` | Courbes de température CPU et GPU sur un même graphe | LibreHardwareMonitor |
-| `sensorbars` | Barres pour n'importe quel capteur (températures, charges, RAM, VRAM, ventilateurs…) | LibreHardwareMonitor |
+| `temperatures` | Courbes de toutes les températures choisies (processeur, carte graphique, barrettes, carte mère, SSD…) sur un même graphe | Pont des capteurs (LibreHardwareMonitor + PawnIO) |
+| `sensorbars` | Barres pour n'importe quel capteur (températures, charges, RAM, VRAM, ventilateurs…) | Pont des capteurs (LibreHardwareMonitor + PawnIO) |
 | `searchbar` | Barre de recherche (bureau seulement) : moteurs intégrés ou ajoutés, suggestions, favoris choisis, commandes `/xxx` pour l'IA de Google | Moteur choisi ; favoris pris dans Chrome, Edge, Brave, Opera ou saisis |
 | `shortcuts` | Barre de raccourcis | `shortcuts.json` |
 
@@ -221,7 +193,8 @@ Le dossier [`payload/`](payload) contient un payload bare-metal lancé depuis
   Joy-Con sélectionnée. Cliquer sur une action ou la glisser sur une tuile ; le menu de gauche se masque (☰ ou Ctrl+B).
 - **Éditeur de disposition** : déplacer et redimensionner directement les modules et leurs éléments dans l'aperçu,
   avec grille et guides d'alignement, ou sélectionner plusieurs éléments avec Ctrl+clic pour les déplacer ou
-  redimensionner ensemble. Appliquer une disposition équilibrée, jeu, monitoring ou compacte comme point de départ,
+  redimensionner ensemble. Placement précis : grille de 5 px, Alt pour placer librement, flèches du clavier (1 px,
+  Maj : 10 px). Appliquer une disposition équilibrée, jeu, monitoring ou compacte comme point de départ,
   puis l'ajuster librement. La grille de tuiles peut adapter automatiquement ses colonnes ou utiliser un nombre choisi.
 - **Transitions entre les pages** : choisir aucune, glissement, fondu, glissement et fondu ou zoom, puis régler la
   durée et l'accélération.
@@ -263,7 +236,7 @@ depuis hekate (*Payloads*). Le pilote WinUSB est choisi automatiquement par Wind
 
 ## Applications connectées (stream deck)
 
-Dans **Paramètres → Applications connectées**, **+ Ajouter une application** active OBS Studio, Twitch ou
+Dans **Paramètres → Applications et plugins → Applications connectées**, **+ Ajouter une application** active OBS Studio, Twitch ou
 Voicemod. On crée ensuite des tuiles de ce type depuis la bibliothèque d'actions de la page Switch. Les tuiles
 affichent l'état en direct (scène active, live ou enregistrement en cours, mode actif, micro coupé…) et
 s'atténuent quand l'application n'est pas connectée.
@@ -481,14 +454,14 @@ portable) ; une instance par dossier de données.
   Steam Input peut aussi prendre le bouton.
 - **Codes CheatSlips : « Quota exceeded for today »** : le compte gratuit a une limite par jour, réessayer le lendemain.
 - **Switch non détectée** : vérifier que le payload affiche « En attente du PC » et utiliser un câble USB-C de données.
-- **Joy-Con sans effet** : copier le dernier `switchdeck.bin` (protocole v6) sur la carte SD ; l'onglet Manettes prévient
+- **Joy-Con sans effet** : copier le dernier `switchdeck.bin` sur la carte SD ; l'onglet Manettes prévient
   si le payload est trop ancien.
 - **Barre de recherche sans favoris** : aucun favori n'est mis d'office ; les ajouter dans la personnalisation du module.
   « Ajouter depuis le navigateur » lit seulement les navigateurs Chromium (Chrome, Edge, Brave, Opera), et uniquement
   celui défini comme navigateur par défaut dans Windows ; sinon, « Ajouter à la main ».
 - **Barre de recherche : « / » ne propose rien** : aucune commande par défaut ; les choisir dans la personnalisation du module.
-- **Météo, qualité de l'air ou soleil vide** : choisir la ville dans la personnalisation du module (onglet Style), puis « Rechercher ».
-- **Application connectée en erreur** : la carte de l'application (Paramètres → Applications connectées)
+- **Météo, qualité de l'air ou soleil vide** : choisir la ville dans la personnalisation du module (Apparence et options du module), puis « Rechercher ».
+- **Application connectée en erreur** : la carte de l'application (Paramètres → Applications et plugins)
   indique la raison. Vérifier qu'OBS ou Voicemod est lancé. Pour Twitch, se déconnecter puis se reconnecter
   après une mise à jour qui demande de nouveaux droits (émotes).
 

@@ -39,7 +39,8 @@ public partial class ModuleCard
         // Taille automatique (bureau) ou cadre imposé (Switch, le contenu recadré est mis à l'échelle du cadre) ;
         // une taille fixe choisie sur le bureau est respectée.
         var active = _useDefaultChrome && _appearance is not null && (_fillFrame || _appearance.AutoSize)
-            && _appearance.Elements.Values.Any(l => !l.IsDefault);
+            // Élément déplacé, redimensionné… ou masqué : la carte se resserre sur ce qui reste affiché.
+            && _appearance.Elements.Values.Any(l => !l.IsDefault || l.Hidden);
         if (active != _fitActive)
         {
             _fitActive = active;

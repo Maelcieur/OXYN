@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Threading;
 using Oxyn.Services;
@@ -13,7 +13,8 @@ public sealed partial class WidgetManager
     private static readonly HashSet<string> HiddenByDefault = new() { "tileclock", "analogclock", "digitalclock", "calendar", "weather", "temperatures", "airquality", "sensorbars", "moon", "sun", "searchbar" };
 
     private readonly DispatcherTimer _clockTimer = new(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(250) };
-    private readonly List<(double? Cpu, double? Gpu)> _temperatureHistory = new();
+    /// <summary>Toutes les températures (identifiant -> °C) à chaque mesure, pour les courbes du module Températures.</summary>
+    private readonly List<IReadOnlyDictionary<string, double?>> _temperatureHistory = new();
     private WeatherService? _weather;
     private int _lastClockSecond = -1;
 
@@ -96,6 +97,7 @@ public sealed partial class WidgetManager
         foreach (var r in snapshot.Sensors ?? Array.Empty<SensorReading>()) all.TryAdd(r.Id, r);
         _lastSensors = all;
         foreach (var bars in Live<SensorBarsWidgetContent>()) bars.Update(all);
+        PushTemperatures(all);
         PushDesigns();
     }
 
@@ -136,10 +138,11 @@ public sealed partial class WidgetManager
     }
 
     /// <summary>Nouvelle lecture des capteurs : un point de plus sur les courbes de températures.</summary>
-    private void PushTemperatures(float? cpu, float? gpu)
+    private void PushTemperatures(IReadOnlyDictionary<string, SensorReading> all)
     {
-        _temperatureHistory.Add((cpu, gpu));
+        var temperatures = all.Values.Where(r => r.Unit == "°C").ToDictionary(r => r.Id, r => (double?)r.Value);
+        _temperatureHistory.Add(temperatures);
         if (_temperatureHistory.Count > Controls.TemperatureChart.Capacity) _temperatureHistory.RemoveAt(0);
-        foreach (var chart in Live<TemperatureWidgetContent>()) chart.Push(cpu, gpu);
+        foreach (var chart in Live<TemperatureWidgetContent>()) chart.Push(temperatures);
     }
 }

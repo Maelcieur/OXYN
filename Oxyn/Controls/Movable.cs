@@ -64,8 +64,72 @@ public static class Movable
     /// Vrai si l'élément est réellement affiché : visible lui-même et via ses parents (module à l'écran,
     /// texte ou bloc non désactivé par une option) et d'une taille non nulle. Un élément désactivé n'a pas de cadre d'édition.
     /// </summary>
+    /// <summary>
+    /// Ligne déplacée ou agrandie par l'utilisateur : sa position réelle (transformée) compte dans le contour de
+    /// l'élément et la taille de la carte (contrairement aux animations, comptées à leur emplacement).
+    /// </summary>
+    public static readonly DependencyProperty PlacedProperty = DependencyProperty.RegisterAttached(
+        "Placed", typeof(bool), typeof(Movable), new PropertyMetadata(false));
+
+    private static bool HasPlaced(DependencyObject node)
+    {
+        if (node.GetValue(PlacedProperty) is true) return true;
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+            if (HasPlaced(VisualTreeHelper.GetChild(node, i))) return true;
+        return false;
+    }
+
+    /// <summary>Ligne de la liste des sorties audio (module Son · sortie audio).</summary>
+    public static bool IsAudioOutputRow(FrameworkElement row)
+        => ItemsControl.ItemsControlFromItemContainer(row) is { Name: "DevicesList" };
+
+    /// <summary>Clé stable d'une ligne de liste (sortie audio, application) : « clé de l'élément#identifiant ».</summary>
+    public static string ItemKey(string elementKey, object item) => elementKey + "#" + item switch
+    {
+        Services.AudioDeviceInfo d => d.Id,
+        Services.AudioSessionInfo s => s.AppKey,
+        _ => item.ToString() ?? ""
+    };
+
+    /// <summary>Listes contenues dans l'élément (ou l'élément lui-même s'il est une liste).</summary>
+    public static IEnumerable<ItemsControl> ListsOf(FrameworkElement element)
+    {
+        if (element is ItemsControl self) yield return self;
+        foreach (var list in Descendants<ItemsControl>(element)) yield return list;
+    }
+
+    private static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T found) yield return found;
+            foreach (var deeper in Descendants<T>(child)) yield return deeper;
+        }
+    }
+
+    /// <summary>
+    /// Place chaque ligne des listes de l'élément selon son réglage propre (déplacée, agrandie, masquée dans l'aperçu).
+    /// Renvoie les listes trouvées, pour que la carte réapplique les placements quand les lignes sont recréées.
+    /// </summary>
+    public static IReadOnlyList<ItemsControl> ApplyItems(FrameworkElement element, string key, IReadOnlyDictionary<string, ElementLayout> layouts)
+    {
+        var lists = ListsOf(element).ToList();
+        foreach (var list in lists)
+            for (var i = 0; i < list.Items.Count; i++)
+                if (list.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement row)
+                {
+                    layouts.TryGetValue(ItemKey(key, list.Items[i]), out var layout);
+                    if (layout is not null || row.RenderTransform is not MatrixTransform { Matrix.IsIdentity: true })
+                        Apply(row, layout);
+                    row.SetValue(PlacedProperty, layout is { IsDefault: false });
+                }
+        return lists;
+    }
+
     public static bool IsDisplayed(FrameworkElement element)
-        => element.IsVisible && element.ActualWidth > 0 && element.ActualHeight > 0;
+        // Masqué par l'utilisateur = rendu transparent (Apply) : plus de cadre, d'accroche ni de place dans la carte.
+        => element.IsVisible && element.Opacity > 0.01 && element.ActualWidth > 0 && element.ActualHeight > 0;
 
     /// <summary>
     /// Contour de ce qui est réellement dessiné (texte, jauge, image…), dans le repère de l'élément.
@@ -78,6 +142,8 @@ public static class Movable
         AddContent(element, element, ref bounds);
         if (bounds.IsEmpty || bounds.Width < 1 || bounds.Height < 1)
             return new Rect(element.RenderSize);
+        // Lignes placées par l'utilisateur : tout leur contour compte, sans limite.
+        if (HasPlaced(element)) return bounds;
         // Un débordement éventuel reste encadré, mais pas plus loin que l'emplacement élargi de moitié.
         var limit = new Rect(element.RenderSize);
         limit.Inflate(element.ActualWidth / 2, element.ActualHeight / 2);
@@ -93,10 +159,19 @@ public static class Movable
     internal static void AddContent(Visual root, Visual node, ref Rect bounds)
     {
         if (node is UIElement { Visibility: not Visibility.Visible } or UIElement { Opacity: <= 0.01 }) return;
+        // Ligne des sorties audio : un bouton qui réagit au survol sur toute sa largeur ; elle compte donc pour toute
+        // sa place, bulles visibles ou non (et la carte ne bouge pas sous la souris). Les autres listes suivent la règle
+        // générale (ce qui est dessiné).
+        if (!ReferenceEquals(node, root) && node is FrameworkElement row && IsAudioOutputRow(row))
+        {
+            Add(root, node, new Rect(row.RenderSize), ref bounds); // position réelle, déplacement compris
+            return;
+        }
         // Élément transformé à l'intérieur (pochette qui tourne, barres animées…) : on compte son emplacement,
         // pas sa forme tournée, sinon le cadre et la carte changeraient de taille à chaque image.
         if (!ReferenceEquals(node, root) && node is UIElement { RenderTransform: { } transform } ui
-            && !transform.Value.IsIdentity && VisualTreeHelper.GetParent(node) is Visual parent)
+            && !transform.Value.IsIdentity && node.GetValue(PlacedProperty) is not true
+            && VisualTreeHelper.GetParent(node) is Visual parent)
         {
             var slot = new Rect((Point)VisualTreeHelper.GetOffset(node), ui.RenderSize);
             bounds.Union(ReferenceEquals(parent, root) ? slot : parent.TransformToAncestor(root).TransformBounds(slot));
@@ -145,8 +220,9 @@ public static class Movable
         _ => false
     };
 
+    /// <summary>Fond invisible ou presque (bulles désactivées ou à 0-1 %) : il ne compte pas dans le cadre de l'élément.</summary>
     private static bool IsClear(Brush? brush)
-        => brush is null || brush.Opacity <= 0.01 || brush is SolidColorBrush { Color.A: 0 };
+        => brush is null || brush.Opacity <= 0.01 || brush is SolidColorBrush { Color.A: <= 3 };
 
     /// <summary>Tous les éléments déplaçables sous <paramref name="root"/> (arbre visuel, sans entrer dans un élément déplaçable).</summary>
     public static List<FrameworkElement> FindAll(DependencyObject root)

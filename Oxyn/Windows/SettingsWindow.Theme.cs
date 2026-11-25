@@ -62,6 +62,8 @@ public partial class SettingsWindow
         ScheduleSave();
     }
 
+    private bool _hiddenListPending;
+
     private void OnModuleChanged(string id, ModuleAppearance appearance, string? property)
     {
         var onSwitch = IsSwitchAppearance(id, appearance);
@@ -96,6 +98,18 @@ public partial class SettingsWindow
 
         // Taille automatique ou manuelle : « Adaptation du contenu » apparaît ou disparaît (bureau).
         if (property == nameof(ModuleAppearance.AutoSize)) UpdateFitCard();
+
+        // Élément, texte ou bouton masqué / réaffiché : la liste « Éléments masqués » suit.
+        if (property is nameof(ModuleAppearance.Elements) or nameof(ModuleAppearance.Texts) or nameof(ModuleAppearance.Buttons)
+            && ReferenceEquals(appearance, CurrentAppearance) && !_hiddenListPending)
+        {
+            _hiddenListPending = true;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, () =>
+            {
+                _hiddenListPending = false;
+                BuildDesignEditor();
+            });
+        }
 
         (onSwitch ? _switchPending : _desktopPending).Add(id);
         QueueApply();

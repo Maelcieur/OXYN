@@ -15,7 +15,7 @@
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
 
     <!-- Version unique de l'application : reprise dans le journal ; à garder alignée avec installer\Oxyn.iss. -->
-    <Version>2.4.0</Version>
+    <Version>2.5.0</Version>
     <Product>OXYN</Product>
     <Company>Fenix</Company>
     <Description>Widgets de bureau : surveillance matérielle, audio, médias, consommation et raccourcis.</Description>

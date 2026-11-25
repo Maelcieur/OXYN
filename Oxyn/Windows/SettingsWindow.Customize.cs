@@ -93,6 +93,11 @@ public partial class SettingsWindow
         SensorBarsCard.Visibility = id == "sensorbars" ? Visibility.Visible : Visibility.Collapsed;
         if (id == "sensorbars") BuildSensorBarsEditor();
         TemperatureCard.Visibility = id == "temperatures" ? Visibility.Visible : Visibility.Collapsed;
+        if (id == "temperatures")
+        {
+            BuildTemperatureEditor();
+            OptionsExpander.IsExpanded = true; // les courbes sont le réglage principal de ce module
+        }
         SearchBarCard.Visibility = id == "searchbar" ? Visibility.Visible : Visibility.Collapsed;
         if (id == "searchbar") BuildSearchBarEditor();
         PageEnergy.Visibility = id == "power" ? Visibility.Visible : Visibility.Collapsed;

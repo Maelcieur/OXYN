@@ -6,6 +6,9 @@ namespace Oxyn;
 // Bureau : menu clic droit de chaque module (le reste se règle dans Personnaliser) et sauvegarde différée.
 public sealed partial class WidgetManager
 {
+    /// <summary>Clic simple sur un module du bureau (les Paramètres ouvrent alors sa personnalisation s'ils y sont déjà).</summary>
+    public event Action<string>? WidgetClicked;
+
     // Rafale de changements (nom tapé lettre par lettre…) : une seule écriture de config.json à la fin.
     private DispatcherTimer? _desktopSaveTimer;
 

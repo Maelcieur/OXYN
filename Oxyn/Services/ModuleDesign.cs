@@ -72,6 +72,9 @@ public sealed class BuilderBlock
     /// <summary>Anneau : dessin ("Smooth", "Segments", "Thin", "Dots", "Needle", "Pie", "Neon", "Rays", "Double", "Capsule") ; null = style global.</summary>
     public string? Design { get; set; }
 
+    /// <summary>Anneau : graduations ("Lines", "Dense", "Majors", "Dots", "Inner", "Numbers") ; null = aucune.</summary>
+    public string? Ticks { get; set; }
+
     /// <summary>Anneau : épaisseur (multiplicateur, 1 = automatique).</summary>
     public double Thickness { get; set; } = 1;
 
